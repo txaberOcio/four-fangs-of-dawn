@@ -1,0 +1,22 @@
+CASTILLO DE LOS VAMPIROS - como jugar
+=====================================
+
+SOLO JUGAR (sin instalar nada)
+  Si alguien ya tiene el servidor encendido, basta con abrir en el navegador
+  (Chrome o Edge) la direccion que te pase, por ejemplo http://192.168.1.128:3000
+
+TENER TU PROPIO SERVIDOR (para jugar tu o para ser anfitrion)
+  1. Necesitas Node.js (version LTS). Si no lo tienes, Iniciar-servidor.bat intenta
+     instalarlo solo con winget. Tambien puedes bajarlo de https://nodejs.org
+  2. Haz doble clic en Iniciar-servidor.bat
+     - La primera vez instala las dependencias (hace falta internet).
+     - Despues abre el juego en tu navegador (http://localhost:3000).
+  3. Para que jueguen otros equipos de la misma red, pasales la direccion
+     "En la red local" que aparece en la ventana negra. Si Windows pregunta por el
+     cortafuegos, permite el acceso en redes privadas.
+
+NOTAS
+  - Las cuentas y partidas guardadas estan en la carpeta data\ (users.json).
+    No la copies si no quieres compartir tus cuentas.
+  - Controles: flechas/AD mover, saltar con flecha arriba/W/Espacio, X o J atacar,
+    C o K impulso, E interactuar, Q usar objeto, B diario, M mapa. Mando y movil tambien.

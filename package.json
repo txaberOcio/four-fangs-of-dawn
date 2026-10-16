@@ -1,0 +1,27 @@
+{
+  "name": "four-fangs-of-dawn",
+  "version": "1.0.0",
+  "description": "Metroidvania gótico cooperativo online (1-4 jugadores) hecho con Phaser 3 y Socket.IO",
+  "private": true,
+  "license": "MIT",
+  "author": "txaberOcio",
+  "type": "commonjs",
+  "keywords": ["metroidvania", "phaser", "socket.io", "multiplayer", "pixel-art", "game"],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/txaberOcio/four-fangs-of-dawn.git"
+  },
+  "homepage": "https://github.com/txaberOcio/four-fangs-of-dawn#readme",
+  "bugs": { "url": "https://github.com/txaberOcio/four-fangs-of-dawn/issues" },
+  "engines": { "node": ">=20" },
+  "scripts": {
+    "start": "node server/index.js",
+    "validate": "node scripts/validate.js",
+    "check": "node --check server/index.js && node --check public/game.js && node --check public/extras.js && node --check public/world.js && node --check public/art.js && node --check public/music.js"
+  },
+  "dependencies": {
+    "express": "^4.22.3",
+    "phaser": "^3.80.1",
+    "socket.io": "^4.8.4"
+  }
+}

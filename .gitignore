@@ -1,0 +1,12 @@
+# Dependencias
+node_modules/
+
+# Datos locales: cuentas y partidas guardadas (contienen hashes de contraseñas)
+data/users.json
+data/*.tmp
+
+# Varios
+*.log
+.env
+.DS_Store
+Thumbs.db
