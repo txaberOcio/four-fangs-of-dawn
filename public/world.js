@@ -80,7 +80,7 @@
     ['E', 'saw', 11, 7, { ax: 'h', r: 90, w: 1.4 }], ['E', 'saw', 19, 13, { ax: 'v', r: 55, w: 1.8 }], ['E', 'saw', 9, 20, { ax: 'h', r: 110, w: 1.2 }], ['E', 'saw', 15, 26, { ax: 'v', r: 65, w: 1.6 }]]);
   area('torre', 'Torre del Reloj', 4, 6, 1, 1, 2, [['forge', 4, 34], ['tri', 'tl', 6], ['tri', 'tr', 6], ['climb', 11, 4, 'dj', true], ['cry', 22, 34], ['E', 'kn', 8, 34, { elite: true, name: 'Relojero Oxidado', reward: { souls: 100, item: 'rage' } }], ['E', 'gh', 20, 24], ['E', 'gh', 8, 10], ['E', 'bat', 14, 28], ['E', 'saw', 13, 21, { ax: 'h', r: 90, w: 1.2 }], ['E', 'saw', 13, 13, { ax: 'h', r: 80, w: 1.5 }]]);
   area('clkC', 'Cámara del Reloj', 4, 6, 0, 1, 1, [['torch', 4, 12], ['torch', 9, 12], ['torch', 14, 12], ['torch', 19, 12], ['torch', 23, 12], ['tri', 'tl', 5], ['tri', 'tr', 5], ['boss', 'clock', 19, 16]]);
-  area('pasR', 'Pasillo Real', 5, 7, 0, 1, 1, [['page', 20, 16], ['tri', 'tl', 5], ['B', 11, 3, 4, 14], ['B', 7, 3, 1, 10], ['cry', 13, 2], ['altar', 22, 16], ['E', 'gh', 3, 9]]);
+  area('pasR', 'Pasillo Real', 5, 7, 0, 1, 1, [['page', 20, 16], ['tri', 'tl', 5], ['B', 11, 3, 4, 14], ['B', 7, 3, 1, 10], ['altar', 22, 16], ['E', 'gh', 3, 9]]);
   // Arena inferior del Conde: no tiene puertas; se llega al romperse el suelo del trono. 'special' = fuera de la comprobación de alcance
   area('fosoC', 'Foso del Conde', 5, 8, 1, 2, 1, [['special'], ['B', 5, 15, 5, 2], ['B', 7, 14, 2, 1], ['B', 14, 16, 3, 1], ['B', 15, 15, 1, 1], ['B', 22, 15, 4, 2], ['B', 23, 14, 2, 1],
     ['B', 31, 16, 3, 1], ['B', 36, 15, 5, 2], ['B', 38, 14, 2, 1], ['B', 45, 15, 4, 2], ['P', 10, 11, 4], ['P', 19, 12, 5], ['P', 29, 10, 5], ['P', 40, 11, 4]]);
@@ -96,7 +96,7 @@
   area('albaB', 'Cámara de Vesper', 7, 11, 1, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 24, 4, 'norm', true], ['boss', 'vesper', 40, 16]]);
 
   // --- Siguiente fase: tras vencer a uno de los rivales se abre la puerta de la cámara de Vesper hacia el cielo ---
-  area('cielo1', 'Antecámara del Cielo', 7, 13, 1, 2, 1, [['page', 25, 16], ['altar', 8, 16], ['tri', 'tl', 4], ['tri', 'tr', 4], ['cry', 42, 16],
+  area('cielo1', 'Antecámara del Cielo', 7, 13, 1, 2, 1, [['page', 25, 16], ['altar', 8, 16], ['tri', 'tl', 4], ['tri', 'tr', 4],
     // puzle de tiempo: cada escalón aparece un segundo después del anterior y desaparece enseguida
     ['TP', 28, 14, 3, 4, 2.4, 0], ['TP', 33, 11, 3, 4, 2.4, 1], ['TP', 38, 8, 3, 4, 2.4, 2], ['P', 43, 5, 7], ['cry', 46, 4]]);
   area('torreC', 'Escalera al Cielo', 7, 15, 0, 1, 2, [['P', 3, 32, 5], ['P', 10, 29, 5], ['P', 17, 26, 5], ['P', 9, 23, 5], ['P', 3, 20, 5], ['P', 10, 17, 5], ['P', 17, 17, 8],
@@ -106,12 +106,12 @@
     ['P', 3, 13, 4], ['P', 1, 10, 3], ['P', 3, 7, 4], ['P', 22, 10, 3], ['cry', 23, 9],
     // alcoba secreta tras un muro agrietado (el Ojo de la Noche la revela): dos cristales de vida
     ['P', 41, 13, 4], ['P', 46, 10, 4], ['P', 41, 7, 4],
-    ['B', 45, 1, 6, 2], ['B', 45, 3, 1, 2], ['K', 45, 5, 1, 2], ['B', 50, 3, 1, 4], ['B', 45, 7, 6, 1], ['cry', 47, 6], ['cry', 49, 6],
+    ['B', 45, 1, 6, 2], ['B', 45, 3, 1, 2], ['K', 45, 5, 1, 2], ['B', 50, 3, 1, 4], ['B', 45, 7, 6, 1],
     ['K', 30, 17, 3, 1]]); // suelo agrietado: bajo él, el Santuario de las Sombras
-  area('jardin', 'Jardín Colgante', 7, 18, 0, 2, 1, [['pit', 7, 17], ['P', 10, 13, 3], ['B', 30, 4, 3, 11], ['B', 36, 4, 3, 13], ['P', 42, 13, 3], ['P', 46, 9, 3], ['cry', 47, 8],
+  area('jardin', 'Jardín Colgante', 7, 18, 0, 2, 1, [['pit', 7, 17], ['P', 10, 13, 3], ['B', 30, 4, 3, 11], ['B', 36, 4, 3, 13], ['P', 42, 13, 3], ['P', 46, 9, 3],
     ['E', 'gh', 22, 9], ['E', 'bat', 14, 6], ['E', 'bat', 41, 7], ['E', 'kn', 25, 16], ['E', 'sentinel', 44, 16]]);
   // Segunda mazmorra de plataformas: suelo de pinchos, huecos para el impulso y sierras
-  area('mazC', 'Mazmorra de Nubes', 7, 20, 0, 2, 1, [['pit', 2, 49], ['P', 3, 13, 4], ['P', 10, 11, 3], ['P', 17, 9, 3], ['P', 26, 9, 3], ['P', 36, 11, 3], ['P', 43, 13, 3], ['P', 47, 10, 3], ['cry', 48, 9],
+  area('mazC', 'Mazmorra de Nubes', 7, 20, 0, 2, 1, [['pit', 2, 49], ['P', 3, 13, 4], ['P', 10, 11, 3], ['P', 17, 9, 3], ['P', 26, 9, 3], ['P', 36, 11, 3], ['P', 43, 13, 3], ['P', 47, 10, 3],
     ['E', 'saw', 14, 10, { ax: 'v', r: 55, w: 1.5 }], ['E', 'saw', 30, 8, { ax: 'h', r: 80, w: 1.3 }], ['E', 'bat', 22, 5], ['E', 'bat', 40, 6], ['E', 'gh', 33, 8],
     ['TP', 14, 8, 3, 3.6, 2.2, 0], ['TP', 18, 5, 3, 3.6, 2.2, 0.9], ['P', 22, 3, 6], ['cry', 24, 2]]);
 
