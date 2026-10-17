@@ -703,5 +703,137 @@
       "bosses": 0,
       "bestTime": null
     }
+  },
+  "EEE": {
+    "salt": "f155ac6251bd56501eda5e5a9de31cab",
+    "hash": "46666c2d1ba447fad0b491896d44a159e8506a2bff7714d78821363fea15d2a9bf6e51fe35f9fb3030759e61ee482cd2412beef7320e425f16e13dc86cec8eaa",
+    "created": "2026-10-17T11:02:23.361Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    },
+    "saves": {
+      "blue": {
+        "me": {
+          "souls": 72,
+          "inv": {
+            "pot": 0,
+            "pot2": 0,
+            "spd": 0,
+            "str": 0,
+            "lamp": 0,
+            "amu": 0,
+            "ward": 0,
+            "rage": 0,
+            "tonic": 0,
+            "fruit": 0,
+            "bomb": 0
+          },
+          "wlv": 2,
+          "maxHp": 9,
+          "cry": [
+            "c_cripta_1",
+            "c_jardin_1",
+            "c_mazC_1",
+            "c_osario_1"
+          ],
+          "forge": [
+            "f_bodega_1"
+          ],
+          "abil": {
+            "dash": true,
+            "dj": true,
+            "wj": true,
+            "wings": false,
+            "eye": false
+          },
+          "elite": [],
+          "pages": [],
+          "seen": [
+            "sk",
+            "bat",
+            "gh",
+            "saw",
+            "archon",
+            "sentinel",
+            "kn",
+            "garg"
+          ],
+          "kills": {
+            "sk": 2,
+            "kn": 0,
+            "bat": 1,
+            "gh": 0,
+            "saw": 0,
+            "sentinel": 0,
+            "garg": 1,
+            "bishop": 0,
+            "clock": 0,
+            "archon": 1,
+            "reina": 0,
+            "conde": 0,
+            "aurora": 0,
+            "vesper": 0
+          },
+          "travel": true,
+          "el": "poison",
+          "gems": 11,
+          "gemGot": [
+            "g_fragua_1",
+            "g_mir_1",
+            "g_mazC_1",
+            "g_salon_1",
+            "g_osario_1"
+          ],
+          "bg": [
+            "archon",
+            "garg"
+          ],
+          "perm": {
+            "dmg": 0,
+            "souls": 0
+          },
+          "altar": "a_gran_1",
+          "lit": [
+            "a_vest_1",
+            "a_gran_1"
+          ],
+          "visited": [
+            "vest",
+            "bodega",
+            "cripta",
+            "caida",
+            "fragua",
+            "gran",
+            "scrip",
+            "mir",
+            "pasR",
+            "jardin",
+            "mazC",
+            "salon",
+            "cubil",
+            "osario"
+          ]
+        },
+        "world": {
+          "abilities": {
+            "dash": false,
+            "dj": false,
+            "wj": false,
+            "wings": false,
+            "eye": false
+          },
+          "bosses": [
+            "archon",
+            "garg"
+          ],
+          "broken": [],
+          "torches": {}
+        },
+        "at": "2026-10-17T11:06:57.187Z"
+      }
+    }
   }
 }

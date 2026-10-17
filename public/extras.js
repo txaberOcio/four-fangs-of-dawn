@@ -511,7 +511,7 @@ Object.assign(CastleScene.prototype, {
         touched.forEach(i => { tmp[i] = 0; }); // se limpia solo lo tocado: el búfer se reutiliza
       }
     }
-    this.hid = hid; return hid;
+    this.hid = hid; this.coverDirty = true; return hid;
   },
   hiddenAt(wx, wy) {
     if (this.abil && this.abil.eye) return false; // el Ojo de la Noche ve tras los muros agrietados
@@ -531,7 +531,7 @@ Object.assign(CastleScene.prototype, {
     const W = this.W, box = document.createElement('div');
     box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#0a0612ee;color:#fff;font:13px Courier New,monospace;padding:10px;display:none;overflow:auto';
     box.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b>MODO DESARROLLO</b>' +
-      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
+      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
       '<span id="devInfo" style="color:#ffd98a">Haz clic en el mapa para teletransportarte</span></div><canvas id="devMap" style="image-rendering:pixelated;cursor:crosshair;border:2px solid #ffb347"></canvas>';
     document.body.appendChild(box);
     box.querySelectorAll('button').forEach(b => { b.style.cssText = 'width:auto;margin:0;padding:4px 10px;font:12px Courier New,monospace;cursor:pointer'; });
@@ -550,7 +550,7 @@ Object.assign(CastleScene.prototype, {
     cv.onmousemove = ev => { const [x, y] = at(ev), a = W.areaOf(x, y); info.textContent = a ? a.name + ' (' + a.id + ')' : 'roca'; };
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
-    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.toast('Habilidades básicas concedidas (modo desarrollo)'); };
+    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
     box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
     box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
@@ -627,7 +627,17 @@ Object.assign(CastleScene.prototype, {
     const x0 = Math.floor(p.x / T) - 24, y0 = Math.floor(p.y / T) - 15;
     for (let gy = Math.max(0, y0); gy < y0 + 30 && gy < this.W.Ht; gy++) for (let gx = Math.max(0, x0); gx < x0 + 48 && gx < this.W.Wt; gx++) { const t = D[gy][gx]; if (t && t.index >= 0 && t.index % 8 === K.CRACK) g.strokeRect(gx * T + 2, gy * T + 2, T - 4, T - 4); }
   },
+  redrawHidCover() { // roca opaca sobre las salas secretas cerradas (sin Ojo de la Noche)
+    const g = this.hidCover || (this.hidCover = this.add.graphics().setDepth(24));
+    this.coverEye = !!this.abil.eye; this.coverDirty = false; g.clear();
+    if (this.abil.eye) return;
+    if (!this.hid) this.recalcHidden();
+    const Wt = this.W.Wt, Ht = this.W.Ht, hid = this.hid; g.fillStyle(0x2f2b3a, 1);
+    for (let y = 0; y < Ht; y++) { let x = 0; while (x < Wt) { if (hid[y * Wt + x] !== 1) { x++; continue; } let x2 = x; while (x2 < Wt && hid[y * Wt + x2] === 1) x2++; g.fillRect(x * T, y * T, (x2 - x) * T, T); x = x2; } }
+    this.coverDirty = false;
+  },
   hiddenSweep() {
+    if (this.coverDirty || this.coverEye !== !!this.abil.eye || !this.hidCover) this.redrawHidCover();
     if (this.sealLabel) { const pb = this.progress.bosses, n = (pb.includes('archon') ? 1 : 0) + (pb.includes('reina') ? 1 : 0), open = pb.includes('conde') || n === 2; this.sealLabel.setText(open ? 'La puerta del trono\nestá abierta' : 'Sellos del trono: ' + n + '/2\n(Archimago y Reina de Huesos)'); }
     this.crackGlow(); // oculta lo que está dentro de una sala secreta aún cerrada
     this.crystals.forEach(c => { if (!this.cryGot.has(c.id)) c.spr.setVisible(!this.hiddenAt(c.x, c.y)); });

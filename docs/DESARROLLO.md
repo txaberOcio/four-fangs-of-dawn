@@ -101,7 +101,7 @@ Añade `?dev=1` a la dirección del juego, por ejemplo <http://localhost:3000/?d
 
 - **Haz clic en cualquier sala del mapa** para teletransportarte al sitio más cercano donde puedas estar de pie. Al pasar el ratón se muestra el nombre de la sala.
 - **Invulnerable**: botón que activa o desactiva el daño (verde = invulnerable).
-- **Dar habilidades** (Impulso, Doble salto y Salto de pared), **Curar** y **Matar jefes (hasta el Conde)**, que abre los muros del foso y las Torres del Alba.
+- **Dar todas las habilidades** (Impulso, Doble salto, Salto de pared, Alas del Alba y Ojo de la Noche), **Curar** y **Matar jefes (hasta el Conde)**, que abre los muros del foso y las Torres del Alba.
 
 Sin `?dev=1` el menú no existe, así que los jugadores normales no lo ven. F2 (o el botón Cerrar) lo cierra.
 
