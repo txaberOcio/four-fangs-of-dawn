@@ -150,7 +150,7 @@ class CastleScene extends Phaser.Scene {
     buildArt(this);
     this.progress = progress || { abilities: {}, bosses: [], broken: [] };
     this.abil = { dash: false, dj: false, wj: false }; // las habilidades son de cada vampiro
-    (this.progress.broken || []).forEach(k => { const [gx, gy] = k.split(',').map(Number); w.fg[gy][gx] = -1; });
+    (this.progress.broken || []).forEach(k => { const [gx, gy] = String(k).split(',').map(Number); if (w.fg[gy] && w.fg[gy][gx] !== undefined) w.fg[gy][gx] = -1; });
 
     // mapa de tiles (fondo + primer plano)
     const bgMap = this.make.tilemap({ data: w.bg.map(r => r.slice()), tileWidth: T, tileHeight: T });
@@ -335,7 +335,7 @@ class CastleScene extends Phaser.Scene {
     on('torch', ({ id, on: v }) => this.setTorch(id, v));
     on('hit', h => { if (!this.isHost) return; const e = this.ents.get(h.id); if (e && e.sim) this.damageEnt(e, h.dmg, h.dir, h.from, h.el); });
     on('progress', p => this.applyProgress(p, false));
-    on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
+    on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(gx, gy); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
     on('victory', v => { // el Conde cae, pero el castillo continúa: se despide y desaparece
       this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Necios... esto no ha terminado.\nMis señores, Aurora y Vesper,\nme esperan más arriba, en las torres del alba.\nSeguidme... si os atrevéis.»\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
       SFX.pick(); this.won = true; this.cameras.main.shake(500, 0.008);
@@ -349,10 +349,12 @@ class CastleScene extends Phaser.Scene {
       if (nowHost && !this.isHost) { // migración de anfitrión: la simulación empieza de cero
         this.isHost = true;
         this.ents.forEach(e => e.spr.destroy()); this.ents.clear(); this.projs.forEach(p => p.spr.destroy()); this.projs.clear(); this.killed.clear();
+        this.sealKey = null; this.applySeal(null); // sin jefe activo no debe quedar ninguna puerta sellada
         this.toast('Eres el anfitrión: los enemigos se reinician');
       }
     });
-    this.events.once('shutdown', () => Object.entries(this.h).forEach(([ev, fn]) => socket.off(ev, fn)));
+    const unlisten = () => Object.entries(this.h).forEach(([ev, fn]) => socket.off(ev, fn));
+    this.events.once('shutdown', unlisten); this.events.once('destroy', unlisten);
   }
 
   applyProgress(p, silent) {
@@ -579,7 +581,7 @@ class CastleScene extends Phaser.Scene {
     e.spr.destroy(); this.ents.delete(e.id); this.killed.add(e.id);
     if (e.boss) {
       socket.emit('bossDead', e.type);
-      this.progress.bosses.push(e.type);
+      if (!(World.BOSSES[e.type] && World.BOSSES[e.type].rival)) this.progress.bosses.push(e.type); // los rivales Aurora/Vesper esperan al servidor (solo puede caer uno)
       this.projs.forEach(p => p.spr.destroy()); this.projs.clear();
       this.ents.forEach(x => { if (x.summoned) { x.spr.destroy(); this.ents.delete(x.id); } });
       this.sealKey = null; this.applySeal(null); this.syncRelics();
@@ -759,7 +761,7 @@ class CastleScene extends Phaser.Scene {
       return;
     }
     if (!tgs.length) { e.emptyT += dt; if (e.emptyT > 4) { // reinicio del jefe
-      e.aggro = false; e.hp = e.max = cfg.hp; e.act = null; e.tele = false; e.phase = null; if (!this.floorBroken) this.floorState = 0; e.spr.setPosition(e.home.x, e.home.y); b.setVelocity(0, 0); e.spr.setAlpha(1);
+      e.aggro = false; e.hp = e.max = cfg.hp; e.act = null; e.tele = false; e.marked = e.erupted = e.moved = e.fired = e.diving = false; e.chan = 0; e.phase = null; if (!this.floorBroken) this.floorState = 0; e.spr.setPosition(e.home.x, e.home.y); b.setVelocity(0, 0); e.spr.setAlpha(1);
       this.projs.forEach(p => p.spr.destroy()); this.projs.clear();
       this.ents.forEach(x => { if (x.summoned) { x.spr.destroy(); this.ents.delete(x.id); } });
       this.sealKey = null; this.applySeal(null); } return; }
@@ -786,7 +788,7 @@ class CastleScene extends Phaser.Scene {
       } else b.setVelocityX(0);
       if (e.cd <= 0) {
         const pick = arr => arr[Math.floor(Math.random() * arr.length)];
-        e.t = 0; e.air = false; e.dirT = dirT; e.n = 0;
+        e.t = 0; e.air = false; e.dirT = dirT; e.n = 0; e.marked = e.erupted = e.moved = e.fired = e.diving = false; e.chan = 0;
         if (e.type === 'garg') e.act = pick(['leap', 'charge', 'leap']);
         if (e.type === 'aurora') { const o = ['fan', 'dive', 'rays', 'sweep'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'vesper') { const o = ['charge', 'ambush', 'pillars', 'leap'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
@@ -1017,7 +1019,7 @@ class CastleScene extends Phaser.Scene {
     // paredes rompibles
     for (let wy = by - bh / 2; wy <= by + bh / 2; wy += 16) for (let wx = bx - bw / 2; wx <= bx + bw / 2; wx += 16) {
       const t = this.fg.getTileAtWorldXY(wx, wy);
-      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
+      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
     }
   }
   contact() {

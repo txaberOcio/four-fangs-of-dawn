@@ -266,9 +266,9 @@ Object.assign(CastleScene.prototype, {
     if (saveMe) this.loadPersonal(saveMe);
     saveMe = null;
     const onRest = () => { if (this.isHost) this.restReset(); };
-    socket.on('rest', onRest); this.events.once('shutdown', () => socket.off('rest', onRest));
+    socket.on('rest', onRest); { const off = () => socket.off('rest', onRest); this.events.once('shutdown', off); this.events.once('destroy', off); }
     const onLoot = ({ amt, item, eid, bonus, kt }) => { if (amt) this.addSouls(amt, true); if (kt) this.registerKill(kt); if (eid) this.eliteReward(eid, { item, souls: bonus }); };
-    socket.on('loot', onLoot); this.events.once('shutdown', () => socket.off('loot', onLoot));
+    socket.on('loot', onLoot); { const off = () => socket.off('loot', onLoot); this.events.once('shutdown', off); this.events.once('destroy', off); }
     this.input.addPointer(2);
     this.time.delayedCall(14000, () => this.toast('Hogueras: pulsa E junto a una para descansar, guardar la partida y hacer reaparecer a los monstruos.', 7000));
   },
@@ -454,8 +454,8 @@ Object.assign(CastleScene.prototype, {
     const W_ = this.W.Wt, H_ = this.W.Ht, D = this.fg.layer.data, hid = new Uint8Array(W_ * H_), reach = new Uint8Array(W_ * H_);
     const ix = t => (t ? t.index : -1), isWall = (x, y) => { const i = ix(D[y][x]); return i >= 0 && [K.SOLID, K.FLOOR, K.CRACK].includes(i % 8); };
     const isCrack = (x, y) => { const i = ix(D[y][x]); return i >= 0 && i % 8 === K.CRACK; };
-    const fill = (sx, sy, mark, cap) => { // inundación por casillas libres; devuelve la lista o null si pasa del tope
-      const st = [[sx, sy]], list = []; mark[sy * W_ + sx] = 1;
+    const fill = (sx, sy, mark, cap, list = []) => { // inundación por casillas libres; devuelve la lista o null si pasa del tope
+      const st = [[sx, sy]]; mark[sy * W_ + sx] = 1;
       while (st.length) {
         const [x, y] = st.pop(); list.push(y * W_ + x); if (cap && list.length > cap) return null;
         for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
@@ -465,14 +465,16 @@ Object.assign(CastleScene.prototype, {
       }
       return list;
     };
+    const tmp = this._hidTmp || (this._hidTmp = new Uint8Array(W_ * H_));
     const seeds = [...this.W.altars, ...this.W.bosses, ...this.W.npcs, { x: this.player.x, y: this.player.y }];
     seeds.forEach(s => { const x = Math.floor(s.x / T), y = Math.floor(s.y / T); if (x >= 0 && y >= 0 && x < W_ && y < H_ && !reach[y * W_ + x] && !isWall(x, y)) fill(x, y, reach, 0); });
     for (let y = 0; y < H_; y++) for (let x = 0; x < W_; x++) {
       if (!isCrack(x, y)) continue;
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W_ || ny >= H_ || reach[ny * W_ + nx] || hid[ny * W_ + nx] || isWall(nx, ny)) continue;
-        const tmp = new Uint8Array(W_ * H_), list = fill(nx, ny, tmp, 800);
+        const touched = [], list = fill(nx, ny, tmp, 800, touched);
         if (list) list.forEach(i => { hid[i] = 1; });
+        touched.forEach(i => { tmp[i] = 0; }); // se limpia solo lo tocado: el búfer se reutiliza
       }
     }
     this.hid = hid; return hid;
@@ -483,7 +485,13 @@ Object.assign(CastleScene.prototype, {
     const x = Math.floor(wx / T), y = Math.floor(wy / T);
     return x >= 0 && y >= 0 && x < this.W.Wt && y < this.W.Ht && this.hid[y * this.W.Wt + x] === 1;
   },
-  wallBroken() { this.hid = null; this.visited && this.visited.forEach(id => { const a = this.W.areas[id]; if (a) this.paintMapArea(a); }); this.mapCanvas && this.mapCanvas.refresh(); },
+  wallBroken(gx, gy) { // con coordenadas solo se repintan las salas junto al muro roto
+    this.hid = null; const ids = new Set();
+    if (gx !== undefined) { for (const [dx, dy] of [[0, 0], [-1, 0], [1, 0], [0, -1], [0, 1]]) { const a = this.W.areaOf(gx + dx, gy + dy); if (a) ids.add(a.id); } }
+    else if (this.visited) this.visited.forEach(id => ids.add(id));
+    ids.forEach(id => { if (this.visited && this.visited.has(id)) { const a = this.W.areas[id]; if (a) this.paintMapArea(a); } });
+    if (this.mapCanvas) this.mapCanvas.refresh();
+  },
   // ---- atajo de desarrollador (solo con ?dev=1 en la dirección): F2 abre el mapa de teletransporte
   setupDev() {
     const W = this.W, box = document.createElement('div');
@@ -516,7 +524,8 @@ Object.assign(CastleScene.prototype, {
     box.querySelector('#devClose').onclick = toggle;
     const onKey = ev => { if (ev.key === 'F2') { ev.preventDefault(); toggle(); } };
     window.addEventListener('keydown', onKey);
-    this.events.once('shutdown', () => { window.removeEventListener('keydown', onKey); box.remove(); });
+    const bye = () => { window.removeEventListener('keydown', onKey); box.remove(); };
+    this.events.once('shutdown', bye); this.events.once('destroy', bye);
     this.toast('Modo desarrollo: F2 abre el mapa de teletransporte', 5000);
   },
   devSpot(a, gx, gy) { // casilla donde se puede estar de pie en el área, la más cercana al punto pedido
@@ -688,7 +697,7 @@ Object.assign(CastleScene.prototype, {
     });
     for (let wy = cy - bh / 2; wy <= cy + bh / 2; wy += 16) for (let wx = bx - bw / 2; wx <= bx + bw / 2; wx += 16) {
       const t = this.fg.getTileAtWorldXY(wx, wy);
-      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
+      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
     }
   },
   damageEnt(e, dmg, dir, by, el, quiet) {
@@ -820,7 +829,7 @@ Object.assign(CastleScene.prototype, {
     for (let wy = y - r; wy <= y + r; wy += 16) for (let wx = x - r; wx <= x + r; wx += 16) {
       if (Math.hypot(wx - x, wy - y) > r) continue;
       const t = this.fg.getTileAtWorldXY(wx, wy);
-      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); }
+      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); }
     }
     this.ents.forEach(e => {
       if (e.dead || e.cfg.inv) return;
