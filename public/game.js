@@ -218,7 +218,7 @@ class CastleScene extends Phaser.Scene {
     this.applyProgress(this.progress, true);
     this.initExtras();
     this.toast(IS_TOUCH ? 'Botones táctiles: mover, saltar, atacar, impulso, objeto, E' : 'Flechas/AD mover · ↑/W/Espacio saltar · ↓+saltar bajar · X/J atacar · M mapa', 6000);
-    this.time.delayedCall(6500, () => this.toast('E: encender/apagar antorchas. Los fantasmas no te ven en la luz; los murciélagos le temen.', 7000));
+    this.time.delayedCall(6500, () => this.toast('{act}: encender/apagar antorchas. Los fantasmas no te ven en la luz; los murciélagos le temen.', 7000));
   }
 
   // ===================================================== HUD
@@ -337,7 +337,7 @@ class CastleScene extends Phaser.Scene {
     on('progress', p => this.applyProgress(p, false));
     on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
     on('victory', v => { // el Conde cae, pero el castillo continúa: se despide y desaparece
-      this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Necios... esto no ha terminado.\nMi señor me espera más arriba,\nen las torres del alba.\nSeguidme... si os atrevéis.»\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
+      this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Necios... esto no ha terminado.\nMis señores, Aurora y Vesper,\nme esperan más arriba, en las torres del alba.\nSeguidme... si os atrevéis.»\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
       SFX.pick(); this.won = true; this.cameras.main.shake(500, 0.008);
       this.time.delayedCall(8000, () => { this.centerTxt.setText(''); });
     });
@@ -357,7 +357,7 @@ class CastleScene extends Phaser.Scene {
 
   applyProgress(p, silent) {
     this.progress = p;
-    if (false) for (const a in p.abilities) if (p.abilities[a]) { this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Pulsa C/K para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.' })[a], 6000); SFX.pick(); }
+    if (false) for (const a in p.abilities) if (p.abilities[a]) { this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.' })[a], 6000); SFX.pick(); }
     this.syncRelics(); this.openGates(!silent);
     this.scenes = this.scenes || new Set();
     (p.bosses || []).forEach(id => { if (World.BOSSES[id] && World.BOSSES[id].rival && !this.scenes.has(id)) { this.scenes.add(id); if (!silent) this.albaScene(id); } });
@@ -375,7 +375,7 @@ class CastleScene extends Phaser.Scene {
   albaScene(killed) { // al caer uno de los rivales, el otro acude, se lo lleva y huye
     const B = World.BOSSES, other = B[killed].rival, kb = this.W.bosses.find(b => b.id === killed), ob = this.W.bosses.find(b => b.id === other);
     const re = this.ents.get(other); if (re) { re.spr.destroy(); this.ents.delete(other); }
-    this.centerTxt.setText(B[killed].name + ' ha caído...\n\n¡' + B[other].name + ' acude,\nlo recoge y huye con él!\nYa no podrás enfrentarte a ' + B[other].name.split(',')[0] + '.');
+    this.centerTxt.setText(B[killed].name + ' ha caído...\n\n¡' + B[other].name + ' acude,\n' + (killed === 'aurora' ? 'la recoge y huye con ella!' : 'lo recoge y huye con él!') + '\nYa no podrás enfrentarte a ' + B[other].name.split(',')[0] + '.');
     if (kb && ob) {
       const x = kb.x, y = kb.y - 40;
       const spr = this.add.image(x + 340, y - 260, EN[other].tex).setScale(4).setDepth(30).setAlpha(0);
@@ -389,7 +389,7 @@ class CastleScene extends Phaser.Scene {
   }
   grantAbility(a) {
     this.abil[a] = true; SFX.pick();
-    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Pulsa C/K para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.' })[a], 6000);
+    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.' })[a], 6000);
     this.wallBroken();
     this.syncRelics(); this.applyProgress(this.progress, true); this.autoSave();
   }
@@ -447,7 +447,7 @@ class CastleScene extends Phaser.Scene {
   interactTorch(pressedE) {
     const p = this.player; let best = null, bd = 1e9;
     if (!this.dead) for (const o of this.torchObjs) { const dx = Math.abs(o.x - p.x), dy = Math.abs(o.y - p.y); if (dx < 70 && dy < 135) { const d = dx + dy; if (d < bd) { bd = d; best = o; } } }
-    if (best) { this.promptTxt.setVisible(true).setPosition(best.x, best.y - 26).setText(best.lit ? 'E: apagar' : 'E: encender'); } else this.promptTxt.setVisible(false);
+    if (best) { this.promptTxt.setVisible(true).setPosition(best.x, best.y - 26).setText(best.lit ? '{act}: apagar' : '{act}: encender'); } else this.promptTxt.setVisible(false);
     if (best && pressedE) { const on = !best.lit; this.setTorch(best.id, on); socket.emit('torch', { id: best.id, on }); SFX.altar(); }
   }
   drawDark(time) {

@@ -52,28 +52,36 @@ const ELEMENTS = {
   poison: { name: 'Veneno', tint: 0x7aff6a, desc: 'envenena: daño continuo durante 6 s' }
 };
 const ELEMENT_ORDER = ['', 'fire', 'ice', 'bolt', 'poison'];
+// Textos con teclas según el dispositivo: {act}, {dash}, {down} se sustituyen por la tecla, el botón del mando o el botón táctil
+function inputMode() {
+  if (IS_TOUCH) return 'touch';
+  try { if (navigator.getGamepads && [...navigator.getGamepads()].some(g => g && g.connected)) return 'pad'; } catch (err) { /* sin mando */ }
+  return 'key';
+}
+const HINT_KEYS = { act: { key: 'E', pad: '△', touch: 'E' }, dash: { key: 'C', pad: '○', touch: '»' }, down: { key: '↓', pad: 'la cruceta ↓', touch: '▼ de la cruceta' } };
+function hintText(s) { const m = inputMode(); return String(s).replace(/\{(act|dash|down)\}/g, (_, k) => HINT_KEYS[k][m]); }
 // ---------- Bestiario y diarios ----------
 const BESTIARY = {
   sk: { name: 'Esqueleto', text: 'Soldados de la guardia caídos. Patrullan y, si te ven cerca, te persiguen. Son débiles pero muchos.', tip: 'Un par de golpes bastan.' },
   kn: { name: 'Caballero maldito', text: 'Armaduras vacías que aún obedecen al Conde. Lentos y pesados, golpean fuerte.', tip: 'Golpea y retrocede; no te quedes pegado.' },
-  bat: { name: 'Murciélago', text: 'Duermen en las bóvedas hasta que alguien se acerca. Temen la luz de las antorchas.', tip: 'Enciende antorchas (E) para mantenerlos a raya.' },
+  bat: { name: 'Murciélago', text: 'Duermen en las bóvedas hasta que alguien se acerca. Temen la luz de las antorchas.', tip: 'Enciende antorchas ({act}) para mantenerlos a raya.' },
   gh: { name: 'Fantasma', text: 'Almas penitentes que atraviesan los muros. No ven a quien está bajo la luz.', tip: 'Quédate junto a una antorcha o una hoguera.' },
-  saw: { name: 'Sierra de raíl', text: 'Maquinaria de la Galería y de la Torre. Va y viene por su raíl y nada la detiene.', tip: 'Invulnerable: aprende su ritmo, salta o usa el impulso.' },
+  saw: { name: 'Sierra de raíl', text: 'Maquinaria del castillo y de sus torres. Va y viene por su raíl y nada la detiene.', tip: 'Invulnerable: aprende su ritmo, salta o usa el impulso.' },
   sentinel: { name: 'Centinela', text: 'Armadura sin alma que patrulla sin descanso. Ningún arma le hace daño.', tip: 'Invulnerable: esquívalo, no lo persigas.' },
   garg: { name: 'Gárgola de Piedra', text: 'Guardiana del primer umbral. Llora piedra y salta sobre quien se atreve a entrar. Su corazón guarda el Impulso.', tip: 'Salta sus ondas y golpéala tras su embestida.' },
   bishop: { name: 'Obispo Caído', text: 'Rezaba por el castillo hasta que la sangre le respondió. Se teletransporta y lanza oraciones en abanico. Guarda el Doble salto.', tip: 'Flota a baja altura: ataca mientras se materializa.' },
-  clock: { name: 'Guardián del Reloj', text: 'Engranaje viviente que se protege con la luz. Guarda el Salto de pared.', tip: 'Apaga sus antorchas con E y atácalo a oscuras.' },
-  aurora: { name: 'Aurora, Dama del Alba', text: 'Hermana de Vesper, vuela entre rayos de luz. Si cae, su hermano la rescata y huye. Premio: Alas del Alba.', tip: 'Esquiva la lluvia de rayos y sus picados; golpéala cuando baje.' },
-  vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y huye. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
-  conde: { name: 'El Conde', text: 'Señor del castillo. Rompe el suelo de su trono para enterrar a sus cazadores en el foso, y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
+  clock: { name: 'Guardián del Reloj', text: 'Engranaje viviente que se protege con la luz. Guarda el Salto de pared.', tip: 'Apaga sus antorchas con {act} y atácalo a oscuras.' },
+  aurora: { name: 'Aurora, Dama del Alba', text: 'Hermana de Vesper y señora del Conde, vuela entre rayos de luz. Si cae, su hermano la rescata y huye. Premio: Alas del Alba.', tip: 'Esquiva la lluvia de rayos y sus picados; golpéala cuando baje.' },
+  vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora y señor del Conde, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y huye. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
+  conde: { name: 'El Conde', text: 'Siervo de los hermanos del Alba y portero de su castillo. Rompe el suelo de su trono para enterrar a sus cazadores en el foso, y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
 };
 const PAGES = {
   corr: { title: 'Diario del Capitán', text: 'Cuando el Conde cerró las puertas ordené sellar el pasillo bajo la galería. Mis hombres se quedaron de pie, vacíos, esperando una orden que nunca llegó. Yo sigo vigilando.' },
   lect: { title: 'Notas del Archivista', text: 'Los libros pidieron sangre y se la dimos. Ahora susurran. Escribí todo lo que dicen hasta que mis ojos se quedaron entre las páginas.' },
-  caden: { title: 'Carta del Carcelero', text: 'Las cadenas ya no sujetan a nadie: el Conde soltó a los presos y nos encadenó a nosotros. Las sierras no se detienen jamás; aprende su compás o no pases.' },
+  caden: { title: 'Carta del Carcelero', text: 'Las cadenas ya no sujetan a nadie: el Conde soltó a los presos y nos encadenó a nosotros. Si subes a la Torre del Reloj, aprende el compás de las sierras: no se detienen jamás.' },
   naveP: { title: 'Plegaria del Obispo', text: 'Padre nuestro que estás en los cielos... responde al revés. Subo al Ábside cada noche para escucharle. Anoche contestó con mi propia voz.' },
   galeria: { title: 'Cuaderno del Relojero', text: 'Los engranajes no descansan. Las sierras recorren su raíl y los centinelas mis pasillos. Construí el reloj para detener el tiempo; él me detuvo a mí.' },
-  pasR: { title: 'Última carta del Conde', text: 'Cuatro cazadores vendrán, con mi misma sangre y mi misma sed. Abriré el suelo bajo mi trono y los enterraré con mis hijos. Quizá, al fin, alguien me detenga.' },
+  pasR: { title: 'Última carta del Conde', text: 'Cuatro cazadores vendrán, con mi misma sangre y mi misma sed. Abriré el suelo bajo mi trono y los enterraré con mis siervos. Si fallo, mis señores del alba, Aurora y Vesper, no me lo perdonarán. Quizá, al fin, alguien me detenga.' },
 };
 const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160 };
 const NPC_DEFS = {
@@ -82,23 +90,23 @@ const NPC_DEFS = {
     ['¡Shhh! ¡Los libros susurran! Dicen tu nombre... ¿o era el mío?',
       'Las paredes agrietadas... ¡golpéalas, golpéalas! Detrás siempre hay algo que brilla.',
       'Bajo la Escalera de los Retratos hay una sala que no existe. Búscala a la izquierda, abajo del todo.',
-      'Y hay un túnel tan bajo que solo lo cruza quien se arrodilla. ¡Abajo, abajo, pulsa abajo!',
-      'Ah, y el Guardián del Reloj: la luz lo protege como una armadura. ¡Apaga sus antorchas con E y atácalo a oscuras!'],
+      'Y hay un túnel tan bajo que solo lo cruza quien se arrodilla. ¡Abajo, abajo, usa {down}!',
+      'Ah, y el Guardián del Reloj: la luz lo protege como una armadura. ¡Apaga sus antorchas con {act} y atácalo a oscuras!'],
     ['¿Me has visto los ojos? Los dejé entre los libros.',
-      'Las antorchas... ¡enciéndelas con E! Los fantasmas no ven en la luz. ¡Y los murciélagos la odian!'],
+      'Las antorchas... ¡enciéndelas con {act}! Los fantasmas no ven en la luz. ¡Y los murciélagos la odian!'],
     ['El Conde cuenta las páginas de noche. Yo cuento las suyas. ¡Cuarenta y dos! ¡No, cuarenta y tres!',
       'Cuidado con los espejos. No tienen reflejo y aun así te miran.'] ] },
   prisoner: { name: 'Prisionero Enloquecido', tex: 'npc_prisoner', lines: [
     ['¡¡Llevo cien años mirando la misma pared!! ¿Tú también la oyes? Dice... dice cosas.',
-      'La Gárgola ya no ríe, ahora llora piedra. Si la vences te dará el Impulso: pulsa C y cruzarás abismos.',
+      'La Gárgola ya no ríe, ahora llora piedra. Si la vences te dará el Impulso: usa {dash} y cruzarás abismos.',
       'En la Mazmorra de Hierro hay un cristal más alto de lo que se salta. Hace falta un segundo aire.',
-      'Aquí las antorchas están apagadas... ¡enciéndelas con E! La oscuridad tiene dientes.'],
+      'Aquí las antorchas están apagadas... ¡enciéndelas con {act}! La oscuridad tiene dientes.'],
     ['Ellos dicen que estoy loco. ¡Yo digo que estoy aquí! ¿Dónde? Aquí. Eso creo.',
       '¿Tienes almas de sobra? El mercader vende pociones... a mí me vendió una sonrisa.'],
     ['Me quitaron la cama, luego el suelo, luego el techo. Solo queda el ruido.',
       'Si ves un fantasma, no lo mires a los ojos. Mira la luz.'] ] },
   oracle: { name: 'Oráculo del Alba', tex: 'npc_oracle', pick: (sc, pages, visits) => ((sc.progress.bosses.includes('aurora') || sc.progress.bosses.includes('vesper')) ? pages[2] : (visits === 1 ? pages[0] : pages[1])), lines: [
-    ['Has llegado más alto que nadie... El Conde solo era el portero.',
+    ['Has llegado más alto que nadie... El Conde solo era el portero de los hermanos del Alba.',
       'Aquí viven dos hermanos rivales: AURORA, Dama del Alba, y VESPER, Señor del Ocaso. Los dos comparten el mismo emblema: media luna y medio sol.',
       'Solo podréis derrotar a UNO. Cuando uno caiga, el otro acudirá, lo recogerá y huirá para siempre.',
       'Si SIGUES RECTO por la puerta del este de esta sala, te enfrentarás a AURORA. Su premio: las ALAS DEL ALBA. Mantén saltar en el aire y planearás para cruzar grandes abismos.',
@@ -118,12 +126,12 @@ const NPC_DEFS = {
       'Al este hay un jardín colgante: hace falta impulso, doble salto y salto de pared. Descansad en la hoguera cuando queráis.'],
     ['El viento aquí huele a ceniza y a amanecer. Pronto habrá más que ver.'] ] },
   monk: { name: 'Monje Trastornado', tex: 'npc_monk', lines: [
-    ['¡Hermano, hermano! El Obispo reza al revés... ¡y su dios responde al derecho!',
-      'Arriba, en el Ábside, espera. La Nave tiene un hueco enorme: el primer escalón está lejos. Necesitas el Impulso: C en el aire.',
-      'Cuando él caiga te dará alas dobles. Con ellas cruzarás el Mirador.',
+    ['¡Hermano, hermano! El Obispo reza al revés... ¡y su dios le responde con su propia voz!',
+      'Arriba, en el Ábside, espera. La Nave Principal tiene un hueco enorme: el primer escalón está lejos. Necesitas el Impulso: {dash} en el aire.',
+      'Cuando él caiga te dará un segundo salto. Con él cruzarás el Mirador.',
       '¿Oyes campanas? Yo también. No hay campanas.'],
     ['Mi hermana era la Gárgola... o la Gárgola era mi hermana. Piedra y carne se parecen tanto de noche.',
-      'Este altar te cura y te guarda. Úsalo, hijo mío, antes de que el cielo se caiga.'],
+      'Esta hoguera te cura y te guarda. Úsalo, hijo mío, antes de que el cielo se caiga.'],
     ['Reza conmigo: ¡Aaaaa-men! ¡Aaaaa-men! ¡¡Aaaaa-menos vida!!'] ] },
 };
 
@@ -252,6 +260,7 @@ Object.assign(CastleScene.prototype, {
       return { ...n, def, spr, name, visits: 0 };
     });
     this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi();
+    [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
     this.canAuto = !!saveMe || !saves[this.color]; // evita pisar una partida guardada de este vampiro en una partida nueva
     if (saveMe) this.loadPersonal(saveMe);
@@ -320,7 +329,7 @@ Object.assign(CastleScene.prototype, {
       this.expTxt.setText('Exploración ' + x.pct + '%');
       this.bigStats.setText('Exploración ' + x.pct + '%   ·   Salas ' + x.vis + '/' + x.rooms + '   Cristales y forjas ' + x.gotItems + '/' + x.items + '   Hogueras ' + x.litB + '/' + x.bon + '\nJefes ' + x.dead + '/' + x.bos + '   Diarios ' + x.pages + '/' + x.nPages + '   Élites ' + x.elites + '/' + x.nElites);
     }
-    this.ents.forEach(e => { if (e.type === 'clock' && e.aggro && !this.clockHint) { this.clockHint = true; this.toast('El Guardián es inmune a la luz: apaga las antorchas de la sala con E. ¡Él irá a encenderlas!', 8000); } });
+    this.ents.forEach(e => { if (e.type === 'clock' && e.aggro && !this.clockHint) { this.clockHint = true; this.toast('El Guardián es inmune a la luz: apaga las antorchas de la sala con {act}. ¡Él irá a encenderlas!', 8000); } });
     const it = ITEMS[this.selItem], n = this.inv[it.id];
     this.itemIcon.setTexture('it_' + it.id).setAlpha(n > 0 ? 1 : 0.3);
     this.itemTxt.setText(`${it.name} x${n}` + (IS_TOUCH ? '' : '   [Q usar · R cambiar]'));
@@ -830,7 +839,7 @@ Object.assign(CastleScene.prototype, {
     const p = this.player; let best = null, bd = 1e9;
     for (const n of this.npcObjs) { const dx = Math.abs(n.x - p.x), dy = Math.abs((n.y - 30) - p.y); if (dx < 70 && dy < 80 && dx < bd) { bd = dx; best = n; } }
     if (best) {
-      this.promptTxt.setVisible(!(this.shopOpen || this.dlg)).setPosition(best.x, best.y - 74).setText(best.def.shop ? 'E: comerciar' : 'E: hablar');
+      this.promptTxt.setVisible(!(this.shopOpen || this.dlg)).setPosition(best.x, best.y - 74).setText(best.def.shop ? '{act}: comerciar' : '{act}: hablar');
       if (ePress) { this.curNpc = best; best.def.shop ? this.openShop(best) : this.openDialogue(best); }
       return;
     }
@@ -839,7 +848,7 @@ Object.assign(CastleScene.prototype, {
     for (const f of this.sforgeObjs || []) { const dx = Math.abs(f.x - p.x), dy = Math.abs(f.y - p.y); if (dx < 80 && dy < 90 && dx < sfd) { sfd = dx; sf = f; } }
     if (sf) {
       const cur = this.element ? ELEMENTS[this.element].name : 'sin elemento', nxt = ELEMENT_ORDER[(ELEMENT_ORDER.indexOf(this.element) + 1) % ELEMENT_ORDER.length];
-      this.promptTxt.setVisible(true).setPosition(sf.x, sf.y - 70).setText('E: imbuir el arma (ahora: ' + cur + ' → ' + (nxt ? ELEMENTS[nxt].name : 'sin elemento') + ')');
+      this.promptTxt.setVisible(true).setPosition(sf.x, sf.y - 70).setText('{act}: imbuir el arma (ahora: ' + cur + ' → ' + (nxt ? ELEMENTS[nxt].name : 'sin elemento') + ')');
       if (ePress) this.cycleElement(sf);
       return;
     }
@@ -847,7 +856,7 @@ Object.assign(CastleScene.prototype, {
     let bf = null, bfd = 1e9;
     for (const a of this.altars) { const dx = Math.abs(a.x - p.x), dy = Math.abs((a.y - 20) - p.y); if (dx < 64 && dy < 90 && dx < bfd) { bfd = dx; bf = a; } }
     if (bf) {
-      this.promptTxt.setVisible(true).setPosition(bf.x, bf.y - 82).setText(bf.lit ? 'E: descansar (guarda la partida)' + (this.travel ? ' y viajar' : '') : (bf.big ? 'E: encender la GRAN HOGUERA (viaje rápido)' : 'E: encender la hoguera'));
+      this.promptTxt.setVisible(true).setPosition(bf.x, bf.y - 82).setText(bf.lit ? '{act}: descansar (guarda la partida)' + (this.travel ? ' y viajar' : '') : (bf.big ? '{act}: encender la GRAN HOGUERA (viaje rápido)' : '{act}: encender la hoguera'));
       if (ePress) this.restAt(bf);
       return;
     }

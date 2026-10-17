@@ -1,6 +1,6 @@
 @echo off
 chcp 65001 >nul
-title Castillo de los Vampiros - servidor
+title Four Fangs of Dawn - servidor
 cd /d "%~dp0"
 
 where node >nul 2>nul

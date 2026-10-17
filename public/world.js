@@ -1,4 +1,4 @@
-/* Castillo de los Vampiros: definición del mundo (usada por el juego y por el validador).
+/* Four Fangs of Dawn: definición del mundo (usada por el juego y por el validador).
    El mundo es una malla de celdas de 26x18 tiles, pero las ÁREAS pueden ocupar varias celdas
    (anchas, altas), llevar pasillos rellenos de roca y conectarse con puertas de distinto tamaño. */
 (function (root) {
@@ -89,8 +89,8 @@
   area('alba1', 'Torre del Alba', 7, 10, 0, 1, 2, [['P', 3, 32, 5], ['P', 10, 29, 5], ['P', 17, 26, 5], ['P', 9, 23, 5], ['P', 3, 20, 5], ['P', 10, 17, 5], ['P', 17, 17, 8],
     ['E', 'kn', 14, 34], ['E', 'bat', 12, 10], ['E', 'gh', 18, 22], ['E', 'gh', 6, 14], ['E', 'bat', 20, 28]]);
   area('albaH', 'Sala de los Rivales', 7, 11, 0, 2, 1, [['npc', 'oracle', 14, 16], ['altar', 4, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
-  area('albaA', 'Cámara de Aurora (premio: Alas del Alba)', 7, 13, 0, 2, 1, [['tri', 'tl', 6], ['tri', 'tr', 6], ['boss', 'aurora', 26, 10]]);
-  area('albaB', 'Cámara de Vesper (premio: Ojo de la Noche)', 7, 11, 1, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 24, 4, 'norm', true], ['boss', 'vesper', 40, 16]]);
+  area('albaA', 'Cámara de Aurora', 7, 13, 0, 2, 1, [['tri', 'tl', 6], ['tri', 'tr', 6], ['boss', 'aurora', 26, 10]]);
+  area('albaB', 'Cámara de Vesper', 7, 11, 1, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 24, 4, 'norm', true], ['boss', 'vesper', 40, 16]]);
 
   // --- Siguiente fase: tras vencer a uno de los rivales se abre la puerta de la cámara de Vesper hacia el cielo ---
   area('cielo1', 'Antecámara del Cielo', 7, 13, 1, 2, 1, [['altar', 8, 16], ['tri', 'tl', 4], ['tri', 'tr', 4], ['cry', 42, 16]]);
