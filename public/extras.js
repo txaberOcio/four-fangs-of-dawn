@@ -433,7 +433,7 @@ Object.assign(CastleScene.prototype, {
       return;
     }
     if (onFloor || ui || this.hookUsed || this.hookCd > 0 || this.dashT > 0 || this.stun > 0 || this.wjLock > 0) return;
-    if (!dir || dir !== this.facing || b.velocity.y < 30) return;
+    if (this.jumpsUsed < 1 || !dir || dir !== this.facing || b.velocity.y < 30) return; // solo tras saltar (no al caerse de un borde)
     const tg = this.hookFind(dir);
     if (!tg) return;
     this.hook = { tx: tg.tx, ty: tg.ty, hx: tg.tx, hy: tg.ty + b.height / 2 + 1, t: 0, g: this.add.graphics().setDepth(9) };
