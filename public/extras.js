@@ -99,6 +99,10 @@ const PAGES = {
 PAGES.cielo1 = { title: 'Carta sin firmar', text: 'Hermano: si lees esto es que uno de los dos ha caído. Ni el sol ni la luna aguantan solos mucho tiempo. Te esperaré en la Cumbre, donde el viento aún huele a nosotros.' };
 PAGES.cumbre = { title: 'Diario del Vigía', text: 'Llevo años mirando el horizonte desde aquí. Antes eran dos luces, una al amanecer y otra al ocaso. Ahora solo veo una, y me parece más triste que la oscuridad.' };
 PAGES.fragua = { title: 'Notas del Herrero', text: 'Forjé la espada del Conde y las dagas de los hermanos del Alba. Cada elemento que domino me recuerda que yo solo ardo en esta cueva, lejos de todos. Si alguien me trae mi martillo, volveré a ver la luz.' };
+PAGES.rai = { title: 'Nota del Montacargas', text: 'Orden del Herrero: el ascensor solo baja a quien lleva cuentas pendientes con el Alba. Arriba el aire sabe a ceniza; aquí abajo, a tierra mojada. El musgo ya ha subido por el cable.' };
+PAGES.cel = { title: 'Registro de Reos', text: 'Reo 14: pidió ver el sol. Reo 15: pidió ver la luna. Reo 16: no pidió nada y fue el único que durmió sin miedo. El musgo lo abrazó primero.' };
+PAGES.rez = { title: 'Menú del último banquete', text: 'Sopa de raíces, pan de piedra y vino sin cosecha. Los carceleros comían de pie; los presos, de rodillas. Ya nadie se acuerda de quién era cada cual.' };
+PAGES.ant = { title: 'Última orden del Alcaide', text: 'Me dejaron las llaves con una sola orden: no abrir hasta que los hermanos vuelvan juntos. Nunca volvieron. Ahora el musgo me habla con la voz de los dos y ya no sé a cuál obedezco. Quien me venza no es mi enemigo: es mi relevo.' };
 const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160 };
 const NPC_DEFS = {
   merchant: { name: 'Mercader', tex: 'npc_merchant', shop: true, lines: [['Almas, almas... Las prefiero a las monedas. Mira lo que tengo.']] },
@@ -144,6 +148,12 @@ const NPC_DEFS = {
     ['Tu espada ha tocado a mi hermana. No te lo perdonaré, pero hoy no tengo fuerzas para odiarte.',
       'El alba y el ocaso no se pueden separar. Eso fue lo que olvidamos.'],
     ['Me quedo junto a ella hasta que despierte. Déjanos tranquilos.'] ] },
+  jardinero: { name: 'Jardinero Ciego', tex: 'npc_prisionero_musgo', lines: [
+    ['Chss... no pises el musgo con prisa. Aquí abajo crece todo menos la esperanza.',
+      'El ascensor sube y baja solo. Paciencia: es lo único que el musgo respeta.',
+      'En las Celdas Cubiertas hay una celda cuyos barrotes sangran. Dale un buen golpe a la pared.',
+      'El Alcaide Verdín aún guarda las llaves. No es malo: es leal, que a veces es peor. Y bajo su sala hay un suelo de raíces que solo cede a un buen pisotón.'],
+    ['¿Oyes las gotas? Cuentan los días que no pasan.'] ] },
   watcher: { name: 'Vigía del Cielo', tex: 'npc_watcher', lines: [
     ['Habéis subido hasta la Cumbre del Alba. Aquí no hay jefes: es un lugar para explorar con todo lo que habéis aprendido.',
       'Dicen que quien venció a Vesper ve un tesoro tras un muro agrietado, al fondo de esta sala (dos cristales de vida), y que el suelo agrietado de aquí abajo guarda el Santuario de las Sombras.',
@@ -296,7 +306,7 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor();
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor();
     this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
@@ -1319,6 +1329,82 @@ Object.assign(CastleScene.prototype, {
       const pool = this.add.image(lx + T * 0.8, lyb - 10, 'glow').setScale(5).setBlendMode(Phaser.BlendModes.ADD).setTint(0xff7a2a).setAlpha(0.6).setDepth(-5).setVisible(!LITE);
       this.tweens.add({ targets: pool, alpha: 0.4, yoyo: true, repeat: -1, duration: 600 }); this.caveLamps.push({ x: lx + T * 0.8, y: lyb - 40, r: 230 }, { x: lx + T * 0.8, y: ly0 + 200, r: 150 });
     }
+  },
+  // ---- atmósfera de los Calabozos Profundos (zona 9): cortinas de musgo, raíces, hongos luminosos (farolas) y goteras
+  buildMossDecor() {
+    const W = this.W; this.caveLamps = this.caveLamps || []; this.mossDrips = [];
+    const g = this.add.graphics().setDepth(-6);
+    W.areaList.filter(a => a.z === 9).forEach(a => {
+      const rnd = rndSeeded(a.x0 * 11 + a.y0 * 17 + 9), top = (a.y0 + 1) * T, floor = (a.y0 + a.rh - 1) * T;
+      for (let x = 1; x < a.rw - 1; x += 1 + Math.floor(rnd() * 2)) { // musgo y raíces colgando del techo
+        const cx = (a.x0 + x + rnd()) * T, len = 16 + rnd() * 70;
+        g.fillStyle(0x2a5428, 1).fillRect(cx - 3, top, 6, len); g.fillStyle(0x3f7a3a, 1).fillRect(cx - 3, top, 2, len * 0.8); g.fillStyle(0x8fd35a, 1).fillRect(cx - 2, top + len, 4, 4);
+        if (rnd() < 0.35) { const rl = 40 + rnd() * 90; g.lineStyle(3, 0x5a4128, 1); g.beginPath(); g.moveTo(cx + 8, top); for (let i = 1; i <= 5; i++) g.lineTo(cx + 8 + Math.sin(i * 1.3 + x) * 8, top + rl * i / 5); g.strokePath(); }
+        if (rnd() < 0.18) this.mossDrips.push({ x: cx, y: top + len + 4, floor, next: 0 }); // de aquí gotea
+      }
+      for (let x = 3; x < a.rw - 3; x += 4 + Math.floor(rnd() * 6)) { // hongos luminosos del suelo = farolas
+        const cx = (a.x0 + x + 0.5) * T, h = 8 + rnd() * 16, w = 8 + rnd() * 9, col = rnd() < 0.75 ? 0x6dffd0 : 0xb48aff;
+        g.fillStyle(0xbfd8c0, 1).fillRect(cx - 2, floor - h, 4, h);
+        g.fillStyle(col, 1).beginPath().arc(cx, floor - h, w, Math.PI, 0).closePath().fillPath(); // sombrero (media elipse)
+        g.fillStyle(0xffffff, 0.55).fillRect(cx - w * 0.4, floor - h - w * 0.55, 3, 3);
+        const gl = this.add.image(cx, floor - h, 'glow').setScale(1.2 + w / 12).setBlendMode(Phaser.BlendModes.ADD).setTint(col).setAlpha(0.55).setDepth(-4).setVisible(!LITE);
+        this.tweens.add({ targets: gl, alpha: 0.3, yoyo: true, repeat: -1, duration: 1400 + rnd() * 1600 });
+        this.caveLamps.push({ x: cx, y: floor - h, r: 65 + w * 4 }); // lo recoge drawDark -> lamp()
+      }
+    });
+    if (this.mossDrips.length) this.time.addEvent({ delay: 700, loop: true, callback: () => { // goteras: solo las cercanas al jugador
+      if (LITE || !this.player) return; const p = this.player, now = this.time.now;
+      for (const d of this.mossDrips) {
+        if (Math.abs(d.x - p.x) > 640 || Math.abs(d.y - p.y) > 420 || d.next > now) continue;
+        d.next = now + 1800 + Math.random() * 3200;
+        const dr = this.add.rectangle(d.x, d.y, 3, 7, 0x9dffd8, 0.9).setDepth(-3), near = Math.abs(d.x - p.x) < 420;
+        this.tweens.add({ targets: dr, y: d.floor - 4, duration: Math.max(250, (d.floor - d.y) * 1.6), ease: 'Quad.in', onComplete: () => {
+          const rp = this.add.image(d.x, d.floor - 3, 'puff').setScale(0.3, 0.12).setTint(0x9dffd8).setAlpha(0.8).setDepth(-3);
+          this.tweens.add({ targets: rp, scaleX: 1.1, alpha: 0, duration: 500, onComplete: () => rp.destroy() });
+          if (near) beep(1300 + Math.random() * 500, 0.05, 'sine', 0.012, -500);
+          dr.destroy();
+        } });
+      }
+    } });
+    // carteles de ambientación
+    const lab = (id, dx, dy, txt, col) => { const a = W.areas[id]; if (!a) return; this.add.text((a.x0 + dx) * T, (a.y0 + dy) * T, txt, { fontSize: fsz('15px'), fontFamily: 'Courier New', color: col, stroke: '#000', strokeThickness: 4, align: 'center' }).setOrigin(0.5).setDepth(-3); };
+    lab('asc', 8, 12, 'CALABOZOS PROFUNDOS\nNo pises donde brilla el musgo.\nAlgo bebe lo que gotea.', '#8fe0b0');
+    lab('cel', 9, 12, 'CELDA 47\n"Me encerraron por cantar al alba.\nYa me crece el bosque en los huesos."', '#c9b88a');
+    lab('ant', 13, 12, 'ORDEN DE LA GUARDIA\nSi oyes llaves, no corras:\nel Alcaide nunca ha perdido un preso.', '#ff9a8a');
+    lab('madre', 26, 8, 'LA MADRE MOHO\nLo que cae al pozo, florece.\nNo la despiertes con luz.', '#d8a0f0');
+  },
+  mossSpores(time) { // esporas que flotan despacio en el aire de los calabozos profundos
+    if (LITE || !this.player || time - (this.sporeT || 0) < 190) return;
+    const a = this.W.areaOf(Math.floor(this.player.x / T), Math.floor(this.player.y / T)); if (!a || a.z !== 9) return;
+    this.sporeT = time; const x = this.player.x + Phaser.Math.Between(-340, 340), y = this.player.y + Phaser.Math.Between(-200, 200);
+    const s = this.add.image(x, y, 'puff').setScale(Phaser.Math.FloatBetween(0.22, 0.45)).setTint(Math.random() < 0.7 ? 0x8dffc8 : 0xd8ff8a).setBlendMode(Phaser.BlendModes.ADD).setDepth(11).setAlpha(0);
+    this.tweens.add({ targets: s, alpha: 0.75, yoyo: true, duration: 1500 });
+    this.tweens.add({ targets: s, y: y - Phaser.Math.Between(40, 110), duration: 3000, ease: 'Sine.inOut' });
+    this.tweens.add({ targets: s, x: x + Phaser.Math.Between(-45, 45), duration: 3000, ease: 'Sine.inOut', onComplete: () => s.destroy() });
+  },
+  // ---- ascensor: baja y sube solo (3 s parado arriba, 4 s bajando, 3 s parado abajo, 4 s subiendo)
+  liftY(l, t) {
+    const c = t % 14, e = k => k * k * (3 - 2 * k), d = l.yBot - l.yTop;
+    if (c < 3) return l.yTop; if (c < 7) return l.yTop + d * e((c - 3) / 4); if (c < 10) return l.yBot; return l.yBot - d * e((c - 10) / 4);
+  },
+  liftStep(dt) {
+    if (!this.W.lifts || !this.W.lifts.length || !this.player) return;
+    if (!this.liftObjs) {
+      this.liftObjs = this.W.lifts.map(l => {
+        const r = this.add.rectangle(l.x + l.w / 2, l.yTop + 8, l.w, 16, 0x5a4128).setDepth(3).setStrokeStyle(2, 0x2a5428);
+        this.physics.add.existing(r, true); const b = r.body; b.checkCollision.down = false; b.checkCollision.left = false; b.checkCollision.right = false; // cuerpo estático: se recoloca cada frame
+        this.physics.add.collider(this.player, r);
+        const g = this.add.graphics().setDepth(2); // cadenas hacia el techo
+        return { ...l, r, g };
+      });
+    }
+    const t = Date.now() / 1000;
+    this.liftObjs.forEach(L => {
+      const oldTop = L.r.y - 8, pb = this.player.body, riding = pb.bottom >= oldTop - 6 && pb.bottom <= oldTop + 10 && pb.velocity.y >= -20 && pb.right > L.x && pb.left < L.x + L.w;
+      L.r.y = this.liftY(L, t) + 8; L.r.body.updateFromGameObject();
+      if (riding) { const sh = (L.r.y - 8) - oldTop; if (sh) this.player.y += sh; } // el jugador sube y baja con la plataforma
+      L.g.clear().fillStyle(0x6b6b5a, 1); [L.x + 10, L.x + L.w - 10].forEach(cx => L.g.fillRect(cx - 2, L.yTop - 200, 4, L.r.y - 8 - (L.yTop - 200)));
+    });
   },
   caveEmbers(time) { // brasas que suben en el aire de la cueva
     if (LITE || !this.player || time - (this.emberT || 0) < 260) return;

@@ -6,9 +6,11 @@ w.gates.forEach(g => g.tiles.forEach(t => { w.fg[t.gy][t.gx] = -1; })); // las p
 const { T, PHYS: P, K, kind } = World;
 const HW = P.bodyW / 2, HH = P.bodyH / 2, DT = 1 / 60;
 
+let poundOn = false; // con el Pisotón de Raíces los suelos de raíces se rompen
 function tileKind(gx, gy) {
   if (gx < 0 || gx >= w.Wt || gy < 0) return K.SOLID;
   if (gy >= w.Ht) return K.SOLID;
+  if (w.roots.has(gy * w.Wt + gx)) return poundOn ? K.BG : K.SOLID;
   const k = kind(w.fg[gy][gx]);
   return k;
 }
@@ -127,6 +129,7 @@ function plansFor(abil) {
 }
 
 function bfs(abil, start, restrict) {
+  poundOn = !!abil.pound;
   const plans = plansFor(abil);
   const key = (tx, ty) => ty * w.Wt + tx;
   const seen = new Map();

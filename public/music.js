@@ -21,6 +21,7 @@ const Music = (() => {
     { root: 38, bpm: 76, pad: 'sawtooth', royal: true },    // (roca: sin uso)
     { root: 45, bpm: 66, pad: 'triangle', organ: true },    // Torres del Alba (la)
     { root: 36, bpm: 52, pad: 'sawtooth', drone: true },    // El Abismo (do)
+    { root: 34, bpm: 46, pad: 'triangle', drone: true, drip: true }, // Calabozos Profundos (si bemol grave, lentísimo, colchón suave + goteo)
   ];
   const CHORDS = [[0, 3, 7], [-4, 0, 3], [3, 7, 10], [-2, 2, 5]]; // i · VI · III · VII
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
@@ -80,6 +81,8 @@ const Music = (() => {
     // percusión de jefe, tic-tac del reloj
     if (boss) { if (s16 % 4 === 0) kick(t); if (s16 % 8 === 4) noise(t, 0.12, 0.12, 1200); else if (s16 % 2 === 1 && !lite()) noise(t, 0.04, 0.05, 6000); }
     if (z.tick && !boss && s16 % 4 === 0) noise(t, 0.03, 0.06, 3500);
+    if (z.drip && !boss && s16 % 2 === 1 && Math.random() < 0.2) tone(mtof(root + [24, 31, 34, 36, 39][Math.random() * 5 | 0] + 12), t, 0.35, 'sine', 0.04, 4000, 0.9); // gota con mucho eco
+    if (z.drip && !boss && !lite() && s16 === 0 && bar % 4 === 3) noise(t, 1.4, 0.014, 2600); // siseo húmedo, muy flojo
   }
   function schedule() {
     if (!ctx) return;

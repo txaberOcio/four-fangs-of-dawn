@@ -10,8 +10,8 @@
     wjY: -430, wjX: 190, wjLock: 0.18, slide: 110, maxFall: 700,
     bodyW: 30, bodyH: 39,
   };
-  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo'];
-  const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche' };
+  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos'];
+  const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche', pound: 'Pisotón de Raíces' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
   const kind = idx => (idx < 0 ? -1 : idx % 8);
@@ -26,6 +26,9 @@
     conde: { name: 'El Conde', hp: 42, drop: null },
     // los dos rivales del Alba: al caer uno, el otro lo rescata y huye (solo se puede elegir a uno)
     aurora: { name: 'Aurora, Dama del Alba', hp: 24, drop: 'wings', rival: 'vesper', reward: 'Alas del Alba: mantén saltar en el aire para planear' },
+    // Calabozos Profundos: el Alcaide guarda el Pisotón de Raíces y la Madre Moho cierra la zona
+    alcaide: { name: 'Alcaide Verdín', hp: 32, drop: 'pound', reward: 'Pisotón de Raíces: en el aire, mantén abajo para caer en picado y romper los suelos de raíces' },
+    madre: { name: 'La Madre Moho', hp: 44, drop: null },
     vesper: { name: 'Vesper, Señor del Ocaso', hp: 24, drop: 'eye', rival: 'aurora', reward: 'Ojo de la Noche: ves los secretos tras los muros agrietados y tu luz crece' },
   };
 
@@ -124,9 +127,31 @@
   // Gemas: la segunda moneda. Se encuentran por el mapa (zonas opcionales y secretos) y las sueltan los jefes y los élites.
   // [sala, x, y] en coordenadas locales; cada gema reposa sobre una plataforma o el suelo
   const GEMS = [['hidden', 8, 16], ['salon', 30, 11], ['foso', 13, 12], ['lect', 6, 10], ['gbib', 26, 10], ['osario', 36, 10], ['mazm', 36, 10], ['galeria', 8, 8], ['mir', 7, 13],
-    ['arch1', 22, 9], ['cat1', 14, 11], ['cielo1', 30, 16], ['cielo1', 48, 4], ['mazC', 26, 2], ['santuario', 20, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['mazC', 28, 8], ['fragua', 6, 16]];
+    ['arch1', 22, 9], ['cat1', 14, 11], ['cielo1', 30, 16], ['cielo1', 48, 4], ['mazC', 26, 2], ['santuario', 20, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['mazC', 28, 8], ['fragua', 6, 16],
+    ['cist', 25, 22], ['rez', 46, 4], ['tun', 47, 13], ['tun', 25, 12]];
 
   area('santuario', 'Santuario de las Sombras', 7, 16, 1, 2, 1, [['npc', 'smith2', 26, 16], ['cry', 36, 16], ['K', 30, 0, 3, 1], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+
+  // ===== Zona 9: Calabozos Profundos (se baja en ascensor desde el Santuario de las Sombras) =====
+  area('asc', 'Pozo del Ascensor', 9, 16, 2, 1, 1, [['lift', 11, 4], ['altar', 4, 16], ['npc', 'jardinero', 20, 16]]);
+  area('rai', 'Galería de Raíces', 9, 17, 2, 2, 1, [['page', 47, 16], ['B', 12, 1, 2, 6], ['B', 33, 1, 2, 5], ['pit', 20, 30], ['P', 21, 14, 3], ['P', 25, 13, 3], ['P', 29, 14, 3],
+    ['E', 'sk', 8, 16], ['E', 'sk', 16, 16], ['E', 'bat', 26, 8], ['E', 'gh', 36, 10], ['E', 'kn', 46, 16]]);
+  area('cist', 'Cisterna de Musgo', 9, 17, 3, 2, 2, [['climb', 40, 4, 'norm', true], ['P', 24, 23, 4],
+    ['E', 'bat', 28, 10], ['E', 'bat', 20, 24], ['E', 'gh', 14, 14], ['E', 'gh', 46, 12], ['E', 'sk', 20, 34], ['E', 'sk', 30, 34]]);
+  area('cel', 'Celdas Cubiertas', 9, 15, 4, 2, 1, [['page', 47, 16], ['B', 14, 1, 2, 11], ['B', 26, 1, 2, 11], ['B', 38, 1, 2, 11],
+    ['B', 1, 1, 6, 8], ['B', 6, 9, 1, 4], ['K', 6, 13, 1, 4], ['cry', 3, 16],
+    ['E', 'sk', 10, 16], ['E', 'sk', 20, 16], ['E', 'gh', 32, 8], ['E', 'bat', 44, 6],
+    ['E', 'kn', 32, 16, { elite: true, name: 'Verdugo Cubierto de Musgo', reward: { souls: 90, item: 'ward' } }]]);
+  area('rez', 'Refectorio Podrido', 9, 17, 5, 2, 1, [['climb', 8, 4, 'norm', true], ['page', 13, 16], ['B', 20, 15, 3, 2], ['B', 25, 15, 2, 2],
+    ['TP', 28, 14, 3, 4, 2.4, 0], ['TP', 33, 11, 3, 4, 2.4, 1], ['TP', 38, 8, 3, 4, 2.4, 2], ['P', 43, 5, 7],
+    ['E', 'sk', 18, 16], ['E', 'kn', 33, 16], ['E', 'sk', 44, 16], ['E', 'gh', 26, 8], ['E', 'gh', 40, 4], ['E', 'bat', 46, 10]]);
+  area('tun', 'Pasaje de Zarzas', 9, 19, 5, 2, 1, [['pit', 4, 38], ['pit', 45, 50],
+    ['P', 6, 14, 3], ['P', 12, 13, 3], ['P', 18, 12, 3], ['P', 24, 13, 3], ['P', 30, 12, 3], ['P', 36, 13, 3], ['P', 46, 14, 4],
+    ['E', 'saw', 15, 9, { ax: 'v', r: 55, w: 1.4 }], ['E', 'saw', 27, 9, { ax: 'v', r: 60, w: 1.6 }], ['E', 'saw', 33, 10, { ax: 'h', r: 60, w: 1.2 }],
+    ['E', 'bat', 22, 5], ['E', 'bat', 40, 6], ['E', 'gh', 8, 8]]);
+  area('ant', 'Antesala del Alcaide', 9, 20, 6, 1, 1, [['climb', 14, 4, 'norm', true], ['altar', 6, 16], ['page', 20, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+  area('alcai', 'Sala del Alcaide', 9, 18, 6, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['P', 8, 12, 5], ['P', 39, 12, 5], ['P', 22, 9, 7], ['boss', 'alcaide', 30, 16]]);
+  area('madre', 'Corazón del Musgo', 9, 18, 7, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['P', 10, 13, 6], ['P', 36, 13, 6], ['P', 23, 9, 6], ['boss', 'madre', 26, 16]]);
 
   // --- Acto II antes del Conde: dos segmentos con jefe; sus sellos abren la Sala del Trono ---
   // Segmento A: el Archivo Prohibido (sobre el Observatorio)
@@ -158,6 +183,8 @@
   E('albaB', 'cielo1', 3, { gate: 'alba' }); E('cielo1', 'torreC', 3); E('torreC', 'cumbre', 3); E('cumbre', 'jardin', 3); E('jardin', 'mazC', 3); S('cripta', 'caida', 1, 6); E('caida', 'fragua', 3); E('fragua', 'gran', 3); // 'alba' = cae Aurora o Vesper
   E('obs', 'arch1', 3); E('arch1', 'arch2'); S('arch3', 'arch2', 11, 4); E('scrip', 'arch3', 3); // Archivo Prohibido
   S('mazm', 'cat1', 20, 4); S('cat1', 'cat2', 38, 4); // Catacumbas Reales
+  S('santuario', 'asc', 11, 4); E('asc', 'rai'); S('rai', 'cist', 40, 4); E('cel', 'cist'); S('cist', 'rez', 8, 4); E('rez', 'tun'); S('tun', 'ant', 40, 4); E('alcai', 'ant');
+  S('alcai', 'madre', 22, 4, { roots: true }); // suelo de raíces: solo el Pisotón lo rompe
   S('naveP', 'naveS'); S('abs', 'naveP'); S('clkC', 'torre'); S('mir', 'galeria', 16, 4); S('torre', 'caden');
 
   function climbOps(rw, rh, hx, hw, type) {
@@ -180,7 +207,7 @@
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [] };
+    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], lifts: [], roots: new Set() };
     let uid = 1;
     // 1) interior de cada área
     for (const a of AREAS) {
@@ -226,6 +253,7 @@
           if (gx < B.x0 + 1 || gx >= B.x0 + B.rw - 1) throw new Error('Hueco fuera de rango ' + l.a + '→' + l.b);
           fg[gyA][gx] = -1; fg[gyB][gx] = -1;
           A.seal.push({ gx, gy: gyA }); B.seal.push({ gx, gy: gyB });
+          if (l.roots) { fg[gyA][gx] = A.z * 8 + K.CRACK; world.roots.add(gyA * Wt + gx); } // tapa de raíces sobre el hueco
         }
       }
     }
@@ -256,6 +284,7 @@
           case 'sshrine': world.sforges.push({ id: sid('sf'), area: a.id, kind: 'shrine', x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'bigfire': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T, big: true }); break;
           case 'altar': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T }); break;
+          case 'lift': world.lifts.push({ id: 'l_' + a.id, area: a.id, x: (a.x0 + op[1]) * T, w: op[2] * T, yTop: (a.y0 - 1) * T, yBot: (a.y0 + a.rh - 1) * T }); break; // ['lift', x, ancho]: ascensor entre el suelo de la sala de arriba y el de esta
           case 'boss': world.bosses.push({ id: op[1], area: a.id, x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, ...BOSSES[op[1]] }); a.boss = op[1]; break;
         }
       }

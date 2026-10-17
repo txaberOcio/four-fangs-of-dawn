@@ -149,7 +149,7 @@ const PR = {
   toxin: { tex: 'puff', sc: 3, hb: [30, 14], dmg: 1, tint: 0x66ff44, alpha: 0.7, linger: true }, // charco de veneno (Relojero Oxidado)
   cloud: { tex: 'puff', sc: 7, hb: [48, 48], dmg: 1, tint: 0x66ff44, alpha: 0.5, linger: true }, // nube de veneno: se queda en el aire
 };
-const ZONE_SCALE = [1, 1.25, 1.5, 1.35, 1.7, 2, 1, 2.4, 2.8]; // vida de los enemigos corrientes según la zona
+const ZONE_SCALE = [1, 1.25, 1.5, 1.35, 1.7, 2, 1, 2.4, 2.8, 3]; // vida de los enemigos corrientes según la zona
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 
@@ -167,7 +167,7 @@ class CastleScene extends Phaser.Scene {
     this.bgLayer = bgMap.createLayer(0, bgMap.addTilesetImage('tiles', 'tiles', T, T, 0, 0), 0, 0).setDepth(-10);
     this.map = this.make.tilemap({ data: w.fg.map(r => r.slice()), tileWidth: T, tileHeight: T });
     this.fg = this.map.createLayer(0, this.map.addTilesetImage('tiles', 'tiles', T, T, 0, 0), 0, 0).setDepth(-5);
-    const solids = []; for (let z = 0; z < 9; z++) solids.push(z * 8 + K.SOLID, z * 8 + K.FLOOR, z * 8 + K.CRACK);
+    const solids = []; for (let z = 0; z < 10; z++) solids.push(z * 8 + K.SOLID, z * 8 + K.FLOOR, z * 8 + K.CRACK);
     this.fg.setCollision(solids);
     this.fg.forEachTile(t => { if (t.index >= 0 && t.index % 8 === K.ONEWAY) t.setCollision(false, false, true, false); });
     this.map.calculateFacesWithin(0, 0, w.Wt, w.Ht);
@@ -479,7 +479,7 @@ class CastleScene extends Phaser.Scene {
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id) && !this.hiddenAt(f.x, f.y)) lamp(f.x, f.y, 70, 0.8); });
     (this.sforgeObjs || []).forEach(f => lamp(f.x, f.y, 120, 0.9));
     if (this.timedStep) this.timedStep(time);
-    (this.caveLamps || []).forEach(L => lamp(L.x, L.y, L.r, 0.85)); this.caveEmbers(time);
+    (this.caveLamps || []).forEach(L => lamp(L.x, L.y, L.r, 0.85)); this.caveEmbers(time); this.mossSpores(time); this.liftStep(0.016);
     (this.gemObjs || []).forEach(o => { if (!this.gemGot.has(o.id) && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, 45, 0.8); });
     Object.values(this.remotes).forEach(r => lamp(r.spr.x, r.spr.y, 90, 0.8));
     this.crystals.forEach(c => { if (!this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y)) lamp(c.x, c.y, 60, 0.8); });

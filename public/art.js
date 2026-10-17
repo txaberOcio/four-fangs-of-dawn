@@ -9,6 +9,7 @@ const ZONE_PAL = [
   { base: '#2f2b3a', dark: '#211e2b', light: '#4a4458', mortar: '#15121c', bg: '#100d17', bgd: '#0c0a12', glow: '#8870a0' }, // roca
   { base: '#a8708a', dark: '#6a3f58', light: '#e0a8b8', mortar: '#3a1e2c', bg: '#2c1626', bgd: '#201019', glow: '#ffd6a0' }, // Torres del Alba
   { base: '#5a463a', dark: '#35271f', light: '#8a6a52', mortar: '#1e1410', bg: '#1a100c', bgd: '#110a08', glow: '#ff7a2a' }, // El Abismo: cueva de roca y lava
+  { base: '#3c5246', dark: '#26362e', light: '#587a64', mortar: '#111c16', bg: '#0f1a15', bgd: '#0a120f', glow: '#6dffd0', moss: '#3f7a3a', mossD: '#2a5428', mossL: '#8fd35a', root: '#5a4128', rootL: '#8a6a3a', fung: '#6dffd0', fung2: '#b48aff' }, // Calabozos Profundos: piedra verdosa, musgo, hongos
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
@@ -58,6 +59,27 @@ const MAPS = {
     '.......MM.......', '......MMMM......', '.....MMMMMM.....', '....MMMMMMMM....', '.....SSSSSS.....', '.....SDSSDS.....', '.....SSSSSS.....', '....MMMMMMMM....', '...TTTMMMMTTT...', '..TTTTTMMTTTTT..', '..TTWWWWWTTTTT..', '..TTWYYYWTTTTT..', '..TTWWWWWTTTTT..', '...TTTTTTTTTT...', '...TTTTTTTTTT...', '..LLLLLLLLLLLL..'],
   reina: [
     '...Y..Y..Y..Y...', '...YYYYYYYYYY...', '....WWWWWWWW....', '....WRRWWRRW....', '....WWWDDWWW....', '.....WWWWWW.....', '..GGGWWWWWWGGG..', '.GGWWGWWWWGWWGG.', '.GWWGGWWWWGGWWG.', '..WW.GWWWWG.WW..', '..WW.GGWWGG.WW..', '..GW..GWWG..WG..', '...W..WWWW..W...', '.....WWWWWW.....', '....WWW..WWW....', '....WWW..WWW....'],
+  limo: [ // babosa de lodo con ojos en tallos y motas luminosas
+    '................', '................', '.........E..E...', '.........G..G...', '.....GGGGGGGG...', '...GGLLLGGGGGG..', '..GGLLGGGGGGGGG.', '.GGLGGGGFGGGGGG.',
+    '.GGGGGGGGGGFGGG.', 'GGGGFGGGGGGGGGGG', 'GGGGGGGGGGGGFGGG', 'GGGFGGGGGGGGGGGG', 'GGGGGGGGGGFGGGGG', '.GGDDGGGGGGDDGG.', '..DDDDDDDDDDDD..', '.L..L......L..L.'],
+  preso: [ // prisionero cubierto de hongos, con grilletes
+    '.....FF...FFF...', '....FFFF.FFFFF..', '.....WW...WW....', '.....SSSSSS.....', '....SSSSSSSS....', '....SRSSSSRS....', '....SSSDDSSS....', '..FF.SSSSSS.FF..',
+    '.FFFMMCCCCMMFFF.', '..MMMCCCCCCMMM..', '.SSMCCCCCCCCMSS.', '.SS.CCMMCCCC.SS.', '.II.CCCCCCCC.II.', '....CCC..CCC....', '....MMM..MMM....', '...DDDD..DDDD...'],
+  raiz: [ // criatura de raíces y lianas con un ojo y un capullo luminoso
+    '..V...R..R...V..', '.VR..RRRRRR..RV.', '.RR.RRLRRLRR.RR.', '..RRRRERRERRRR..', '...RRRRRRRRRR...', '..VRRRRFFRRRRV..', '.RRRRRVRRVRRRRR.', 'RR.RRRRRRRRRR.RR',
+    'R...RRVRRRRR...R', '....RRRRRRRR....', '...RRRRVRRRR....', '...RRRR.RRRR....', '..RRRR...RRRR...', '..RRR.....RRR...', '.RRR.......RRR..', 'RRR.........RRR.'],
+  esporas: [ // polilla de esporas con sacos brillantes colgando
+    '................', 'W..............W', 'WW....B..B....WW', 'WWW....BB....WWW', 'WwWW..BBBB..WWwW', 'WwwWBBEBBEBBWwwW', '.WwwWBBBBBBWwwW.', '..WWWWBBBBWWWW..',
+    '....FWWBBWWF....', '....FF.BB.FF....', '....FF.BB.FF....', '.....F.BB.F.....', '........BB......', '................', '................', '................'],
+  hongo: [ // hongo esporífero arraigado
+    '................', '................', '....CCCCCCCC....', '..CCWCCCCCCWCC..', '.CCCCCCCCWCCCCC.', 'CCWCCCCCCCCCWCCC', 'CCCCCCWCCCCCCCCC', 'DDDDDDDDDDDDDDDD',
+    '....FFFFFFFF....', '.....FFEEFF.....', '.....FFFFFF.....', '.....FFFFFF.....', '.....FFFFFF.....', '....FFFFFFFF....', '...FFFFFFFFFF...', '..DDDDDDDDDDDD..'],
+  carcelero: [ // JEFE: carcelero colosal con capucha, armadura oxidada, musgo, cadenas y llave al cinto
+    '....M.HHHH.M....', '...MMHHHHHHMM...', '....HHHHHHHH....', '....HRHHHHRH....', '....HHHHHHHH....', '..MMKKKSSKKKMM..', '.MLMKKKKKKKKMLM.', 'MKKKKKKYYKKKKKKM',
+    'MKKMKKKYYKKKMKKM', 'SSKKMKKKKKKMKKSS', 'SSKKKKIIIIKKKKSS', 'SS.KKKKIIKKKK.SS', 'FF.KKKK..KKKK.FF', '...MKKK..KKKM...', '..MMKKK..KKKMM..', '..DDDDD..DDDDD..'],
+  driade: [ // JEFE: figura de raíces con cuernas de ramas, flores y cabello de lianas
+    '.P..B......B..P.', '.BB.BB.VV.BB.BB.', '..BBBBVVVVBBBB..', '...BB.VllV.BB...', '....VVSSSSVV....', '....VSESSESV....', '...VVVSSSSVVV...', '..VlVVBSSBVVlV..',
+    '.VlVBBBBBBBBVlV.', 'BBVBBBLBBLBBBVBB', 'B.BBBBBBBBBBBB.B', 'B..BBLBBBBLBB..B', '...BBBBBBBBBB...', '..BBLBBBBBBLBB..', '.BBB.BBBBBB.BBB.', 'BBB..BB..BB..BBB'],
   altar: [
     '......YY......', '.....YYYY.....', '.....YOOY.....', '......YY......', '.....WWWW.....', '.....WWWW.....', '....WWWWWW....', '....WWWWWW....',
     '...WWWWWWWW...', '...WWDDDDWW...', '..WWWWWWWWWW..', '..WWWWWWWWWW..', '.WWWWWWWWWWWW.', '.DDDDDDDDDDDD.'],
@@ -93,6 +115,13 @@ const MAP_PAL = {
   bishop: { M: '#e8e8f4', Y: '#ffd23b', S: '#d9c2a8', D: '#15101c', P: '#6a2f8e' },
   clock: { B: '#b8863a', G: '#ffd98a', R: '#ff3b3b', D: '#5a3f14' },
   conde: { K: '#1a1020', S: '#e8dcdc', R: '#ff2b2b', C: '#a01a2e' },
+  limo: { G: '#4f8a3a', L: '#9ad65a', D: '#2a4a24', F: '#6dffd0', E: '#fff27a' },
+  preso: { F: '#6dffd0', W: '#e8e4d4', S: '#8aa38a', R: '#ff3b3b', D: '#15101c', M: '#3f7a3a', C: '#4a4036', I: '#8a8a96' },
+  raiz: { R: '#6a4a2a', L: '#8a6a3a', V: '#3f7a3a', E: '#ff3b3b', F: '#6dffd0' },
+  esporas: { B: '#2a3a30', W: '#4a6a5a', w: '#8ab89a', E: '#ff3b3b', F: '#6dffd0' },
+  hongo: { C: '#b48aff', W: '#e8d8ff', D: '#3a2a50', F: '#d8d4b8', E: '#ff3b3b' },
+  carcelero: { H: '#1a2a22', K: '#4a5a52', M: '#3f7a3a', L: '#8fd35a', R: '#ff3b3b', S: '#8aa38a', Y: '#ffd23b', I: '#8a8a96', F: '#6dffd0', D: '#1a1f1c' },
+  driade: { B: '#5a4128', L: '#8a6a3a', V: '#3f7a3a', l: '#8fd35a', S: '#9ab89a', E: '#6dffd0', P: '#d86ac8' },
   archon: { M: '#cfe8ff', Y: '#ffd23b', S: '#d9c2a8', D: '#15101c', T: '#2a5a8a', L: '#7ad8ff', W: '#ffffff' },
   reina: { W: '#e8e4d4', G: '#cfc6a8', R: '#ff3b3b', D: '#5a5240', Y: '#ffd23b' },
   aurora: { H: '#ffe3a0', W: '#fff2d8', S: '#ffe3d0', R: '#ff8aa8', D: '#3a1a2a', G: '#ffb36a' },
@@ -153,6 +182,42 @@ function drawTile(ctx, z, k, ox) {
     else { rock(p.bg, p.bgd, '#241610'); r(7, 0, 2, 16, '#ff7a2a'); r(6, 5, 1, 4, '#c0501a'); r(9, 9, 1, 4, '#c0501a'); r(7, 0, 2, 16, 'rgba(255,200,80,0.35)'); } // veta de lava
     return;
   }
+  if (z === 9) { // calabozos profundos: piedra húmeda con musgo cayendo por las juntas, manchas verdes y hongos
+    const bgk = k === 3 || k === 6 || k === 7;
+    const drip = (x, y, len) => { r(x, y, 1, len, p.moss); r(x, y + len, 1, 1, p.mossL); }; // hilo de musgo que cuelga
+    const blot = (n, c) => { for (let i = 0; i < n; i++) r(Math.floor(rnd() * 13), Math.floor(rnd() * 14), 2 + Math.floor(rnd() * 3), 1 + Math.floor(rnd() * 2), c); }; // manchas
+    const cap = (x, y, c) => { r(x - 1, y, 3, 1, c); r(x, y - 1, 1, 1, c); r(x, y + 1, 1, 2, '#cfe8d0'); }; // hongo: sombrero de 3 px + pie
+    if (k !== 5) bricks(bgk ? p.bg : p.base, bgk ? p.bgd : p.mortar, bgk ? p.bg : p.light);
+    if (k === 0) {
+      blot(5, p.moss); blot(3, p.mossD);
+      for (let x = 0; x < 16; x += 2) { if (rnd() < 0.6) r(x, 0, 2, 1, p.moss); if (rnd() < 0.6) r(x, 8, 2, 1, p.moss); } // musgo en las juntas
+      for (let i = 0; i < 4; i++) drip(1 + Math.floor(rnd() * 14), rnd() < 0.5 ? 1 : 9, 2 + Math.floor(rnd() * 4)); // cae por las juntas
+      for (let i = 0; i < 2; i++) r(Math.floor(rnd() * 15), 2 + Math.floor(rnd() * 12), 1, 1, p.fung); // motas luminosas
+    } else if (k === 1) { // suelo: alfombra de musgo con hongos incrustados
+      r(0, 0, 16, 4, p.moss); r(0, 4, 16, 1, p.mossD);
+      for (let x = 0; x < 16; x++) if (rnd() < 0.5) r(x, 0, 1, 1, p.mossL);
+      for (let i = 0; i < 4; i++) drip(1 + Math.floor(rnd() * 14), 5, 1 + Math.floor(rnd() * 4));
+      cap(3, 1, p.fung); cap(11, 2, rnd() < 0.5 ? p.fung : p.fung2);
+    } else if (k === 2) { // plataforma cubierta de musgo con lianas colgando
+      r(0, 0, 16, 5, p.base); r(0, 4, 16, 1, p.dark); r(0, 5, 16, 1, p.mortar); r(0, 0, 16, 2, p.moss); r(0, 2, 16, 1, p.mossD);
+      [2, 6, 9, 13].forEach(x => drip(x, 6, 2 + Math.floor(rnd() * 5))); cap(12, 1, p.fung);
+    } else if (k === 3) { // fondo: manchas oscuras y alguna mota brillante
+      blot(4, '#142a1e'); for (let i = 0; i < 3; i++) r(Math.floor(rnd() * 15), Math.floor(rnd() * 15), 1, 1, 'rgba(109,255,208,0.35)');
+    } else if (k === 4) { // grieta apenas visible
+      blot(3, p.moss); r(7, 6, 1, 2, p.mortar); r(8, 8, 1, 2, p.mortar);
+    } else if (k === 5) { // pinchos de raíz seca
+      for (let t = 0; t < 3; t++) { const cx = t * 5 + 2; for (let h = 0; h < 11; h++) { const half = Math.floor((11 - h) / 4); r(cx - half, 15 - h, half * 2 + 1, 1, h > 8 ? '#d8b070' : p.rootL); } }
+      r(0, 14, 16, 2, p.moss);
+    } else if (k === 6) { // pilar de fondo con raíces trepando
+      r(4, 0, 8, 16, p.dark); r(5, 0, 2, 16, p.base); r(6, 0, 1, 16, p.light); r(11, 0, 1, 16, p.mortar); r(3, 0, 10, 2, p.base);
+      for (let y = 0; y < 16; y++) { r(7 + Math.round(Math.sin(y * 0.7) * 2), y, 1, 1, p.root); r(10 - Math.round(Math.sin(y * 0.5 + 1) * 1.5), y, 1, 1, p.rootL); }
+      r(4, 10, 4, 2, p.moss); r(8, 4, 3, 2, p.mossD); drip(5, 12, 3);
+    } else { // k === 7: reja con luz de hongos al fondo
+      r(3, 0, 10, 16, p.mortar); r(4, 1, 8, 15, '#0a1c15'); r(4, 1, 8, 15, 'rgba(109,255,208,0.16)'); r(6, 1, 1, 15, p.dark); r(9, 1, 1, 15, p.dark); r(4, 7, 8, 1, p.mortar);
+      cap(6, 11, p.fung); cap(10, 13, p.fung2); r(3, 0, 10, 2, p.moss);
+    }
+    return;
+  }
   switch (k) {
     case 0: bricks(p.base, p.mortar, p.light); break;
     case 1: bricks(p.base, p.mortar, p.light); r(0, 0, 16, 3, p.light); r(0, 3, 16, 1, p.dark); for (let i = 0; i < 4; i++) r(Math.floor(rnd() * 14), 3, 2, 2, p.dark); break;
@@ -171,8 +236,8 @@ function buildArt(scene) {
   const tx = scene.textures;
   if (tx.exists('tiles')) return;
   // Tileset: 6 zonas x 8 tipos
-  const tiles = tx.createCanvas('tiles', 72 * 32, 32); const tctx = tiles.getContext('2d');
-  for (let z = 0; z < 9; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
+  const tiles = tx.createCanvas('tiles', 80 * 32, 32); const tctx = tiles.getContext('2d');
+  for (let z = 0; z < 10; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
   tiles.refresh();
 
   const makeMap = (key, mapName, pal, px) => {
@@ -202,6 +267,8 @@ function buildArt(scene) {
   makeMap('npc_oracle', 'npcMad', madPal('#ffe6b0', '#c9a0ff'), 1);
   makeMap('npc_smith', 'npcMad', madPal('#2a1a10', '#8a4a1a'), 1);
   makeMap('npc_watcher', 'npcMad', madPal('#b8d8ff', '#5a7aa8'), 1);
+  ['limo', 'preso', 'raiz', 'esporas', 'hongo', 'carcelero', 'driade'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
+  makeMap('npc_prisionero_musgo', 'npcMad', madPal('#3f7a3a', '#3a4a36'), 1);
   ['archon', 'reina', 'aurora', 'vesper'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // dibujos propios de los jefes nuevos
   // fotograma de reposo: el torso baja un píxel (respiración)
   for (const col in HERO_COLORS) {
