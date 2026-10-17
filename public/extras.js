@@ -941,12 +941,8 @@ Object.assign(CastleScene.prototype, {
     this.toast(first ? '¡Viaje rápido desbloqueado! Descansa en cualquier hoguera encendida y elige a cuál viajar.' : 'Hoguera: vida restaurada, partida guardada y los monstruos han reaparecido', first ? 7000 : 4500);
     if (this.travel) this.openTravel();
   },
-  // Guarda al conseguir una mejora permanente (habilidad de jefe, cristal de vida, mejora de arma)
-  autoSave() {
-    if (!this.canAuto || !this.lastBonfire) return;
-    this.savePersonal(this.lastBonfire);
-    this.floatText(this.player.x, this.player.y - 56, 'mejora guardada', '#9fffb0');
-  },
+  // El juego solo se guarda al descansar en una hoguera (ya no hay guardado automático al conseguir mejoras)
+  autoSave() {},
   restReset() { // el anfitrión hace reaparecer a todos los enemigos normales
     this.killed.clear();
     [...this.ents.entries()].forEach(([id, e]) => { if (e.sim && !e.boss) { this.poof(e.spr.x, e.spr.y, 3); e.spr.destroy(); this.ents.delete(id); } });

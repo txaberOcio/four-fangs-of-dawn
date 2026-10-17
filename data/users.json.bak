@@ -505,7 +505,7 @@
       },
       "blue": {
         "me": {
-          "souls": 370,
+          "souls": 416,
           "inv": {
             "pot": 0,
             "pot2": 0,
@@ -542,27 +542,45 @@
             "bat",
             "gh",
             "kn",
-            "aurora"
+            "aurora",
+            "saw"
           ],
           "kills": {
             "sk": 0,
-            "kn": 0,
-            "bat": 0,
-            "gh": 1,
+            "kn": 1,
+            "bat": 1,
+            "gh": 4,
             "saw": 0,
             "sentinel": 0,
             "garg": 0,
             "bishop": 0,
             "clock": 0,
+            "archon": 0,
+            "reina": 0,
             "conde": 1,
             "aurora": 1,
             "vesper": 0
           },
-          "altar": "a_albaH_1",
+          "travel": true,
+          "el": "bolt",
+          "gems": 1,
+          "gemGot": [
+            "g_fragua_1"
+          ],
+          "bg": [
+            "conde",
+            "aurora"
+          ],
+          "perm": {
+            "dmg": 0,
+            "souls": 0
+          },
+          "altar": "a_gran_1",
           "lit": [
             "a_vest_1",
             "a_pasR_1",
-            "a_albaH_1"
+            "a_albaH_1",
+            "a_gran_1"
           ],
           "visited": [
             "vest",
@@ -573,7 +591,10 @@
             "albaH",
             "albaA",
             "bodega",
-            "cripta"
+            "cripta",
+            "caida",
+            "fragua",
+            "gran"
           ]
         },
         "world": {
@@ -589,9 +610,11 @@
             "aurora"
           ],
           "broken": [],
-          "torches": {}
+          "torches": {
+            "18": true
+          }
         },
-        "at": "2026-10-17T08:57:15.144Z"
+        "at": "2026-10-17T10:31:34.446Z"
       },
       "red": {
         "me": {
