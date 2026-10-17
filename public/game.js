@@ -367,6 +367,7 @@ class CastleScene extends Phaser.Scene {
   }
   bossGone(b) { const r = World.BOSSES[b.id] && World.BOSSES[b.id].rival; return this.progress.bosses.includes(b.id) || !!(r && this.progress.bosses.includes(r)); }
   openGates(show) { // los muros que cierran el foso caen cuando el Conde huye
+    if (this.payBossGems) this.payBossGems(!show);
     (this.W.gates || []).forEach(gt => {
       const pb = this.progress.bosses; if (gt.open || !(gt.boss === 'alba' ? (pb.includes('aurora') || pb.includes('vesper')) : pb.includes(gt.boss))) return;
       gt.open = true; gt.tiles.forEach(t => { this.fg.removeTileAt(t.gx, t.gy); if (show) this.poof((t.gx + 0.5) * T, (t.gy + 0.5) * T, 3, 0xaaaaaa); });
@@ -464,6 +465,7 @@ class CastleScene extends Phaser.Scene {
     this.npcObjs.forEach(n => lamp(n.x, n.y - 20, n.def.shop ? 110 : 80, 0.85));
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id) && !this.hiddenAt(f.x, f.y)) lamp(f.x, f.y, 70, 0.8); });
     (this.sforgeObjs || []).forEach(f => lamp(f.x, f.y, 120, 0.9));
+    (this.gemObjs || []).forEach(o => { if (!this.gemGot.has(o.id) && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, 45, 0.8); });
     Object.values(this.remotes).forEach(r => lamp(r.spr.x, r.spr.y, 90, 0.8));
     this.crystals.forEach(c => { if (!this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y)) lamp(c.x, c.y, 60, 0.8); });
     Object.values(this.relics).forEach(r => lamp(r.x, r.y, 110, 1));

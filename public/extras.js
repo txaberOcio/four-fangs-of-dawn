@@ -30,18 +30,22 @@ const ITEMS = [
   { id: 'pot2', name: 'Poción mayor', price: 75, desc: 'Cura toda la vida.' },
   { id: 'str', name: 'Elixir de fuerza', price: 60, desc: '+1 de daño durante 25 s.' },
   { id: 'ward', name: 'Piel de piedra', price: 55, desc: 'Bloquea los próximos 2 golpes.' },
-  { id: 'amu', name: 'Amuleto de resurrección', price: 120, desc: 'Si mueres, revives (se gasta solo).' },
+  { id: 'amu', name: 'Amuleto de resurrección', price: 0, gems: 3, desc: 'Si mueres, revives (se gasta solo).' },
   { id: 'rage', name: 'Elixir de furia', price: 70, desc: 'Atacas un 40% más rápido durante 20 s.' },
   { id: 'tonic', name: 'Tónico de almas', price: 80, desc: 'Doble de almas durante 60 s.' },
-  { id: 'fruit', name: 'Fruto de sangre', price: 200, desc: '+1 corazón máximo para siempre.' },
+  { id: 'fruit', name: 'Fruto de sangre', price: 0, gems: 4, desc: '+1 corazón máximo para siempre.' },
+  { id: 'fang', name: 'Colmillo de acero', price: 0, gems: 4, perm: 'dmg', max: 3, desc: '+1 de daño para siempre (hasta 3 veces; cada una cuesta más).' },
+  { id: 'talis', name: 'Talismán de almas', price: 0, gems: 3, perm: 'souls', max: 2, desc: '+20% de almas de los enemigos para siempre (hasta 2 veces).' },
 ];
+// Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
+const GEMS_BOSS = { garg: 2, bishop: 3, clock: 4, conde: 5, aurora: 6, vesper: 6 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
 // [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
 // Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
 const SHOP_STOCK = {
-  vest: [['pot', 0], ['bomb', 1, 'green'], ['lamp', 2], ['spd', 3]],
-  naveS: [['pot', 0], ['bomb', 0], ['lamp', 0], ['spd', 1], ['pot2', 1], ['ward', 2], ['str', 3]],
-  mir: [['pot', 0], ['bomb', 0], ['lamp', 0], ['spd', 0], ['pot2', 0], ['ward', 1], ['str', 1], ['rage', 2], ['amu', 2], ['tonic', 3], ['fruit', 3]]
+  vest: [['pot', 0], ['bomb', 1, 'green'], ['lamp', 2], ['spd', 3], ['talis', 2]],
+  naveS: [['pot', 0], ['bomb', 0], ['lamp', 0], ['spd', 1], ['pot2', 1], ['ward', 2], ['str', 3], ['amu', 0], ['fang', 1]],
+  mir: [['pot', 0], ['bomb', 0], ['spd', 0], ['pot2', 0], ['ward', 1], ['str', 1], ['rage', 2], ['tonic', 3], ['amu', 0], ['fang', 0], ['talis', 1], ['fruit', 1]]
 };
 const SHOP_ORDER = ['vest', 'naveS', 'mir'];
 // poderes elementales de la Forja de los Elementos: cambian el color del ataque y añaden un efecto
@@ -231,6 +235,7 @@ Object.assign(CastleScene.prototype, {
     const w = this.W;
     this.wpn = WEAPONS[this.color] || WEAPONS.red; this.pas = PASSIVES[this.color] || {}; this.wlv = 1;
     this.maxHp = 5 + (this.pas.hp || 0); this.hp = this.maxHp;
+    this.gems = 0; this.perm = { dmg: 0, souls: 0 }; this.gemGot = new Set(); this.bossGemsPaid = new Set(this.progress ? this.progress.bosses : []);
     this.souls = 0; this.inv = {}; ITEMS.forEach(i => { this.inv[i.id] = 0; }); this.ward = 0; this.selItem = 0; this.buffs = { spd: 0, str: 0, lamp: 0, rage: 0, tonic: 0 };
     this.crouching = false; this.arrows = []; this.forgeGot = new Set(); this.shopOpen = false; this.dlg = null; this.shopSel = 0;
     this.kills = {}; this.seen = new Set(); this.eliteGot = new Set(); this.pagesGot = new Set(); this.bookOpen = false; this.bookSel = 0; this.expT = 0;
@@ -245,6 +250,12 @@ Object.assign(CastleScene.prototype, {
       const glow = this.add.image(f.x, f.y, 'glow').setScale(1.1).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.55).setDepth(1).setVisible(!LITE);
       this.tweens.add({ targets: [spr, glow], y: f.y - 6, yoyo: true, repeat: -1, duration: 900, ease: 'Sine.inOut' });
       return { ...f, spr, glow };
+    });
+    this.gemObjs = (w.gems || []).map(gm => { // gemas: la segunda moneda
+      const spr = this.add.image(gm.x, gm.y, 'gem').setScale(3).setDepth(2);
+      const glow = this.add.image(gm.x, gm.y, 'glow').setScale(0.7).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.5).setTint(0x7ae8ff).setDepth(1).setVisible(!LITE);
+      this.tweens.add({ targets: [spr, glow], y: gm.y - 4, yoyo: true, repeat: -1, duration: 950 + (gm.x % 300), ease: 'Sine.inOut' });
+      return { ...gm, spr, glow };
     });
     this.sforgeObjs = (w.sforges || []).map(f => { // forja especial: poder elemental para el arma
       const spr = this.add.image(f.x, f.y, 'forge').setScale(3.6).setDepth(2).setTint(0xff9a3b);
@@ -275,6 +286,9 @@ Object.assign(CastleScene.prototype, {
   // Recupera los datos personales de la partida guardada
   loadPersonal(m) {
     this.travel = !!m.travel; this.element = ELEMENTS[m.el] ? m.el : '';
+    this.gems = m.gems | 0; this.perm = { dmg: (m.perm && m.perm.dmg) | 0, souls: (m.perm && m.perm.souls) | 0 };
+    (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
+    this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
     if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0); this.hp = this.maxHp;
@@ -302,7 +316,14 @@ Object.assign(CastleScene.prototype, {
   },
   auraMul() { return (this.pas.aura || 1) * (this.buffs.lamp > 0 ? 1.7 : 1) * (this.abil.eye ? 1.4 : 1); },
   wstats() { return this.wpn.lv[Math.min(this.wlv, 5) - 1]; },
-  dmgBonus() { return this.buffs.str > 0 ? 1 : 0; },
+  dmgBonus() { return (this.buffs.str > 0 ? 1 : 0) + this.perm.dmg; },
+  addGems(n, x, y) { this.gems += n; SFX.pick(); this.floatText(x !== undefined ? x : this.player.x, (y !== undefined ? y : this.player.y) - 24, '+' + n + ' ✦', '#7ae8ff'); },
+  payBossGems(silent) { // cada jefe suelta gemas la primera vez que cae
+    if (!this.bossGemsPaid) return; let got = 0;
+    (this.progress.bosses || []).forEach(id => { if (this.bossGemsPaid.has(id)) return; this.bossGemsPaid.add(id); if (!silent && GEMS_BOSS[id]) got += GEMS_BOSS[id]; });
+    if (got) { this.addGems(got); this.toast('Recompensa del jefe: ' + got + ' gemas ✦', 5000); this.autoSave(); }
+  },
+  itemCost(it) { return it.perm ? it.gems + 2 * this.perm[it.perm === 'dmg' ? 'dmg' : 'souls'] : (it.gems || 0); },
 
   // ---- HUD
   buildExtraHud() {
@@ -336,7 +357,7 @@ Object.assign(CastleScene.prototype, {
     const b = this.buffs, parts = [];
     if (b.spd > 0) parts.push('VEL ' + Math.ceil(b.spd) + 's'); if (b.str > 0) parts.push('FUE ' + Math.ceil(b.str) + 's'); if (b.lamp > 0) parts.push('LUZ ' + Math.ceil(b.lamp) + 's'); if (b.rage > 0) parts.push('FUR ' + Math.ceil(b.rage) + 's'); if (b.tonic > 0) parts.push('ALM ' + Math.ceil(b.tonic) + 's'); if (this.ward > 0) parts.push('PIEL x' + this.ward);
     this.buffTxt.setText(parts.join('  '));
-    this.hudSouls.setText(`◆ ${this.souls}    ${this.wpn.name} Nv.${this.wlv}${this.element ? ' [' + ELEMENTS[this.element].name + ']' : ''}    ${this.pas.name || ''}`);
+    this.hudSouls.setText(`◆ ${this.souls}  ✦ ${this.gems}    ${this.wpn.name} Nv.${this.wlv}${this.element ? ' [' + ELEMENTS[this.element].name + ']' : ''}    ${this.pas.name || ''}`);
   },
   floatText(x, y, text, color = '#d9b3ff') {
     const t = this.add.text(x, y, text, { fontSize: '14px', fontFamily: 'Courier New', color, stroke: '#000', strokeThickness: 4 }).setOrigin(0.5).setDepth(28);
@@ -497,7 +518,7 @@ Object.assign(CastleScene.prototype, {
     const W = this.W, box = document.createElement('div');
     box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#0a0612ee;color:#fff;font:13px Courier New,monospace;padding:10px;display:none;overflow:auto';
     box.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b>MODO DESARROLLO</b>' +
-      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar habilidades</button><button id="devHp">Curar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
+      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
       '<span id="devInfo" style="color:#ffd98a">Haz clic en el mapa para teletransportarte</span></div><canvas id="devMap" style="image-rendering:pixelated;cursor:crosshair;border:2px solid #ffb347"></canvas>';
     document.body.appendChild(box);
     box.querySelectorAll('button').forEach(b => { b.style.cssText = 'width:auto;margin:0;padding:4px 10px;font:12px Courier New,monospace;cursor:pointer'; });
@@ -517,6 +538,7 @@ Object.assign(CastleScene.prototype, {
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
     box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.toast('Habilidades básicas concedidas (modo desarrollo)'); };
+    box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
     box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
     const orig = this.hurt; this.hurt = (d, x) => { if (this.devGod) return; return orig.call(this, d, x); };
@@ -581,6 +603,7 @@ Object.assign(CastleScene.prototype, {
     this.crackGlow(); // oculta lo que está dentro de una sala secreta aún cerrada
     this.crystals.forEach(c => { if (!this.cryGot.has(c.id)) c.spr.setVisible(!this.hiddenAt(c.x, c.y)); });
     this.pageObjs.forEach(pg => { if (!this.pagesGot.has(pg.id)) { const h = this.hiddenAt(pg.x, pg.y); pg.spr.setVisible(!h); pg.glow.setVisible(!h && !LITE); } });
+    this.gemObjs.forEach(gm => { if (!this.gemGot.has(gm.id)) { const h = this.hiddenAt(gm.x, gm.y); gm.spr.setVisible(!h); gm.glow.setVisible(!h && !LITE); } });
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id)) { const h = this.hiddenAt(f.x, f.y); f.spr.setVisible(!h); f.glow.setVisible(!h && !LITE); } });
     this.torchObjs.forEach(o => { const h = this.hiddenAt(o.x, o.y); o.flame.setVisible(o.lit && !h); o.glow.setVisible(o.lit && !h && !LITE); });
   },
@@ -743,12 +766,13 @@ Object.assign(CastleScene.prototype, {
     this.eliteGot.add(eid);
     if (reward.item && this.inv[reward.item] !== undefined) this.inv[reward.item] = Math.min(9, this.inv[reward.item] + 1);
     if (reward.souls) this.addSouls(reward.souls, false);
+    this.addGems(1);
     const it = ITEMS.find(i => i.id === reward.item);
     this.toast('¡Has derrotado a ' + eid + '! Recompensa: ' + (it ? it.name + ' + ' : '') + (reward.souls || 0) + ' almas', 5500);
     SFX.pick(); this.autoSave();
   },
   addSouls(n, kill, x, y) {
-    const amt = Math.round(n * (this.pas.souls || 1) * (this.buffs.tonic > 0 ? 2 : 1)); this.souls += amt;
+    const amt = Math.round(n * (this.pas.souls || 1) * (this.buffs.tonic > 0 ? 2 : 1) * (1 + 0.2 * this.perm.souls)); this.souls += amt;
     this.floatText(x !== undefined ? x : this.player.x, (y !== undefined ? y : this.player.y) - 20, '+' + amt + ' ◆');
   },
 
@@ -789,6 +813,10 @@ Object.assign(CastleScene.prototype, {
         this.pagesGot.add(pg.id); pg.spr.destroy(); pg.glow.destroy(); SFX.pick();
         this.toast('Nuevo diario: ' + (PAGES[pg.area] ? PAGES[pg.area].title : 'página') + '  (B para leerlo)', 5000); this.autoSave();
       }
+    });
+    this.gemObjs.forEach(gm => {
+      if (this.gemGot.has(gm.id) || this.hiddenAt(gm.x, gm.y)) return;
+      if (Math.abs(p.x - gm.x) < 28 && Math.abs(p.y - gm.y) < 38) { this.gemGot.add(gm.id); gm.spr.destroy(); gm.glow.destroy(); this.addGems(1, gm.x, gm.y); this.autoSave(); }
     });
     this.forgeObjs.forEach(f => {
       if (this.forgeGot.has(f.id)) return;
@@ -893,7 +921,7 @@ Object.assign(CastleScene.prototype, {
   },
   savePersonal(a) {
     socket.emit('save', { souls: this.souls, inv: this.inv, wlv: this.wlv, maxHp: this.maxHp, cry: [...this.cryGot], forge: [...this.forgeGot],
-      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element });
+      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: [...this.gemGot], perm: this.perm, bg: [...this.bossGemsPaid] });
   },
 
   // ---- diálogo
@@ -956,15 +984,17 @@ Object.assign(CastleScene.prototype, {
   refreshShop() {
     const list = this.shopItems(), cy = SH / 2;
     if (this.shopSel >= list.length) this.shopSel = 0;
-    this.shopTitle.setText('MERCADER        almas: ' + this.souls + ' ◆');
+    this.shopTitle.setText('MERCADER      almas: ' + this.souls + ' ◆     gemas: ' + this.gems + ' ✦');
     this.shopRows.forEach(r => {
       const idx = list.indexOf(r.it), vis = idx >= 0 && this.shopOpen;
       [r.row, r.icon, r.nameT, r.ownT, r.priceT].forEach(o => o.setVisible(vis));
       if (!vis) return;
-      const y = cy - 190 + idx * 35;
+      const y = cy - 195 + idx * 31;
       [r.row, r.icon, r.nameT, r.ownT, r.priceT].forEach(o => o.setY(y));
       r.row.setFillStyle(idx === this.shopSel ? 0x5a3a9a : 0x2a1d4d, 1);
-      r.ownT.setText('tienes ' + this.inv[r.it.id]); r.priceT.setColor(this.souls >= r.it.price ? '#d9b3ff' : '#ff7a7a');
+      const it = r.it, gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price, maxed = it.perm && this.perm[it.perm] >= it.max;
+      r.ownT.setText(it.perm ? 'nivel ' + this.perm[it.perm] + '/' + it.max : 'tienes ' + this.inv[it.id]);
+      r.priceT.setText(maxed ? 'máximo' : cost + (gem ? ' ✦' : ' ◆')).setColor(maxed ? '#9fffb0' : ((gem ? this.gems : this.souls) >= cost ? (gem ? '#7ae8ff' : '#d9b3ff') : '#ff7a7a'));
     });
     this.shopDesc.setText(list[this.shopSel].desc);
     const nb = this.progress.bosses.length;
@@ -983,10 +1013,13 @@ Object.assign(CastleScene.prototype, {
   buyItem(k) {
     const it = this.shopItems()[k]; if (!it) return;
     this.shopSel = k;
-    if (this.souls < it.price) { this.toast('No tienes suficientes almas'); SFX.hurt(); this.refreshShop(); return; }
-    if (this.inv[it.id] >= 9) { this.toast('No puedes llevar más'); this.refreshShop(); return; }
-    this.souls -= it.price; this.inv[it.id]++; SFX.pick(); this.refreshShop();
-    if (this.inv[ITEMS[this.selItem].id] === 0) this.selItem = ITEMS.indexOf(it);
+    const gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price;
+    if (it.perm && this.perm[it.perm] >= it.max) { this.toast('Ya tienes el máximo de este objeto'); this.refreshShop(); return; }
+    if ((gem ? this.gems : this.souls) < cost) { this.toast(gem ? 'No tienes suficientes gemas ✦ (se encuentran por el mapa y las sueltan los jefes)' : 'No tienes suficientes almas'); SFX.hurt(); this.refreshShop(); return; }
+    if (!it.perm && this.inv[it.id] >= 9) { this.toast('No puedes llevar más'); this.refreshShop(); return; }
+    if (gem) this.gems -= cost; else this.souls -= cost;
+    if (it.perm) { this.perm[it.perm]++; this.toast(it.name + ': ' + it.desc, 5000); this.autoSave(); } else { this.inv[it.id]++; if (this.inv[ITEMS[this.selItem].id] === 0) this.selItem = ITEMS.indexOf(it); }
+    SFX.pick(); this.refreshShop();
   },
   // ---- bestiario y diarios (tecla B)
   bookEntries() {
@@ -1041,7 +1074,7 @@ Object.assign(CastleScene.prototype, {
   // ---- porcentaje de exploración
   exploration() {
     const w = this.W, rooms = w.areaList.filter(a => !a.special), vis = rooms.filter(a => this.visited.has(a.id)).length;
-    const items = w.crystals.length + w.forges.length, gotItems = this.cryGot.size + this.forgeGot.size;
+    const items = w.crystals.length + w.forges.length + w.gems.length, gotItems = this.cryGot.size + this.forgeGot.size + this.gemGot.size;
     const bon = w.altars.length, litB = this.altars.filter(a => a.lit).length, bos = w.bosses.length, dead = this.progress.bosses.length;
     const extra = w.pages.length + this.W.spawns.filter(s => s.opts && s.opts.elite).length, gotExtra = this.pagesGot.size + this.eliteGot.size;
     const pct = Math.round(35 * vis / rooms.length + 25 * gotItems / items + 10 * litB / bon + 20 * dead / bos + 10 * gotExtra / extra);

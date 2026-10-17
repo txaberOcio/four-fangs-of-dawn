@@ -181,11 +181,12 @@ function buildArt(scene) {
   makeMap('npc_oracle', 'npcMad', madPal('#ffe6b0', '#c9a0ff'), 1);
   makeMap('npc_watcher', 'npcMad', madPal('#b8d8ff', '#5a7aa8'), 1);
   makeMap('aurora', 'bishop', MAP_PAL.aurora, 1); makeMap('vesper', 'conde', MAP_PAL.vesper, 1);
-  [['pot', '#ff3b5c', '#ffd0da'], ['pot2', '#b43bff', '#ecd0ff'], ['spd', '#3bd9ff', '#d0f6ff'], ['str', '#ff9a3b', '#ffe2c0'], ['lamp', '#ffe066', '#fffbe0'], ['ward', '#c9ced8', '#ffffff'], ['rage', '#d4ff3b', '#f6ffd0'], ['tonic', '#3bff9a', '#d0ffe6'], ['fruit', '#ff3bd9', '#ffd0f4']].forEach(([k, c, l]) => makeMap('it_' + k, 'bottle', { D: '#8a6a4a', C: c, L: l }, 1));
+  [['fang', '#e8e8f0', '#ffffff'], ['talis', '#7ad8ff', '#e0f7ff'], ['pot', '#ff3b5c', '#ffd0da'], ['pot2', '#b43bff', '#ecd0ff'], ['spd', '#3bd9ff', '#d0f6ff'], ['str', '#ff9a3b', '#ffe2c0'], ['lamp', '#ffe066', '#fffbe0'], ['ward', '#c9ced8', '#ffffff'], ['rage', '#d4ff3b', '#f6ffd0'], ['tonic', '#3bff9a', '#d0ffe6'], ['fruit', '#ff3bd9', '#ffd0f4']].forEach(([k, c, l]) => makeMap('it_' + k, 'bottle', { D: '#8a6a4a', C: c, L: l }, 1));
   makeMap('it_amu', 'amulet', MAP_PAL.amulet, 1);
   makeMap('forge', 'hammer', MAP_PAL.hammer, 1);
   makeMap('soul', 'soul', MAP_PAL.soul, 1);
   const mk = (key, w, h, fn) => { const c = tx.createCanvas(key, w, h); fn(c.getContext('2d')); c.refresh(); };
+  mk('gem', 8, 8, g => { g.fillStyle = '#1b8fb8'; g.fillRect(2, 1, 4, 6); g.fillRect(1, 2, 6, 4); g.fillStyle = '#7ae8ff'; g.fillRect(2, 2, 3, 3); g.fillStyle = '#ffffff'; g.fillRect(2, 2, 1, 1); });
   mk('orb', 8, 8, g => { g.fillStyle = '#ff2b4a'; g.fillRect(2, 0, 4, 8); g.fillRect(0, 2, 8, 4); g.fillStyle = '#ffd0d8'; g.fillRect(3, 2, 2, 2); });
   mk('shock', 16, 8, g => { g.fillStyle = '#ffb347'; g.fillRect(0, 4, 16, 4); g.fillRect(3, 2, 10, 2); g.fillRect(6, 0, 4, 2); g.fillStyle = '#fff3c0'; g.fillRect(6, 4, 4, 2); });
   mk('gear', 12, 12, g => { g.fillStyle = '#c29a4a'; g.fillRect(2, 0, 8, 12); g.fillRect(0, 2, 12, 8); g.fillStyle = '#5a4318'; g.fillRect(4, 4, 4, 4); g.fillStyle = '#ffe08a'; g.fillRect(3, 1, 2, 1); });

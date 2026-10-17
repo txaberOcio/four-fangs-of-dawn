@@ -206,6 +206,7 @@ while (changed) {
   const rooms = new Set(nodes.map(roomOf));
   rooms.forEach(r => { if (!(r in firstStage)) firstStage[r] = stage; });
   w.crystals.forEach(c => { if (!('cry:' + c.id in firstStage) && nodes.some(n => Math.abs(n.x - c.x) < 70 && Math.abs(n.y - c.y) < 70)) firstStage['cry:' + c.id] = stage; });
+  w.gems.forEach(c => { if (!('gem:' + c.id in firstStage) && nodes.some(n => Math.abs(n.x - c.x) < 70 && Math.abs(n.y - c.y) < 70)) firstStage['gem:' + c.id] = stage; });
   w.altars.forEach(c => { if (!('alt:' + c.id in firstStage) && nodes.some(n => Math.abs(n.x - c.x) < 70 && Math.abs(n.y - c.y) < 70)) firstStage['alt:' + c.id] = stage; });
   changed = false;
   for (const b of w.bosses) if (rooms.has(b.area) && b.drop && !abil[b.drop]) { abil[b.drop] = true; changed = true; }
@@ -223,5 +224,6 @@ for (let s = 0; s < stage; s++) {
 console.log('\nCristales:', w.crystals.map(c => `${c.area}→fase ${firstStage['cry:' + c.id] ?? 'INALCANZABLE'}`).join(' | '));
 console.log('Altares:', w.altars.map(c => `${c.area}→fase ${firstStage['alt:' + c.id] ?? 'INALCANZABLE'}`).join(' | '));
 console.log('\nSalas INALCANZABLES:', missing.length ? missing.map(r => w.areas[r].name + ' (' + r + ')').join(', ') : 'ninguna');
-const unreachC = w.crystals.filter(c => !('cry:' + c.id in firstStage));
+const unreachC = w.crystals.filter(c => !('cry:' + c.id in firstStage)).concat(w.gems.filter(c => !('gem:' + c.id in firstStage)));
+console.log('Gemas:', w.gems.map(c => `${c.area}→fase ${firstStage['gem:' + c.id] ?? 'INALCANZABLE'}`).join(' | '));
 process.exitCode = missing.length || unreachC.length ? 1 : 0;

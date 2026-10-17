@@ -47,6 +47,7 @@ function sanitizeMe(m) {
   return { souls: clampInt(m.souls, 0, 99999), inv, wlv: clampInt(m.wlv, 1, 5), maxHp: clampInt(m.maxHp, 5, 40), cry: strList(m.cry, 40), forge: strList(m.forge, 20),
     abil: { dash: !!(m.abil && m.abil.dash), dj: !!(m.abil && m.abil.dj), wj: !!(m.abil && m.abil.wj), wings: !!(m.abil && m.abil.wings), eye: !!(m.abil && m.abil.eye) }, elite: strList(m.elite, 20, 40), pages: strList(m.pages, 20), seen: strList(m.seen, 20), kills: (() => { const o = {}; for (const k of ['sk', 'kn', 'bat', 'gh', 'saw', 'sentinel', 'garg', 'bishop', 'clock', 'conde', 'aurora', 'vesper']) o[k] = clampInt(m.kills && m.kills[k], 0, 99999); return o; })(),
     travel: !!m.travel, el: ELEMS.includes(m.el) ? m.el : '',
+    gems: clampInt(m.gems, 0, 999), gemGot: strList(m.gemGot, 60), bg: strList(m.bg, 12), perm: { dmg: clampInt(m.perm && m.perm.dmg, 0, 3), souls: clampInt(m.perm && m.perm.souls, 0, 2) },
     altar: typeof m.altar === 'string' ? m.altar.slice(0, 24) : '', lit: strList(m.lit, 30), visited: strList(m.visited, 80) };
 }
 // datos personales que se entregan a un jugador: las habilidades solo valen si su jefe ya cayó en el mundo de la sala

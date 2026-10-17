@@ -114,6 +114,11 @@
   area('fragua', 'Forja de los Elementos', 8, 1, 8, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['sforge', 30, 15], ['E', 'kn', 12, 16], ['E', 'gh', 22, 9], ['E', 'bat', 40, 7]]);
   area('gran', 'La Gran Hoguera', 8, 3, 8, 1, 1, [['bigfire', 13, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
 
+  // Gemas: la segunda moneda. Se encuentran por el mapa (zonas opcionales y secretos) y las sueltan los jefes y los élites.
+  // [sala, x, y] en coordenadas locales; cada gema reposa sobre una plataforma o el suelo
+  const GEMS = [['hidden', 8, 16], ['salon', 30, 11], ['foso', 13, 12], ['lect', 6, 10], ['gbib', 26, 10], ['osario', 36, 10], ['mazm', 36, 10], ['galeria', 8, 8], ['mir', 7, 13],
+    ['cielo1', 30, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['mazC', 28, 8], ['fragua', 6, 16]];
+
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
   const E = (a, b, size = 3, o = {}) => LINKS.push({ t: 'E', a, b, size, ...o });
@@ -151,7 +156,7 @@
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [] };
+    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [] };
     let uid = 1;
     // 1) interior de cada área
     for (const a of AREAS) {
@@ -230,6 +235,8 @@
       // antorchas
       if (!a.ops.some(o => o[0] === 'torch')) for (let x = 5; x < a.rw - 4; x += 13) for (let k = 0; k < a.h; k++) for (const dy of [13, 12, 14, 11]) { const yy = k * 18 + dy; if (yy < a.rh - 1 && yy > 1 && free(a, x, yy)) { world.torches.push({ id: world.torches.length, x: (a.x0 + x + 0.5) * T, y: (a.y0 + yy + 0.5) * T, z: a.z, area: a.id, lit: a.z !== 3, r: 215 }); break; } }
     }
+    const gcnt = {};
+    for (const [aid, gx, gy] of GEMS) { const a = world.areas[aid]; if (!a) throw new Error('Gema en área inexistente ' + aid); gcnt[aid] = (gcnt[aid] || 0) + 1; world.gems.push({ id: 'g_' + aid + '_' + gcnt[aid], area: aid, x: (a.x0 + gx + 0.5) * T, y: (a.y0 + gy + 0.5) * T }); }
     world.spawnPoint = world.altars.find(a => a.area === 'vest');
     world.areaOf = (gx, gy) => { const i = (areaAt[gy] || [])[gx]; return i >= 0 && i !== undefined ? AREAS[i] : null; };
     return world;
