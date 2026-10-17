@@ -1065,7 +1065,7 @@ class CastleScene extends Phaser.Scene {
     });
     this.crystals.forEach(c => {
       if (this.cryGot.has(c.id)) return;
-      if (Math.abs(p.x - c.x) < 28 && Math.abs(p.y - c.y) < 36) { this.cryGot.add(c.id); c.spr.destroy(); this.maxHp++; this.hp = this.maxHp; this.toast('¡Cristal de vida! +1 corazón máximo'); SFX.pick(); this.autoSave(); }
+      if (Math.abs(p.x - c.x) < 28 && Math.abs(p.y - c.y) < 36) { this.cryGot.add(c.id); c.spr.setVisible(false); this.maxHp++; this.hp = this.maxHp; this.toast('¡Cristal de vida! +1 corazón máximo'); SFX.pick(); this.autoSave(); }
     });
     Object.values(this.relics).forEach(r => {
       if (Math.abs(p.x - r.x) < 34 && Math.abs(p.y - r.y) < 44 && !r.taken) { r.taken = true; this.grantAbility(r.ability); }

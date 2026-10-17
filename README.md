@@ -52,7 +52,7 @@ Cuatro cazadores vampiro irrumpen en el castillo del Conde. Exploras un mapa con
 - **Dos monedas:** las **almas** (◆) se ganan matando enemigos y compran objetos corrientes; las **gemas** (✦) se encuentran por el mapa y las sueltan jefes y élites, y compran mejoras permanentes (Colmillo de acero, Talismán de almas), el Fruto de sangre y el Amuleto. Los mercaderes amplían su mercancía según avanzas.
 - **Acto II antes del Conde:** dos segmentos con jefe, el **Archivo Prohibido** (Archimago Silente) y las **Catacumbas Reales** (Reina de Huesos). Sus sellos abren la puerta de la Sala del Trono.
 - **Viaje rápido temprano:** la Gran Hoguera de la Capilla lo desbloquea; al descansar en cualquier hoguera encendida eliges a cuál viajar.
-- **Progreso con sentido:** guardado solo al descansar en hogueras, porcentaje de exploración, bestiario y diarios de historia.
+- **Progreso con sentido:** guardado solo al descansar en hogueras (si mueres, vuelves a tu último punto de control y pierdes lo conseguido desde entonces; las reliquias de los jefes siguen en su sala), porcentaje de exploración, bestiario y diarios de historia.
 - **Todo el arte y la música se generan por código:** sprites y tiles en pixel art dibujados a partir de mapas de texto y una banda sonora procedural con WebAudio.
 - **Pensado para cualquier pantalla:** teclado, **mando de PlayStation/estándar**, **controles táctiles** con cruceta de arrastre y un **modo ligero** para televisores y dispositivos lentos.
 

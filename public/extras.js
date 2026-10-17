@@ -292,6 +292,7 @@ Object.assign(CastleScene.prototype, {
     this.canAuto = !!saveMe || !saves[this.color]; // evita pisar una partida guardada de este vampiro en una partida nueva
     if (saveMe) this.loadPersonal(saveMe);
     saveMe = null;
+    this.snap = this.captureState(); // punto de control inicial: al empezar o al cargar la partida
     const onRest = () => { if (this.isHost) this.restReset(); };
     socket.on('rest', onRest); { const off = () => socket.off('rest', onRest); this.events.once('shutdown', off); this.events.once('destroy', off); }
     const onLoot = ({ amt, item, eid, bonus, kt }) => { if (amt) this.addSouls(amt, true); if (kt) this.registerKill(kt); if (eid) this.eliteReward(eid, { item, souls: bonus }); };
@@ -855,25 +856,25 @@ Object.assign(CastleScene.prototype, {
     }
     this.closeUi(); this.setCrouch(false); _die.call(this);
   },
-  respawn() { this.setCrouch(false); _respawn.call(this); },
+  respawn() { this.revertToCheckpoint(); this.setCrouch(false); _respawn.call(this); },
   pickups() {
     _pick.call(this);
     const p = this.player;
     this.pageObjs.forEach(pg => {
       if (this.pagesGot.has(pg.id)) return;
       if (Math.abs(p.x - pg.x) < 30 && Math.abs(p.y - pg.y) < 40) {
-        this.pagesGot.add(pg.id); pg.spr.destroy(); pg.glow.destroy(); SFX.pick();
+        this.pagesGot.add(pg.id); pg.spr.setVisible(false); pg.glow.setVisible(false); SFX.pick();
         this.toast('Nuevo diario: ' + (PAGES[pg.area] ? PAGES[pg.area].title : 'página') + '  (B para leerlo)', 5000); this.autoSave();
       }
     });
     this.gemObjs.forEach(gm => {
       if (this.gemGot.has(gm.id) || this.hiddenAt(gm.x, gm.y)) return;
-      if (Math.abs(p.x - gm.x) < 28 && Math.abs(p.y - gm.y) < 38) { this.gemGot.add(gm.id); gm.spr.destroy(); gm.glow.destroy(); this.addGems(1, gm.x, gm.y); this.autoSave(); }
+      if (Math.abs(p.x - gm.x) < 28 && Math.abs(p.y - gm.y) < 38) { this.gemGot.add(gm.id); gm.spr.setVisible(false); gm.glow.setVisible(false); this.addGems(1, gm.x, gm.y); this.autoSave(); }
     });
     this.forgeObjs.forEach(f => {
       if (this.forgeGot.has(f.id)) return;
       if (Math.abs(p.x - f.x) < 30 && Math.abs(p.y - f.y) < 40) {
-        this.forgeGot.add(f.id); f.spr.destroy(); f.glow.destroy(); SFX.pick(); this.poof(f.x, f.y, 10, 0xffd98a);
+        this.forgeGot.add(f.id); f.spr.setVisible(false); f.glow.setVisible(false); SFX.pick(); this.poof(f.x, f.y, 10, 0xffd98a);
         if (this.wlv < 5) { this.wlv++; this.toast(`¡${this.wpn.name} mejorada! Nivel ${this.wlv}`, 4500); } else this.toast('Tu arma ya está al máximo.');
         this.autoSave();
       }
@@ -967,10 +968,35 @@ Object.assign(CastleScene.prototype, {
     this.activeT = 0;
   },
   savePersonal(a) {
+    this.snap = this.captureState(); // nuevo punto de control: lo guardado al descansar en la hoguera
     socket.emit('save', { souls: this.souls, inv: this.inv, wlv: this.wlv, maxHp: this.maxHp, cry: [...this.cryGot], forge: [...this.forgeGot],
       altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: [...this.gemGot], perm: this.perm, bg: [...this.bossGemsPaid], hammer: this.hammerState, met: this.smithMet });
   },
 
+  // ---- punto de control: lo conseguido desde el último descanso en una hoguera se pierde al morir
+  captureState() {
+    return { souls: this.souls, inv: Object.assign({}, this.inv), wlv: this.wlv, maxHp: this.maxHp, abil: Object.assign({}, this.abil), cry: [...this.cryGot], forge: [...this.forgeGot], gem: [...this.gemGot], gems: this.gems,
+      perm: Object.assign({}, this.perm), element: this.element, travel: this.travel, hammer: this.hammerState, met: this.smithMet, elite: [...this.eliteGot], pages: [...this.pagesGot], bg: [...this.bossGemsPaid] };
+  },
+  revertToCheckpoint() {
+    const s = this.snap; if (!s) return;
+    const before = JSON.stringify([this.abil, this.cryGot.size, this.forgeGot.size, this.gemGot.size, this.wlv, this.maxHp, this.element, this.perm, this.pagesGot.size, this.eliteGot.size, this.hammerState]);
+    // los objetos recogidos después del punto de control vuelven a su sitio
+    const back = (set, keep, list, show) => { [...set].forEach(id => { if (!keep.includes(id)) { set.delete(id); const o = list.find(x => x.id === id); if (o) show(o); } }); };
+    back(this.cryGot, s.cry, this.crystals, c => c.spr.setVisible(true));
+    back(this.forgeGot, s.forge, this.forgeObjs, f => { f.spr.setVisible(true); f.glow.setVisible(!LITE); });
+    back(this.gemGot, s.gem, this.gemObjs, gm => { gm.spr.setVisible(true); gm.glow.setVisible(!LITE); });
+    back(this.pagesGot, s.pages, this.pageObjs, pg => { pg.spr.setVisible(true); pg.glow.setVisible(!LITE); });
+    this.eliteGot = new Set(s.elite);
+    // las gemas que soltó un jefe ya derrotado no se pierden (el jefe no vuelve): solo vuelven a su sitio las recogidas por el mapa
+    let bossGems = 0; this.bossGemsPaid.forEach(id => { if (!s.bg.includes(id) && GEMS_BOSS[id]) bossGems += GEMS_BOSS[id]; });
+    this.souls = s.souls; this.inv = Object.assign({}, s.inv); this.wlv = s.wlv; this.maxHp = s.maxHp; this.gems = s.gems + bossGems; this.perm = Object.assign({}, s.perm); this.element = s.element; this.travel = s.travel; this.smithMet = s.met;
+    Object.keys(this.abil).forEach(k => { this.abil[k] = !!s.abil[k]; });
+    this.hammerState = s.hammer; if (this.progress.bosses.includes('reina') && this.hammerState === 0) this.hammerState = 1;
+    this.syncRelics(); this.applyProgress(this.progress, true); this.syncNpcs(); this.wallBroken();
+    const after = JSON.stringify([this.abil, this.cryGot.size, this.forgeGot.size, this.gemGot.size, this.wlv, this.maxHp, this.element, this.perm, this.pagesGot.size, this.eliteGot.size, this.hammerState]);
+    if (before !== after) this.time.delayedCall(600, () => this.toast('Has vuelto a tu último punto de control: lo conseguido desde entonces se pierde. Las reliquias de los jefes siguen en sus salas.', 7000));
+  },
   // ---- diálogo
   buildDialogueUi() {
     const f = (s, c = '#fff') => ({ fontSize: s, fontFamily: 'Courier New', color: c, wordWrap: { width: 720 } });
