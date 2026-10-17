@@ -35,6 +35,11 @@ const SFX = {
   swing: () => beep(320, 0.09, 'sawtooth', 0.03, -180), hit: () => beep(140, 0.12, 'square', 0.05, -70),
   hurt: () => beep(110, 0.3, 'sawtooth', 0.06, -60), jump: () => beep(300, 0.1, 'square', 0.025, 220),
   dash: () => beep(180, 0.15, 'sawtooth', 0.03, 300), pick: () => { beep(520, 0.1, 'triangle', 0.05); setTimeout(() => beep(780, 0.15, 'triangle', 0.05), 90); },
+  step: () => beep(95 + Math.random() * 25, 0.045, 'triangle', 0.012, -30), land: () => beep(85, 0.1, 'square', 0.04, -40),
+  die: () => { beep(200, 0.18, 'sawtooth', 0.04, -140); setTimeout(() => beep(90, 0.2, 'square', 0.03, -50), 80); },
+  warp: () => { beep(240, 0.35, 'sine', 0.05, 520); setTimeout(() => beep(900, 0.25, 'triangle', 0.035, -500), 120); },
+  rest: () => { [330, 415, 495].forEach((f, i) => setTimeout(() => beep(f, 0.5, 'sine', 0.035), i * 110)); },
+  elem: () => { beep(600, 0.12, 'square', 0.03, 400); setTimeout(() => beep(1000, 0.2, 'triangle', 0.035, -300), 90); },
   boss: () => beep(70, 0.5, 'sawtooth', 0.07, -20), altar: () => { beep(440, 0.12, 'sine', 0.05); setTimeout(() => beep(660, 0.2, 'sine', 0.05), 100); },
 };
 
@@ -1005,7 +1010,7 @@ class CastleScene extends Phaser.Scene {
     this.ents.forEach(e => { if (e.type === 'saw') e.spr.angle += 520 * dt; });
     let boss = null;
     this.ents.forEach(e => { if (e.boss && e.aggro) boss = e; if (e.boss) { if (e.tele) e.spr.setTint(0xff7777); else if (e.shield) e.spr.setTint(0x8fc8ff); else if (e.flash <= 0) e.spr.clearTint(); } });
-    this.bossBar.clear(); Music.setBoss(!!boss);
+    this.bossBar.clear(); Music.setBossKind(boss ? (['aurora', 'archon', 'clock'].includes(boss.type) ? 1 : ['vesper', 'reina', 'conde'].includes(boss.type) ? 2 : 0) : 0); Music.setBoss(!!boss);
     if (boss) {
       this.bossBar.fillStyle(0x000000, 0.7).fillRect(SW / 2 - 202, SH - 56, 404, 14).fillStyle(0xcc2233, 1).fillRect(SW / 2 - 200, SH - 54, 400 * Math.max(0, boss.hp / boss.max), 10);
       this.bossName.setText((boss.name || '') + (boss.prize ? '  ·  premio: ' + boss.prize.split(':')[0] : ''));

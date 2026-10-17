@@ -425,6 +425,9 @@ Object.assign(CastleScene.prototype, {
     this.invuln = Math.max(0, this.invuln - dt); this.atkCd -= dt; this.dashCd -= dt; this.stun -= dt;
     p.setAlpha(this.invuln > 0 && ((time >> 6) & 1) && this.dashT <= 0 ? 0.35 : (this.dashT > 0 ? 0.5 : 1));
     const onFloor = b.blocked.down || b.touching.down;
+    if (onFloor && !this.wasFloor && (this.lastVy || 0) > 260) SFX.land();
+    if (onFloor && !ui && Math.abs(b.velocity.x) > 40 && (this.stepT = (this.stepT || 0) - dt) <= 0) { this.stepT = 0.3; SFX.step(); }
+    this.wasFloor = onFloor; this.lastVy = b.velocity.y;
     if (onFloor) { this.coyote = 0.1; this.jumpsUsed = 0; this.dashAvail = true; if (!this.nearSpikes()) { this.lastGround.x = p.x; this.lastGround.y = p.y; } } else this.coyote -= dt;
     const left = !ui && (held(K_.LEFT, K_.A) || touch.left || pad.left), right = !ui && (held(K_.RIGHT, K_.D) || touch.right || pad.right);
     const crouchHeld = !ui && (held(K_.DOWN, K_.S) || touch.down || pad.down);
@@ -801,6 +804,7 @@ Object.assign(CastleScene.prototype, {
     if (e.dotT > 0) { e.dotT -= dt; e.dotAcc = (e.dotAcc || 0) + dt; if (e.dotAcc >= e.dotTick) { e.dotAcc -= e.dotTick; this.poof(e.spr.x, e.spr.y - 10, 2, e.dotCol); this.damageEnt(e, 1, 0, e.dotBy, undefined, true); } }
   },
   killEnt(e, by) {
+    if (!e.boss) SFX.die();
     let base = (SOULS[e.type] || 0) * (e.elite ? 5 : 1); base = Math.round(base * (1 + 0.2 * (e.zone !== undefined ? e.zone : 0)));
     const x = e.spr.x, y = e.spr.y, summoned = e.summoned, type = e.type, elite = e.elite, name = e.name, reward = e.reward;
     _kill.call(this, e);
@@ -953,7 +957,7 @@ Object.assign(CastleScene.prototype, {
   },
   restAt(a) {
     a.lit = true; this.bonfireLit.add(a.id); this.lastAltar = { x: a.x, y: a.y }; this.lastBonfire = a; this.canAuto = true; this.hp = this.maxHp; this.rebuildLights();
-    SFX.altar(); this.poof(a.x, a.y - 30, 10, 0xffb347);
+    SFX.rest(); this.poof(a.x, a.y - 30, 10, 0xffb347);
     if (this.isHost) this.restReset(); else socket.emit('rest');
     const first = a.big && !this.travel; if (first) this.travel = true;
     this.savePersonal(a);
@@ -1228,7 +1232,7 @@ Object.assign(CastleScene.prototype, {
   imbueGo() {
     const sel = this.imbueList[this.imbueSel]; if (!sel) return; const from = this.curNpc || this.player;
     this.element = sel.id; this.closeImbue(); const col = sel.id ? ELEMENTS[sel.id].tint : 0xffffff;
-    SFX.pick(); this.poof(from.x || this.player.x, (from.y || this.player.y) - 20, 12, col); this.cameras.main.flash(160, (col >> 16) & 255, (col >> 8) & 255, col & 255);
+    SFX.elem(); this.poof(from.x || this.player.x, (from.y || this.player.y) - 20, 12, col); this.cameras.main.flash(160, (col >> 16) & 255, (col >> 8) & 255, col & 255);
     this.toast(sel.id ? 'Arma imbuida de ' + ELEMENTS[sel.id].name + ': ' + ELEMENTS[sel.id].desc : 'Arma sin elemento', 5000); this.autoSave();
   },
   timedStep(time) { // plataformas temporales: aparecen y desaparecen con parpadeo de aviso (cada jugador las ve en su propio ritmo)
@@ -1353,7 +1357,7 @@ Object.assign(CastleScene.prototype, {
     const t = this.travelList[this.travelSel]; if (!t) return; this.closeTravel();
     if (t.a === this.lastBonfire) return;
     const p = this.player; this.poof(p.x, p.y, 10, 0xffb347); p.setPosition(t.a.x, t.a.y - 21); p.body.setVelocity(0, 0); this.lastGround = { x: p.x, y: p.y }; this.invuln = 1.5;
-    this.cameras.main.flash(250, 255, 200, 120); SFX.altar(); this.poof(p.x, p.y, 10, 0xffb347); this.toast('Has viajado a ' + t.name);
+    this.cameras.main.flash(250, 255, 200, 120); SFX.warp(); this.poof(p.x, p.y, 10, 0xffb347); this.toast('Has viajado a ' + t.name);
   },
   closeUi() {
     if (this.travelOpen) this.closeTravel();

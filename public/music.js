@@ -7,7 +7,7 @@ const saveOpts = () => { try { localStorage.setItem('opts', JSON.stringify(OPT))
 const fsz = s => Math.round(parseFloat(s) * OPT.text) + 'px';
 const Music = (() => {
   let ctx = null, master = null, echoIn = null, noiseBuf = null, timer = null, step = 0, nextT = 0;
-  let zone = 0, boss = false, bossPending = null, started = false, muted = false;
+  let zone = 0, bossKind = 0, boss = false, bossPending = null, started = false, muted = false;
   const VOL = 0.34;
   try { muted = localStorage.getItem('mute') === '1'; } catch (e) { /* sin almacenamiento */ }
   // raíz MIDI, tempo, timbre del colchón, extras
@@ -70,8 +70,8 @@ const Music = (() => {
       if (z.royal) tone(mtof(root + chord[0] + 24), t, sd * 6, 'square', 0.02, 1400, 0.5);
     }
     // bajo
-    if (boss) { if (s16 % 2 === 0) tone(mtof(root + chord[0]), t, sd * 1.8, 'sawtooth', 0.075, 520, 0.1); }
-    else if (s16 % 8 === 0) tone(mtof(root + chord[0]), t, sd * 7, 'sine', 0.13, 420, 0.1);
+    if (boss) { if (s16 % 2 === 0) { tone(mtof(root + chord[0]), t, sd * 1.8, 'sawtooth', 0.075, 520, 0.1); if (s16 % 4 === 0) tone(mtof(root + chord[0] + 12), t, sd * 1.6, 'square', 0.025, 900, 0.1); } if (bossKind === 1 && s16 % 8 === 6) tone(mtof(root + chord[2] + 24), t, sd * 2, 'sawtooth', 0.03, 3000, 0.5); if (bossKind === 2 && s16 % 16 === 12) noise(t, 0.3, 0.08, 800); }
+    else if (s16 % 8 === 0) { tone(mtof(root + chord[0]), t, sd * 7, 'sine', 0.13, 420, 0.1); tone(mtof(root + chord[0] + 12), t, sd * 6, 'triangle', 0.05, 900, 0.1); } // la octava de arriba se oye en altavoces pequeños
     // arpegio
     if (boss) { if (!lite() || s16 % 2 === 0) tone(mtof(root + chord[(s16 >> 1) % 3] + 24), t, sd * 1.5, 'square', 0.022, 2200, 0.4); }
     else if (s16 % 2 === 0 && (!lite() || s16 % 4 === 0) && Math.random() < 0.78) tone(mtof(root + chord[(s16 / 2 + bar) % 3 | 0] + 24), t, sd * 2.6, 'triangle', 0.05, 2600, 0.6);
@@ -100,6 +100,7 @@ const Music = (() => {
     },
     stop() { if (timer) clearInterval(timer); timer = null; started = false; if (master) master.gain.value = 0; },
     setZone(z) { if (ZONES[z]) zone = z; },
+    setBossKind(k) { bossKind = k || 0; },
     setBoss(b) { if (b !== boss && bossPending !== b) bossPending = b; },
     toggleMute() {
       muted = !muted; try { localStorage.setItem('mute', muted ? '1' : '0'); } catch (e) { /* ok */ }
