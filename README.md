@@ -38,7 +38,7 @@ Cuatro cazadores vampiro irrumpen en el castillo del Conde. Exploras un mapa con
   | Carmesí | Espada | Sed de sangre: cura el 40 % de los golpes | — |
   | Azul | Lanza (largo alcance) | Visión nocturna | Más daño de los proyectiles |
   | Esmeralda | Arco | Cazadora de almas (+50 % de almas) | +50 % de daño recibido y no rompe muros sin bombas |
-  | Violeta | Guadaña | Piel de sombra (+2 corazones) | Se mueve más lento |
+  | Violeta | Guadaña | Piel de sombra (+2 corazones) | Se mueve más lento (lo compensa con un **gancho automático** al borde si el salto se queda corto) |
 
 - **Metroidvania de verdad:** Impulso, Doble salto y Salto de pared abren zonas y atajos nuevos. Cada vampiro conquista sus propios poderes y tiene su propia partida guardada.
 - **Oscuridad y luz como mecánica:** las antorchas se encienden y apagan (`E`) y su estado se comparte. Los fantasmas no ven a quien está bajo la luz, los murciélagos huyen de ella y el Guardián del Reloj es invulnerable mientras haya luz.
@@ -108,7 +108,7 @@ scripts/validate.js  Validador de alcanzabilidad del mapa
 docs/              Documentación y capturas
 ```
 
-Más detalle técnico en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
+Guía para preparar el entorno (Node, Git, VS Code) en [`docs/DESARROLLO.md`](docs/DESARROLLO.md). Más detalle técnico en [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md).
 
 ## Hoja de ruta
 

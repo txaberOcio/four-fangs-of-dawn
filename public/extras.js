@@ -362,6 +362,8 @@ Object.assign(CastleScene.prototype, {
     if (!held(K_.UP, K_.W, K_.SPACE, K_.Z) && !touch.jump && !pad.jump && b.velocity.y < -200 && this.dashT <= 0 && this.stun <= 0) b.setVelocityY(b.velocity.y * 0.55);
     if (this.abil.wj && wall && !onFloor && b.velocity.y > P.slide && dir === wall) b.setVelocityY(P.slide);
 
+    this.hookStep(dt, onFloor, dir, ui);
+
     // impulso (dash)
     if (!ui && this.abil.dash && inp.dashPress && this.dashCd <= 0 && this.dashAvail && this.stun <= 0 && (!this.crouching || this.canStand())) {
       if (this.crouching) this.setCrouch(false);
@@ -383,6 +385,51 @@ Object.assign(CastleScene.prototype, {
     // cerrar tienda/diálogo si te alejas
     const cn = this.curNpc;
     if ((this.shopOpen || this.dlg) && cn && (Math.abs(cn.x - p.x) > 150 || Math.abs(cn.y - p.y) > 150)) this.closeUi();
+  },
+
+  // ---- gancho (vampiro morado): si el salto se queda corto, se engancha al borde y le arrastra
+  hookSolid(wx, wy) { const t = this.fg.getTileAtWorldXY(wx, wy); return !!t && t.index >= 0 && [K.SOLID, K.FLOOR, K.CRACK].includes(t.index % 8); },
+  hookFind(dir) {
+    const b = this.player.body, cx = b.center.x, feet = b.bottom, gx0 = Math.floor(cx / T);
+    for (let i = 1; i <= 4; i++) {
+      const gx = gx0 + dir * i;
+      for (let gy = Math.floor((feet - 3.6 * T) / T); gy <= Math.floor((feet - 4) / T); gy++) {
+        const t = this.fg.getTileAt(gx, gy), tu = this.fg.getTileAt(gx, gy - 1), tu2 = this.fg.getTileAt(gx, gy - 2);
+        const st = !!t && t.index >= 0 && [K.SOLID, K.FLOOR, K.CRACK, K.ONEWAY].includes(t.index % 8);
+        const free = q => !q || q.index < 0 || ![K.SOLID, K.FLOOR, K.CRACK].includes(q.index % 8);
+        if (!st || !free(tu) || !free(tu2)) continue;
+        const tx = (gx + 0.5) * T, ty = gy * T - (b.height / 2) - 1;
+        let clear = true; // camino libre: primero hacia arriba y luego hacia el borde
+        const py = b.center.y;
+        for (let s = 0; s <= 1 && clear; s += 0.125) if (this.hookSolid(cx, py + (ty - py) * s) || this.hookSolid(cx + (tx - cx) * s, ty)) clear = false;
+        if (clear) return { tx, ty: ty + (this.player.y - py) };
+      }
+    }
+    return null;
+  },
+  hookStep(dt, onFloor, dir, ui) {
+    if (this.color !== 'purple') return;
+    const p = this.player, b = p.body;
+    this.hookCd = (this.hookCd || 0) - dt;
+    if (onFloor) this.hookUsed = false;
+    const h = this.hook;
+    if (h) { // arrastre hacia el borde
+      h.t += dt;
+      const up = p.y > h.ty + 6; // fase 1: subir al nivel del borde; fase 2: avanzar sobre él
+      const dx = up ? 0 : h.tx - p.x, dy = up ? h.ty - p.y : 0, d = Math.hypot(dx, dy);
+      if ((!up && Math.abs(h.tx - p.x) < 10) || h.t > 0.7 || this.stun > 0 || this.dead) {
+        this.hook = null; b.setAllowGravity(true); b.setVelocity(Math.sign(h.tx - p.x) * 60, 0); this.hookCd = 0.5; h.g.destroy(); return;
+      }
+      b.setAllowGravity(false); b.setVelocity(d ? dx / d * 520 : 0, d ? dy / d * 520 : 0);
+      h.g.clear().lineStyle(2, 0xd9b3ff, 1).lineBetween(p.x, p.y - 4, h.hx, h.hy);
+      return;
+    }
+    if (onFloor || ui || this.hookUsed || this.hookCd > 0 || this.dashT > 0 || this.stun > 0 || this.wjLock > 0) return;
+    if (!dir || dir !== this.facing || b.velocity.y < 30) return;
+    const tg = this.hookFind(dir);
+    if (!tg) return;
+    this.hook = { tx: tg.tx, ty: tg.ty, hx: tg.tx, hy: tg.ty + b.height / 2 + 1, t: 0, g: this.add.graphics().setDepth(9) };
+    this.hookUsed = true; this.dashAvail = true; SFX.dash(); this.poof(tg.tx, tg.ty + 14, 3, 0xd9b3ff);
   },
 
   // ---- armas

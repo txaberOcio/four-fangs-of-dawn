@@ -1,0 +1,8 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    { "label": "Arrancar servidor", "type": "npm", "script": "start", "problemMatcher": [] },
+    { "label": "Comprobar sintaxis", "type": "npm", "script": "check", "problemMatcher": [] },
+    { "label": "Validar mapa", "type": "npm", "script": "validate", "problemMatcher": [] }
+  ]
+}

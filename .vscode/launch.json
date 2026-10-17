@@ -1,0 +1,19 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Servidor del juego",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/server/index.js",
+      "console": "integratedTerminal"
+    },
+    {
+      "name": "Validar mapa",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/validate.js",
+      "console": "integratedTerminal"
+    }
+  ]
+}

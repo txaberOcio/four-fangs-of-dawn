@@ -16,7 +16,7 @@ const HERO_INFO = {
   red: { weapon: 'Espada', passive: 'Sed de sangre', desc: 'Espada equilibrada. Pasiva: 40% de curarse al golpear (los demás, 25%).' },
   blue: { weapon: 'Lanza', passive: 'Visión nocturna', desc: 'Lanza de gran alcance. Pasiva: ve mucho más lejos en la oscuridad. Desventaja: recibe más daño de los ataques a distancia.' },
   green: { weapon: 'Arco', passive: 'Cazadora de almas', desc: 'Dispara flechas a distancia. Pasiva: +50% de almas al matar. Desventaja: recibe +50% de daño y no rompe muros (necesita Bombas de la tienda).' },
-  purple: { weapon: 'Guadaña', passive: 'Piel de sombra', desc: 'Guadaña lenta y muy dañina. Pasiva: +2 corazones de vida máxima. Desventaja: se mueve más lento.' },
+  purple: { weapon: 'Guadaña', passive: 'Piel de sombra', desc: 'Guadaña lenta y muy dañina. Pasiva: +2 corazones de vida máxima. Desventaja: se mueve más lento (compensa con un gancho automático: si el salto se queda corto, se engancha al borde y sube).' },
 };
 const MAPS = {
   hero: [
