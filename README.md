@@ -85,7 +85,7 @@ En **Windows** también puedes hacer doble clic en `Iniciar-servidor.bat`: insta
 
 ### Instalador para Windows (sin instalar Node)
 
-Si alguien solo quiere probar el juego, puedes darle **`FourFangsOfDawn-Setup.exe`**: lo instala en su carpeta de usuario (sin permisos de administrador), crea accesos directos en el escritorio y en el menú Inicio y abre el juego en el navegador. Para jugar con amigos en la misma red, el que ejecuta el juego comparte la dirección `http://IP:3000` que muestra su ventana. Sus partidas se guardan en `%APPDATA%FourFangsOfDawn`. Windows puede avisar de que el programa no está firmado: pulsa *Más información → Ejecutar de todos modos*.
+Si alguien solo quiere probar el juego, puedes darle **`FourFangsOfDawn-Setup.exe`**: lo instala en su carpeta de usuario (sin permisos de administrador), crea accesos directos en el escritorio y en el menú Inicio y abre el juego en el navegador. Para jugar con amigos en la misma red, el que ejecuta el juego comparte la dirección `http://IP:3000` que muestra su ventana. Sus partidas se guardan en `%APPDATA%\FourFangsOfDawn`. Windows puede avisar de que el programa no está firmado: pulsa *Más información → Ejecutar de todos modos*.
 
 Se genera con `npm run build:exe` (salida en `dist/`), ver [docs/DESARROLLO.md](docs/DESARROLLO.md).
 

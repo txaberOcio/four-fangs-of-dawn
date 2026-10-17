@@ -128,8 +128,8 @@ npm run build:exe
 
 Crea en `dist/` (no se sube a Git):
 
-- `FourFangsOfDawn.exe`: servidor y juego en un solo ejecutable (usa `@yao-pkg/pkg`, descarga Node la primera vez). Al abrirlo arranca el servidor, abre el navegador y guarda cuentas y partidas en `%APPDATA%FourFangsOfDawn`. Si el puerto 3000 está ocupado prueba el siguiente. Variables útiles para pruebas: `PORT` y `NO_OPEN=1` (no abrir el navegador).
-- `FourFangsOfDawn-Setup.exe`: instalador autoextraíble hecho con IExpress (viene con Windows): copia el juego a `%LOCALAPPDATA%ProgramsFour Fangs of Dawn`, crea accesos directos y un desinstalador. Los scripts están en `installer/`.
+- `FourFangsOfDawn.exe`: servidor y juego en un solo ejecutable (usa `@yao-pkg/pkg`, descarga Node la primera vez). Al abrirlo arranca el servidor, abre el navegador y guarda cuentas y partidas en `%APPDATA%\FourFangsOfDawn`. Si el puerto 3000 está ocupado prueba el siguiente. Variables útiles para pruebas: `PORT` y `NO_OPEN=1` (no abrir el navegador).
+- `FourFangsOfDawn-Setup.exe`: instalador autoextraíble hecho con IExpress (viene con Windows): copia el juego a `%LOCALAPPDATA%\Programs\Four Fangs of Dawn`, crea accesos directos y un desinstalador. Los scripts están en `installer/`.
 
 No está firmado digitalmente, así que Windows SmartScreen puede mostrar un aviso la primera vez.
 
