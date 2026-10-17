@@ -89,7 +89,9 @@ setInterval(() => { const now = Date.now(); for (const [k, f] of failures) if (f
 const app = express();
 app.disable('x-powered-by');
 if (process.env.TRUST_PROXY) app.set('trust proxy', 1);
-app.use((req, res, next) => { res.setHeader('X-Content-Type-Options', 'nosniff'); res.setHeader('Referrer-Policy', 'no-referrer'); next(); });
+app.use((req, res, next) => { res.setHeader('X-Content-Type-Options', 'nosniff'); res.setHeader('Referrer-Policy', 'no-referrer'); res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' ws: wss:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
+  next(); });
 app.use('/vendor/phaser.min.js', express.static(path.join(__dirname, '..', 'node_modules', 'phaser', 'dist', 'phaser.min.js')));
 app.use('/vendor/socket.io.min.js', express.static(path.join(__dirname, '..', 'node_modules', 'socket.io', 'client-dist', 'socket.io.min.js')));
 app.use(express.static(path.join(__dirname, '..', 'public'), { etag: false, maxAge: 0 }));
