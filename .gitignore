@@ -13,3 +13,6 @@ Thumbs.db
 
 # Ejecutables e instaladores generados
 dist/
+
+# Accesos directos personales
+*.lnk
