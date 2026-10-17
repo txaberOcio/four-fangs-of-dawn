@@ -8,7 +8,7 @@ const ZONE_PAL = [
   { base: '#7a2f3a', dark: '#4d1a23', light: '#a8505e', mortar: '#28090f', bg: '#2a0f16', bgd: '#1f0a10', glow: '#ff7a7a' },
   { base: '#2f2b3a', dark: '#211e2b', light: '#4a4458', mortar: '#15121c', bg: '#100d17', bgd: '#0c0a12', glow: '#8870a0' }, // roca
   { base: '#a8708a', dark: '#6a3f58', light: '#e0a8b8', mortar: '#3a1e2c', bg: '#2c1626', bgd: '#201019', glow: '#ffd6a0' }, // Torres del Alba
-  { base: '#3a5a6a', dark: '#223644', light: '#5f8ea0', mortar: '#10202a', bg: '#0f1c26', bgd: '#0a141b', glow: '#7ad8ff' }, // El Abismo
+  { base: '#5a463a', dark: '#35271f', light: '#8a6a52', mortar: '#1e1410', bg: '#1a100c', bgd: '#110a08', glow: '#ff7a2a' }, // El Abismo: cueva de roca y lava
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
@@ -134,6 +134,17 @@ function drawTile(ctx, z, k, ox) {
     for (let i = 0; i < 8; i++) r(Math.floor(rnd() * 15), Math.floor(rnd() * 15), 1, 1, p.mortar);
     return;
   }
+  if (z === 8 && k !== 5) { // cueva: roca irregular en lugar de ladrillos
+    const rock = (base, d, l) => { r(0, 0, 16, 16, base); for (let i = 0; i < 10; i++) r(Math.floor(rnd() * 14), Math.floor(rnd() * 14), 2 + Math.floor(rnd() * 4), 2 + Math.floor(rnd() * 3), rnd() < 0.5 ? d : l); for (let i = 0; i < 5; i++) r(Math.floor(rnd() * 15), Math.floor(rnd() * 15), 1, 1, p.mortar); };
+    if (k === 0) rock(p.base, p.dark, p.light);
+    else if (k === 1) { rock(p.base, p.dark, p.light); r(0, 0, 16, 2, p.light); r(0, 2, 16, 1, p.dark); for (let i = 0; i < 3; i++) r(Math.floor(rnd() * 15), 0, 1, 1, p.glow); }
+    else if (k === 2) { r(0, 0, 16, 5, p.base); r(0, 0, 16, 1, p.light); r(0, 4, 16, 1, p.dark); r(0, 5, 16, 1, p.mortar); [3, 8, 12].forEach(x => r(x, 2, 2, 1, p.dark)); }
+    else if (k === 3) rock(p.bg, p.bgd, '#241610');
+    else if (k === 4) { rock(p.base, p.dark, p.light); r(7, 5, 1, 3, p.mortar); r(8, 8, 1, 3, p.mortar); }
+    else if (k === 6) { rock(p.bg, p.bgd, '#241610'); r(5, 0, 6, 16, p.dark); r(6, 0, 2, 16, p.base); r(9, 0, 1, 16, p.mortar); }
+    else { rock(p.bg, p.bgd, '#241610'); r(7, 0, 2, 16, '#ff7a2a'); r(6, 5, 1, 4, '#c0501a'); r(9, 9, 1, 4, '#c0501a'); r(7, 0, 2, 16, 'rgba(255,200,80,0.35)'); } // veta de lava
+    return;
+  }
   switch (k) {
     case 0: bricks(p.base, p.mortar, p.light); break;
     case 1: bricks(p.base, p.mortar, p.light); r(0, 0, 16, 3, p.light); r(0, 3, 16, 1, p.dark); for (let i = 0; i < 4; i++) r(Math.floor(rnd() * 14), 3, 2, 2, p.dark); break;
@@ -181,6 +192,7 @@ function buildArt(scene) {
   makeMap('npc_prisoner', 'npcMad', madPal('#3a2a1a', '#8a8a96'), 1);
   makeMap('npc_monk', 'npcMad', madPal('#7a5a3a', '#7a5a3a'), 1);
   makeMap('npc_oracle', 'npcMad', madPal('#ffe6b0', '#c9a0ff'), 1);
+  makeMap('npc_smith', 'npcMad', madPal('#2a1a10', '#8a4a1a'), 1);
   makeMap('npc_watcher', 'npcMad', madPal('#b8d8ff', '#5a7aa8'), 1);
   makeMap('archon', 'bishop', MAP_PAL.archon, 1); makeMap('reina', 'garg', MAP_PAL.reina, 1); makeMap('aurora', 'bishop', MAP_PAL.aurora, 1); makeMap('vesper', 'conde', MAP_PAL.vesper, 1);
   [['fang', '#e8e8f0', '#ffffff'], ['talis', '#7ad8ff', '#e0f7ff'], ['pot', '#ff3b5c', '#ffd0da'], ['pot2', '#b43bff', '#ecd0ff'], ['spd', '#3bd9ff', '#d0f6ff'], ['str', '#ff9a3b', '#ffe2c0'], ['lamp', '#ffe066', '#fffbe0'], ['ward', '#c9ced8', '#ffffff'], ['rage', '#d4ff3b', '#f6ffd0'], ['tonic', '#3bff9a', '#d0ffe6'], ['fruit', '#ff3bd9', '#ffd0f4']].forEach(([k, c, l]) => makeMap('it_' + k, 'bottle', { D: '#8a6a4a', C: c, L: l }, 1));

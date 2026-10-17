@@ -10,7 +10,7 @@
     wjY: -430, wjX: 190, wjLock: 0.18, slide: 110, maxFall: 700,
     bodyW: 30, bodyH: 39,
   };
-  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'El Abismo'];
+  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo'];
   const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
@@ -115,7 +115,7 @@
   // --- El Abismo: tras planear sobre los pinchos de la Cripta Olvidada, una caída libre lleva a la Forja de los Elementos y a la Gran Hoguera ---
   area('caida', 'Caída Libre', 8, 0, 7, 1, 2, [['E', 'saw', 9, 9, { ax: 'h', r: 60, w: 1.3 }], ['E', 'saw', 16, 18, { ax: 'h', r: 70, w: 1.6 }], ['E', 'saw', 10, 27, { ax: 'h', r: 60, w: 1.1 }],
     ['E', 'bat', 5, 6], ['E', 'bat', 20, 14], ['E', 'bat', 12, 23]]);
-  area('fragua', 'Forja de los Elementos', 8, 1, 8, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['sforge', 30, 15], ['E', 'kn', 12, 16], ['E', 'gh', 22, 9], ['E', 'bat', 40, 7]]);
+  area('fragua', 'Forja de los Elementos', 8, 1, 8, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['npc', 'smith', 26, 16], ['sforge', 30, 15]]);
   area('gran', 'La Gran Hoguera', 8, 3, 8, 1, 1, [['bigfire', 13, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
 
   // Gemas: la segunda moneda. Se encuentran por el mapa (zonas opcionales y secretos) y las sueltan los jefes y los élites.

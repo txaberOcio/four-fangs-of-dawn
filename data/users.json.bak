@@ -1,0 +1,684 @@
+{
+  "prueba1": {
+    "salt": "1dc7cb86d617385273662b77cc47d420",
+    "hash": "7cf1479914de5e6e30a54bbe02d09b661fc05d1a95501f7d94f600d8ce278264c3d49ed52749536119cb74be5b280ad684ceee2d6e3fffcf380ee14e95969fb5",
+    "created": "2026-10-16T18:33:55.286Z",
+    "stats": {
+      "games": 6,
+      "wins": 6,
+      "bosses": 12,
+      "bestTime": 9
+    },
+    "saves": {
+      "blue": {
+        "me": {
+          "souls": 12,
+          "inv": {
+            "pot": 1,
+            "pot2": 0,
+            "spd": 0,
+            "str": 0,
+            "lamp": 0,
+            "amu": 0,
+            "ward": 0,
+            "rage": 0,
+            "tonic": 0,
+            "fruit": 0
+          },
+          "wlv": 1,
+          "maxHp": 5,
+          "cry": [],
+          "forge": [],
+          "abil": {
+            "dash": false,
+            "dj": false,
+            "wj": false
+          },
+          "altar": "a2",
+          "lit": [
+            "a2"
+          ],
+          "visited": [
+            "vest"
+          ]
+        },
+        "world": {
+          "abilities": {
+            "dash": false,
+            "dj": false,
+            "wj": false
+          },
+          "bosses": [],
+          "broken": [],
+          "torches": {}
+        },
+        "at": "2026-10-16T21:58:13.144Z"
+      },
+      "red": {
+        "me": {
+          "souls": 40,
+          "inv": {
+            "pot": 1,
+            "pot2": 0,
+            "spd": 0,
+            "str": 0,
+            "lamp": 0,
+            "amu": 0,
+            "ward": 0,
+            "rage": 0,
+            "tonic": 0,
+            "fruit": 0
+          },
+          "wlv": 2,
+          "maxHp": 6,
+          "cry": [],
+          "forge": [],
+          "abil": {
+            "dash": true,
+            "dj": false,
+            "wj": false
+          },
+          "altar": "a_naveS_1",
+          "lit": [
+            "a_vest_1",
+            "a_naveS_1"
+          ],
+          "visited": [
+            "vest",
+            "naveS"
+          ]
+        },
+        "world": {
+          "abilities": {
+            "dash": false,
+            "dj": false,
+            "wj": false
+          },
+          "bosses": [],
+          "broken": [],
+          "torches": {}
+        },
+        "at": "2026-10-16T22:10:49.006Z"
+      },
+      "green": {
+        "me": {
+          "souls": 90,
+          "inv": {
+            "pot": 0,
+            "pot2": 0,
+            "spd": 0,
+            "str": 0,
+            "lamp": 0,
+            "amu": 0,
+            "ward": 0,
+            "rage": 0,
+            "tonic": 0,
+            "fruit": 0
+          },
+          "wlv": 1,
+          "maxHp": 5,
+          "cry": [],
+          "forge": [],
+          "abil": {
+            "dash": true,
+            "dj": false,
+            "wj": false
+          },
+          "altar": "a_vest_1",
+          "lit": [
+            "a_vest_1"
+          ],
+          "visited": [
+            "vest",
+            "cubil"
+          ]
+        },
+        "world": {
+          "abilities": {
+            "dash": false,
+            "dj": false,
+            "wj": false
+          },
+          "bosses": [
+            "garg"
+          ],
+          "broken": [],
+          "torches": {}
+        },
+        "at": "2026-10-16T22:15:59.176Z"
+      }
+    }
+  },
+  "botA4751": {
+    "salt": "fcce632bc40e1a7584b5fbd77260021c",
+    "hash": "c6d42ca5738dc43ed31875595794872fb8eeef830a58c9a612dda8c0f30ca06f86f5491919156a0575034a3d278ee0916e781cb6236554927e9158a89133c318",
+    "created": "2026-10-16T18:34:46.371Z",
+    "stats": {
+      "games": 1,
+      "wins": 1,
+      "bosses": 0,
+      "bestTime": 9
+    }
+  },
+  "botB4751": {
+    "salt": "955110c5332b62beb776455f4a55ff7f",
+    "hash": "a45160c9264a661e02b21880706a811e4047bb8d1068b44019b7fac76269313ac2cc266cfadec05a0be6bc6803a5524be3e3e65dbbd2eb0d37a5abafc9b5be08",
+    "created": "2026-10-16T18:34:46.413Z",
+    "stats": {
+      "games": 1,
+      "wins": 1,
+      "bosses": 0,
+      "bestTime": 9
+    }
+  },
+  "Txaber": {
+    "salt": "72cf2972bd377229cebfa0fe99629e51",
+    "hash": "1734e78e0cedc232f474c65a6ef644a722cd1a680efaa61bbb9d94bf048eda0ed6f7821ca50edf5573f7a68d46b23359246a92de06f9a303cd1425b9802c8513",
+    "created": "2026-10-16T18:37:49.522Z",
+    "stats": {
+      "games": 1,
+      "wins": 1,
+      "bosses": 0,
+      "bestTime": 33.2
+    }
+  },
+  "Stella": {
+    "salt": "949bcbf3fabb76b5c6be794e6a70a1b5",
+    "hash": "e54d216e426b4b8c4691bd64f3346d8ba404d183e023da9bcffd69694dcf347204ad5a6ea46189d254c6403bc5cae539f3b541795caff86956e32d04ad145954",
+    "created": "2026-10-16T18:40:26.433Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "prueba2": {
+    "salt": "d4d3a9895fe8de5cff7018d6b782dd0e",
+    "hash": "740912c68e48aceb89e0eb8887679a7984e76e9ebae7006e5d54f8323c82b3eca2972e8da91ed1fd700609b7a5150b5c9936125963b456a54d82a4e4f3e89988",
+    "created": "2026-10-16T18:42:22.245Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "botC7027": {
+    "salt": "9b4bc018c7c7720cb553f5b219c1ecd3",
+    "hash": "bddc0810c063e66b5e5fbe3bab3dd8b1cd5ae34b30fe89d404e40c99aa7f8fb9d4144da370bec55e06744146f87de7ec495be19b1ac38302b51f8be8913e7195",
+    "created": "2026-10-16T19:04:26.398Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "TXABER": {
+    "salt": "21d79f79ad9f43aedcdc240e029da9a9",
+    "hash": "5e76cf7048450fd87708f2b1be8f70d2a137597d1364bf8c6b16a48cdc4d30b7238558f6d6bbbc073a1eca618c859304714ac8ef0fd0e183784692cf9ffab325",
+    "created": "2026-10-16T19:34:46.592Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "botD4297": {
+    "salt": "b21674d5803e19328c6c806a82fe49b1",
+    "hash": "26ce1653b22fc77609ce5475cb742aec6d44c072372dba0ff48587a704a5982c8e6d14216c91783755bab7cd52bd32640136906f681fe3b46e9f45de31553ab8",
+    "created": "2026-10-16T19:53:53.611Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "botE5783": {
+    "salt": "115b32ae295021596bc0f56f945813f2",
+    "hash": "529a68f817360657f9afe7cfa18bf47159e89786f3fe4e414be9b495f3daf445dacd8623e8cfb7f774fb3f571a6fea0973838492a276ecb9ded2b2747fb8ccee",
+    "created": "2026-10-16T20:12:11.592Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "botF3268": {
+    "salt": "77d56d9d4c19b7f57fea317d0e43501b",
+    "hash": "a93308fc670b02cef98bb21b02223d98250184433b4c5c9f2b00ad4779cf982d9526c6e1cbb3cb76de0ebf6cbb1f86fcf20cd76917d219501690e7b14e37e336",
+    "created": "2026-10-16T20:13:11.670Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "pepe": {
+    "salt": "0b793da3b910f3d7854910f0203c270e",
+    "hash": "3b997b8cf055037253ed1daa365d6c6ecf3562eba39febb10ecc94abff821c71ca5934b850f34dea4ca2dfede071b65114f5ca1d080adf813e2c2e06feaa6cf0",
+    "created": "2026-10-16T20:16:35.732Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "botG6880": {
+    "salt": "c89e219d785a566ec2f0b6c0bba2d4e5",
+    "hash": "531127a40179d012e919873067b09b462b1ed324ba7f92cccd4c3ab6373d6c5d8eee5b70234d77dfc6d807fd64a82594cf1f599cb580922a1e9930bca4bcb5ae",
+    "created": "2026-10-16T20:34:05.108Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "txa": {
+    "salt": "dcd1a391d4dc830c49b6562f031600b0",
+    "hash": "d8bad7837f82e0094c5ce375c66f8aa126fb0a95500553c8d6c4cfe2830f1fb601a47dd90ea6295fcbbe7f957536e2eb27f9b94b9e44513a5c38b215e38cf745",
+    "created": "2026-10-16T20:59:07.832Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  },
+  "eee": {
+    "salt": "cd4c59d428b8ae85c5a03983158509c9",
+    "hash": "ffedd7b11ed96e06204ffb5e92f92ac3e54f45304525a70b458ddf3dbb1d5713748ef0dc50f11629fb285577d9790f06a47e09019a9a8cf45824e2bf2788319b",
+    "created": "2026-10-16T21:44:40.042Z",
+    "stats": {
+      "games": 5,
+      "wins": 5,
+      "bosses": 14,
+      "bestTime": 26
+    },
+    "saves": {
+      "green": {
+        "me": {
+          "souls": 281,
+          "inv": {
+            "pot": 0,
+            "pot2": 0,
+            "spd": 0,
+            "str": 0,
+            "lamp": 0,
+            "amu": 0,
+            "ward": 0,
+            "rage": 0,
+            "tonic": 0,
+            "fruit": 0
+          },
+          "wlv": 4,
+          "maxHp": 7,
+          "cry": [
+            "c_hidden_1",
+            "c_obs_1"
+          ],
+          "forge": [
+            "f_bodega_1",
+            "f_lect_1",
+            "f_gbib_1"
+          ],
+          "abil": {
+            "dash": true,
+            "dj": false,
+            "wj": false
+          },
+          "altar": "a_naveS_1",
+          "lit": [
+            "a_vest_1",
+            "a_naveS_1"
+          ],
+          "visited": [
+            "vest",
+            "bodega",
+            "salon",
+            "corr",
+            "foso",
+            "cubil",
+            "osario",
+            "escal",
+            "hidden",
+            "archivo",
+            "lect",
+            "gbib",
+            "obs",
+            "naveS"
+          ]
+        },
+        "world": {
+          "abilities": {
+            "dash": false,
+            "dj": false,
+            "wj": false
+          },
+          "bosses": [
+            "garg"
+          ],
+          "broken": [
+            "78,106",
+            "77,106",
+            "78,105",
+            "78,104",
+            "77,104",
+            "77,105",
+            "103,70",
+            "104,70",
+            "104,68",
+            "103,68",
+            "104,69",
+            "103,69"
+          ],
+          "torches": {
+            "16": true,
+            "17": true,
+            "18": true
+          }
+        },
+        "at": "2026-10-16T22:18:02.285Z"
+      },
+      "purple": {
+        "me": {
+          "souls": 369,
+          "inv": {
+            "pot": 0,
+            "pot2": 0,
+            "spd": 1,
+            "str": 0,
+            "lamp": 0,
+            "amu": 0,
+            "ward": 0,
+            "rage": 1,
+            "tonic": 0,
+            "fruit": 0,
+            "bomb": 0
+          },
+          "wlv": 2,
+          "maxHp": 9,
+          "cry": [
+            "c_torre_1",
+            "c_mazm_1"
+          ],
+          "forge": [
+            "f_torre_1"
+          ],
+          "abil": {
+            "dash": false,
+            "dj": true,
+            "wj": false
+          },
+          "elite": [
+            "Carcelero",
+            "Espectro Penitente",
+            "Relojero Oxidado"
+          ],
+          "pages": [
+            "p_caden_1",
+            "p_naveP_1",
+            "p_galeria_1"
+          ],
+          "seen": [
+            "sk",
+            "bat",
+            "kn",
+            "garg",
+            "gh",
+            "bishop",
+            "saw",
+            "sentinel",
+            "clock"
+          ],
+          "kills": {
+            "sk": 5,
+            "kn": 5,
+            "bat": 6,
+            "gh": 4,
+            "saw": 0,
+            "sentinel": 0,
+            "garg": 1,
+            "bishop": 1,
+            "clock": 0,
+            "conde": 0
+          },
+          "altar": "a_mir_1",
+          "lit": [
+            "a_vest_1",
+            "a_mir_1"
+          ],
+          "visited": [
+            "vest",
+            "salon",
+            "corr",
+            "foso",
+            "cubil",
+            "pozo",
+            "tunel",
+            "calab",
+            "caden",
+            "naveS",
+            "naveP",
+            "abs",
+            "mir",
+            "galeria",
+            "torre",
+            "clkC",
+            "mazm"
+          ]
+        },
+        "world": {
+          "abilities": {
+            "dash": false,
+            "dj": false,
+            "wj": false
+          },
+          "bosses": [
+            "garg",
+            "bishop"
+          ],
+          "broken": [],
+          "torches": {
+            "15": true,
+            "43": true,
+            "46": true,
+            "48": true,
+            "49": true,
+            "50": true,
+            "53": true,
+            "54": true,
+            "55": true,
+            "69": false,
+            "74": false,
+            "75": false
+          }
+        },
+        "at": "2026-10-17T07:40:23.756Z"
+      },
+      "blue": {
+        "me": {
+          "souls": 370,
+          "inv": {
+            "pot": 0,
+            "pot2": 0,
+            "spd": 0,
+            "str": 0,
+            "lamp": 0,
+            "amu": 0,
+            "ward": 0,
+            "rage": 0,
+            "tonic": 0,
+            "fruit": 0,
+            "bomb": 0
+          },
+          "wlv": 1,
+          "maxHp": 6,
+          "cry": [
+            "c_cripta_1"
+          ],
+          "forge": [],
+          "abil": {
+            "dash": true,
+            "dj": true,
+            "wj": true,
+            "wings": true,
+            "eye": false
+          },
+          "elite": [],
+          "pages": [
+            "p_pasR_1"
+          ],
+          "seen": [
+            "sk",
+            "conde",
+            "bat",
+            "gh",
+            "kn",
+            "aurora"
+          ],
+          "kills": {
+            "sk": 0,
+            "kn": 0,
+            "bat": 0,
+            "gh": 1,
+            "saw": 0,
+            "sentinel": 0,
+            "garg": 0,
+            "bishop": 0,
+            "clock": 0,
+            "conde": 1,
+            "aurora": 1,
+            "vesper": 0
+          },
+          "altar": "a_albaH_1",
+          "lit": [
+            "a_vest_1",
+            "a_pasR_1",
+            "a_albaH_1"
+          ],
+          "visited": [
+            "vest",
+            "pasR",
+            "throne",
+            "fosoC",
+            "alba1",
+            "albaH",
+            "albaA",
+            "bodega",
+            "cripta"
+          ]
+        },
+        "world": {
+          "abilities": {
+            "dash": false,
+            "dj": false,
+            "wj": false,
+            "wings": false,
+            "eye": false
+          },
+          "bosses": [
+            "conde",
+            "aurora"
+          ],
+          "broken": [],
+          "torches": {}
+        },
+        "at": "2026-10-17T08:57:15.144Z"
+      },
+      "red": {
+        "me": {
+          "souls": 160,
+          "inv": {
+            "pot": 0,
+            "pot2": 0,
+            "spd": 0,
+            "str": 0,
+            "lamp": 0,
+            "amu": 0,
+            "ward": 0,
+            "rage": 0,
+            "tonic": 0,
+            "fruit": 0,
+            "bomb": 0
+          },
+          "wlv": 1,
+          "maxHp": 5,
+          "cry": [],
+          "forge": [],
+          "abil": {
+            "dash": true,
+            "dj": true,
+            "wj": true,
+            "wings": false,
+            "eye": true
+          },
+          "elite": [],
+          "pages": [],
+          "seen": [
+            "sk",
+            "bat",
+            "vesper"
+          ],
+          "kills": {
+            "sk": 0,
+            "kn": 0,
+            "bat": 0,
+            "gh": 0,
+            "saw": 0,
+            "sentinel": 0,
+            "garg": 0,
+            "bishop": 0,
+            "clock": 0,
+            "conde": 0,
+            "aurora": 0,
+            "vesper": 1
+          },
+          "altar": "a_vest_1",
+          "lit": [
+            "a_vest_1"
+          ],
+          "visited": [
+            "vest",
+            "albaH",
+            "tunel",
+            "albaB"
+          ]
+        },
+        "world": {
+          "abilities": {
+            "dash": false,
+            "dj": false,
+            "wj": false,
+            "wings": false,
+            "eye": false
+          },
+          "bosses": [
+            "vesper"
+          ],
+          "broken": [],
+          "torches": {}
+        },
+        "at": "2026-10-17T08:34:55.785Z"
+      }
+    }
+  },
+  "probador11": {
+    "salt": "54f4750bc2570b679f3702b51484fcb0",
+    "hash": "48bde4cbed35036a9d96b388b72a4763ebaff730fddc9b129ee52c88b5b663bfe0ea69dd4d1da262e859b1877d645b51eab33d3acdbfda9bf0a510e26f5146ab",
+    "created": "2026-10-17T09:31:09.758Z",
+    "stats": {
+      "games": 0,
+      "wins": 0,
+      "bosses": 0,
+      "bestTime": null
+    }
+  }
+}
