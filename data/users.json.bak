@@ -717,7 +717,7 @@
     "saves": {
       "blue": {
         "me": {
-          "souls": 433,
+          "souls": 522,
           "inv": {
             "pot": 0,
             "pot2": 0,
@@ -732,7 +732,7 @@
             "bomb": 0
           },
           "wlv": 3,
-          "maxHp": 13,
+          "maxHp": 14,
           "cry": [
             "c_cripta_1",
             "c_jardin_1",
@@ -741,7 +741,8 @@
             "c_torre_1",
             "c_cumbre_1",
             "c_cumbre_2",
-            "c_cumbre_3"
+            "c_cumbre_3",
+            "c_mazm_1"
           ],
           "forge": [
             "f_bodega_1",
@@ -758,7 +759,8 @@
             "Relojero Oxidado"
           ],
           "pages": [
-            "p_galeria_1"
+            "p_galeria_1",
+            "p_cat1_1"
           ],
           "seen": [
             "sk",
@@ -774,8 +776,8 @@
           ],
           "kills": {
             "sk": 2,
-            "kn": 1,
-            "bat": 2,
+            "kn": 3,
+            "bat": 4,
             "gh": 1,
             "saw": 0,
             "sentinel": 0,
@@ -789,8 +791,8 @@
             "vesper": 0
           },
           "travel": true,
-          "el": "poison",
-          "gems": 21,
+          "el": "shadow",
+          "gems": 23,
           "gemGot": [
             "g_fragua_1",
             "g_mir_1",
@@ -798,7 +800,9 @@
             "g_salon_1",
             "g_osario_1",
             "g_cumbre_1",
-            "g_jardin_1"
+            "g_jardin_1",
+            "g_mazm_1",
+            "g_cat1_1"
           ],
           "bg": [
             "archon",
@@ -810,11 +814,13 @@
             "dmg": 0,
             "souls": 0
           },
-          "altar": "a_mir_1",
+          "altar": "a_cielo1_1",
           "lit": [
             "a_vest_1",
             "a_gran_1",
-            "a_mir_1"
+            "a_mir_1",
+            "a_calab_1",
+            "a_cielo1_1"
           ],
           "visited": [
             "vest",
@@ -839,7 +845,12 @@
             "caden",
             "clkC",
             "escal",
-            "cumbre"
+            "cumbre",
+            "obs",
+            "mazm",
+            "cat1",
+            "santuario",
+            "cielo1"
           ]
         },
         "world": {
@@ -872,7 +883,7 @@
             "78": false
           }
         },
-        "at": "2026-10-17T11:11:50.934Z"
+        "at": "2026-10-17T11:16:40.925Z"
       }
     }
   }
