@@ -333,9 +333,10 @@ class CastleScene extends Phaser.Scene {
     on('hit', h => { if (!this.isHost) return; const e = this.ents.get(h.id); if (e && e.sim) this.damageEnt(e, h.dmg, h.dir, h.from); });
     on('progress', p => this.applyProgress(p, false));
     on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
-    on('victory', v => {
-      this.centerTxt.setText(`¡EL CONDE HA CAÍDO!\nTiempo: ${Math.floor(v.time / 60)}m ${v.time % 60}s · Jefes: ${v.bosses}\n${v.players.join(', ')}`);
-      SFX.pick(); this.won = true;
+    on('victory', v => { // el Conde cae, pero el castillo continúa: se despide y desaparece
+      this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Necios... esto no ha terminado.\nMi señor me espera más arriba, en las torres del alba.\nYa lo veréis...»\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
+      SFX.pick(); this.won = true; this.cameras.main.shake(500, 0.008);
+      this.time.delayedCall(9000, () => { this.centerTxt.setText(''); this.leaveFoso(); });
     });
     on('room', r => {
       room = r;
@@ -479,6 +480,17 @@ class CastleScene extends Phaser.Scene {
       if (gx % 3 === 0) this.poof((gx + 0.5) * T, (th.y0 + th.rh) * T, 4, 0x9a8a8a);
     }
     this.floorBroken = true; this.floorState = 2; this.cameras.main.shake(700, 0.02); SFX.boss(); this.toast('¡El suelo se derrumba! Caéis al foso del Conde...', 4000);
+  }
+  leaveFoso() { // tras el Conde: se reconstruye el suelo del trono y todos vuelven arriba
+    const th = this.W.areas.throne, fo = this.W.areas.fosoC;
+    if (this.floorBroken) {
+      for (let gx = th.x0 + 2; gx <= th.x0 + th.rw - 3; gx++) for (const gy of [th.y0 + th.rh - 1, fo.y0]) { const v = this.W.fg[gy][gx]; if (v >= 0) this.fg.putTileAt(v, gx, gy); }
+      this.floorBroken = false; this.floorState = 0;
+    }
+    if (this.dead) return;
+    const x = (th.x0 + th.rw / 2) * T, y = (th.y0 + th.rh - 1) * T - 24;
+    this.player.setPosition(x, y); this.player.body.setVelocity(0, 0); this.lastGround = { x, y }; this.invuln = 2;
+    this.toast('El castillo aún guarda secretos... Pronto se abrirán nuevas zonas. ¡Seguid explorando!', 7000); SFX.altar();
   }
   applySeal(key) {
     if (this.curSeal === key) return;

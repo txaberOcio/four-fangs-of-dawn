@@ -78,22 +78,20 @@ function leave(socket) {
   io.to(r.code).emit('room', roomInfo(r));
 }
 function victory(r) {
-  if (r.finished) return;
-  r.finished = true;
+  if (r.won) return; // el Conde solo cierra el primer acto: la partida continúa
+  r.won = true;
   const time = Math.round((Date.now() - r.startedAt) / 1000);
   for (const p of Object.values(r.players)) {
     const u = users[p.name]; if (!u) continue;
     u.stats.games++; u.stats.wins++; u.stats.bosses += r.progress.bosses.length;
     if (!u.stats.bestTime || time < u.stats.bestTime) u.stats.bestTime = time;
   }
-  for (const p of Object.values(r.players)) { if (users[p.name] && users[p.name].saves) delete users[p.name].saves[p.animal]; }
   saveUsers();
   io.to(r.code).emit('victory', { time, bosses: r.progress.bosses.length, players: Object.values(r.players).map(p => p.name) });
   for (const p of Object.values(r.players)) {
     const s = io.sockets.sockets.get(p.id);
     if (s && users[p.name]) s.emit('stats', users[p.name].stats);
   }
-  setTimeout(() => { r.started = false; r.finished = false; r.progress = freshProgress(); io.to(r.code).emit('room', roomInfo(r)); }, 12000);
 }
 
 io.on('connection', socket => {
@@ -158,7 +156,7 @@ io.on('connection', socket => {
   socket.on('start', opt => {
     const r = myRoom();
     if (!r || r.host !== socket.id || r.started) return;
-    r.started = true; r.finished = false; r.startedAt = Date.now();
+    r.started = true; r.finished = false; r.won = false; r.startedAt = Date.now();
     const hu = users[socket.user], hc = r.players[socket.id].animal;
     const hslot = hu && hu.saves && hu.saves[hc];
     r.cont = !!(opt && opt.cont && hslot && hslot.world);
