@@ -528,7 +528,7 @@ class CastleScene extends Phaser.Scene {
   spawnProj(type, x, y, vx, vy, life = 3, grav = 0) {
     const c = PR[type], id = 'p' + (this.nid++);
     const spr = this.add.sprite(x, y, c.tex).setScale(c.sc).setDepth(7);
-    this.projs.set(id, { id, type, spr, vx, vy, life, grav, tx: x, ty: y });
+    const pr = { id, type, spr, vx, vy, life, grav, tx: x, ty: y }; this.projs.set(id, pr); return pr;
   }
 
   damageEnt(e, dmg, dir) {
@@ -596,6 +596,7 @@ class CastleScene extends Phaser.Scene {
     [...this.projs.values()].forEach(p => {
       p.life -= dt; p.vy += p.grav * dt; p.spr.x += p.vx * dt; p.spr.y += p.vy * dt;
       p.spr.setFlipX(p.vx < 0);
+      if (p.ground && (!this.solidAt(p.spr.x, p.spr.y + 12) || this.solidAt(p.spr.x + Math.sign(p.vx) * 14, p.spr.y))) p.life = 0; // la onda muere en el borde de la plataforma o en un muro
       if (p.life <= 0 || (p.type !== 'shock' && this.solidAt(p.spr.x, p.spr.y))) { p.spr.destroy(); this.projs.delete(p.id); }
     });
     // instantánea
@@ -634,7 +635,15 @@ class CastleScene extends Phaser.Scene {
   eliteFire(e, ab, tg) {
     const x = e.spr.x, y = e.spr.y, an = Math.atan2(tg.y - y, tg.x - x);
     if (ab.kind === 'orbs') { for (const o of [-0.3, 0, 0.3]) this.spawnProj('orb', x, y - 6, Math.cos(an + o) * 190, Math.sin(an + o) * 190, 3); }
-    else if (ab.kind === 'quake') { this.cameras.main.shake(180, 0.006); for (const s of [-1, 1]) this.spawnProj('shock', x + s * 24, y + 14, s * 230, 0, 1.3); }
+    else if (ab.kind === 'quake') { this.cameras.main.shake(180, 0.006); 
+      const feet = y + (e.cfg.body[1] * e.cfg.sc) / 2;
+      for (const s of [-1, 1]) { // las ondas viajan pegadas al suelo que pisa el enemigo (también en plataformas)
+        const sx = x + s * 24; let top = null;
+        for (let yy = feet - 6; yy < feet + 40; yy += 4) if (this.solidAt(sx, yy)) { top = Math.floor(yy / T) * T; break; }
+        if (top === null) continue;
+        const pr = this.spawnProj('shock', sx, top - 8, s * 230, 0, 1.3); pr.ground = true;
+      }
+    }
     else if (ab.kind === 'blink') {
       e.abN = (e.abN || 0) + 1;
       const lit = this.torchObjs.filter(o => o.lit && Math.hypot(o.x - x, o.y - y) < 380).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
