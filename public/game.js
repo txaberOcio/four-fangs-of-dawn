@@ -766,7 +766,10 @@ class CastleScene extends Phaser.Scene {
     const x = e.spr.x, y = e.spr.y, rage = e.hp < e.max * 0.5, dirT = Math.sign(tg.x - x) || 1;
     e.spr.setFlipX(tg.x < x);
     const floorY = a.floor;
-    const shock = (n = 1) => { this.spawnProj('shock', x, floorY - 10, 230, 0, 1.4); this.spawnProj('shock', x, floorY - 10, -230, 0, 1.4); if (rage && n > 1) { this.spawnProj('shock', x, floorY - 10, 340, 0, 1.2); this.spawnProj('shock', x, floorY - 10, -340, 0, 1.2); } this.cameras.main.shake(180, 0.006); };
+    const shock = (n = 1) => { // las ondas salen de la superficie que pisa el jefe (suelo o plataforma)
+      const sy = this.surfaceBelow(x, y, floorY), onPlat = sy < floorY - 4;
+      const mk = (vx, life) => { const pr = this.spawnProj('shock', x, sy - 10, vx, 0, life); if (onPlat) pr.ground = true; };
+      mk(230, 1.4); mk(-230, 1.4); if (rage && n > 1) { mk(340, 1.2); mk(-340, 1.2); } this.cameras.main.shake(180, 0.006); };
     const fan = (cnt) => { const base = Math.atan2(tg.y - y, tg.x - x); for (let i = -cnt; i <= cnt; i++) { const an = base + i * 0.24; this.spawnProj('orb', x, y, Math.cos(an) * 200, Math.sin(an) * 200, 4); } };
     const gear = () => this.spawnProj('gear', Phaser.Math.Between(a.x0 + 20, a.x1 - 20), a.y0 + 12, 0, 240, 3.5, 0);
     const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };

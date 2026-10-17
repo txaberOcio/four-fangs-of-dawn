@@ -149,7 +149,7 @@ function buildArt(scene) {
   const tx = scene.textures;
   if (tx.exists('tiles')) return;
   // Tileset: 6 zonas x 8 tipos
-  const tiles = tx.createCanvas('tiles', 56 * 32, 32); const tctx = tiles.getContext('2d');
+  const tiles = tx.createCanvas('tiles', 64 * 32, 32); const tctx = tiles.getContext('2d');
   for (let z = 0; z < 8; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
   tiles.refresh();
 
