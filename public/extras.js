@@ -17,7 +17,7 @@ const WEAPONS = {
 };
 const PASSIVES = {
   red: { name: 'Sed de sangre', life: 0.40 },
-  blue: { name: 'Visión nocturna', aura: 1.8, projPlus: 1 },          // desventaja: +1 daño de proyectiles
+  blue: { name: 'Visión nocturna', aura: 1.8, projPlus: 1, speed: 0.94 }, // desventajas: +1 daño de proyectiles y algo más lento
   green: { name: 'Cazadora de almas', souls: 1.5, dmgTaken: 1.5 },    // desventaja: +50% daño recibido y sin romper muros
   purple: { name: 'Piel de sombra', hp: 2, speed: 0.82 },             // desventaja: más lento
 };
@@ -862,7 +862,8 @@ Object.assign(CastleScene.prototype, {
   hurt(dmg, fromX) {
     if (this.invuln > 0 || this.dead || this.dashT > 0) return;
     if (this.ward > 0) { this.ward--; this.invuln = 0.8; SFX.hit(); this.poof(this.player.x, this.player.y, 5, 0xc9ced8); this.floatText(this.player.x, this.player.y - 30, 'bloqueado', '#c9ced8'); return; }
-    _hurt.call(this, this.pas.dmgTaken ? Math.ceil(dmg * this.pas.dmgTaken) : dmg, fromX);
+    if (this.pas.dmgTaken) { this.dmgAcc = (this.dmgAcc || 0) + dmg * (this.pas.dmgTaken - 1); const extra = Math.floor(this.dmgAcc); this.dmgAcc -= extra; dmg += extra; } // +50% de media: el medio corazón se acumula, no se redondea hacia arriba en cada golpe
+    _hurt.call(this, dmg, fromX);
   },
   die() {
     if (this.inv.amu > 0) {

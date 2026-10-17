@@ -227,3 +227,18 @@ console.log('\nSalas INALCANZABLES:', missing.length ? missing.map(r => w.areas[
 const unreachC = w.crystals.filter(c => !('cry:' + c.id in firstStage)).concat(w.gems.filter(c => !('gem:' + c.id in firstStage)));
 console.log('Gemas:', w.gems.map(c => `${c.area}→fase ${firstStage['gem:' + c.id] ?? 'INALCANZABLE'}`).join(' | '));
 process.exitCode = missing.length || unreachC.length ? 1 : 0;
+
+// ---- Rutas: ¿se puede acabar el juego con solo una de las dos recompensas del Alba? (node scripts/validate.js rutas) ----
+if (process.argv[2] === 'rutas') {
+  const base = { dash: true, dj: true, wj: true };
+  const must = ['throne', 'scrip', 'cat2', 'cumbre']; // jefes obligatorios y salas clave (la Cueva del Abismo y la Forja exigen planear: es opcional)
+  let bad = false;
+  for (const [name, extra] of [['SOLO Aurora (alas, sin el Ojo)', { wings: true }], ['SOLO Vesper (Ojo, sin alas)', { eye: true }]]) {
+    const ab = { ...base, ...extra }, nodes = bfs(ab, start), rooms = new Set(nodes.map(roomOf));
+    const lost = allRooms.filter(r => !rooms.has(r)), lostMust = must.filter(r => !rooms.has(r));
+    const items = w.crystals.concat(w.gems).filter(c => !nodes.some(n => Math.abs(n.x - c.x) < 70 && Math.abs(n.y - c.y) < 70));
+    console.log(`\nRuta ${name}: ${rooms.size} salas; sin alcanzar: ${lost.length ? lost.join(', ') : 'ninguna'}; cristales/gemas fuera de alcance: ${items.length}${items.length ? ' (' + items.map(c => c.area).join(', ') + ')' : ''}`);
+    if (lostMust.length) { bad = true; console.log('  ERROR: salas obligatorias inalcanzables en esta ruta: ' + lostMust.join(', ')); }
+  }
+  process.exit(bad ? 1 : 0);
+}
