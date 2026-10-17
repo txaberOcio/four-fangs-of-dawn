@@ -3,7 +3,7 @@
    (anchas, altas), llevar pasillos rellenos de roca y conectarse con puertas de distinto tamaño. */
 (function (root) {
   'use strict';
-  const T = 32, CW = 26, CH = 18, COLS = 15, ROWS = 7;
+  const T = 32, CW = 26, CH = 18, COLS = 22, ROWS = 7;
   const PHYS = {
     gravity: 900, speed: 165, jump: -470, djump: -420,
     dashSpeed: 560, dashTime: 0.25, dashCd: 0.5,
@@ -50,7 +50,7 @@
   // --- Ramas del ala de entrada ---
   area('tunel', 'Túnel de Calaveras', 3, 6, 5, 1, 1, [['tri', 'tl', 4], ['tri', 'tr', 4], ['pit', 8, 16], ['E', 'bat', 12, 8], ['E', 'bat', 18, 6], ['E', 'gh', 4, 9]]);
   area('bodega', 'Bodega', 3, 1, 6, 1, 1, [['forge', 20, 12], ['tri', 'tr', 5], ['B', 5, 15, 3, 2], ['B', 19, 14, 3, 3], ['E', 'sk', 9, 16], ['E', 'sk', 22, 16], ['E', 'bat', 15, 9]]);
-  area('cripta', 'Cripta Olvidada', 3, 0, 6, 1, 1, [['tri', 'tl', 6], ['pit', 7, 15], ['cry', 2, 16], ['E', 'gh', 20, 9], ['E', 'gh', 4, 8]]);
+  area('cripta', 'Cripta Olvidada', 3, 0, 6, 1, 1, [['tri', 'tl', 6], ['pit', 8, 22], ['cry', 2, 16], ['E', 'gh', 20, 9], ['E', 'gh', 4, 8]]);
   area('osario', 'Osario', 3, 8, 6, 2, 1, [['tri', 'tl', 7], ['tri', 'tr', 5], ['P', 30, 14, 4], ['P', 35, 11, 4], ['B', 40, 6, 8, 1], ['cry', 43, 5], ['E', 'gh', 15, 10], ['E', 'gh', 32, 6], ['E', 'sk', 10, 16], ['E', 'sk', 25, 16]]);
   area('escal', 'Escalera de los Retratos', 0, 3, 4, 1, 2, [['tri', 'tl', 6], ['tri', 'tr', 6], ['climb', 11, 4, 'norm', true], ['E', 'bat', 6, 10], ['E', 'bat', 20, 20], ['E', 'gh', 8, 28], ['E', 'sk', 20, 34]]);
   area('hidden', 'Sala Oculta', 0, 2, 5, 1, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['cry', 13, 16]]);
@@ -92,6 +92,22 @@
   area('albaA', 'Cámara de Aurora (premio: Alas del Alba)', 7, 13, 0, 2, 1, [['tri', 'tl', 6], ['tri', 'tr', 6], ['boss', 'aurora', 26, 10]]);
   area('albaB', 'Cámara de Vesper (premio: Ojo de la Noche)', 7, 11, 1, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 24, 4, 'norm', true], ['boss', 'vesper', 40, 16]]);
 
+  // --- Siguiente fase: tras vencer a uno de los rivales se abre la puerta de la cámara de Vesper hacia el cielo ---
+  area('cielo1', 'Antecámara del Cielo', 7, 13, 1, 2, 1, [['altar', 8, 16], ['tri', 'tl', 4], ['tri', 'tr', 4], ['cry', 42, 16]]);
+  area('torreC', 'Escalera al Cielo', 7, 15, 0, 1, 2, [['P', 3, 32, 5], ['P', 10, 29, 5], ['P', 17, 26, 5], ['P', 9, 23, 5], ['P', 3, 20, 5], ['P', 10, 17, 5], ['P', 17, 17, 8],
+    ['E', 'kn', 14, 34], ['E', 'bat', 12, 10], ['E', 'gh', 18, 22], ['E', 'gh', 6, 14], ['E', 'bat', 20, 28], ['E', 'saw', 13, 24, { ax: 'h', r: 90, w: 1.3 }]]);
+  area('cumbre', 'Cumbre del Alba', 7, 16, 0, 2, 1, [['npc', 'watcher', 20, 16], ['altar', 6, 16], ['tri', 'tl', 5], ['tri', 'tr', 5],
+    // escalera al saliente izquierdo y balcón lejano (solo se alcanza planeando con las Alas del Alba)
+    ['P', 3, 13, 4], ['P', 1, 10, 3], ['P', 3, 7, 4], ['P', 22, 10, 3], ['cry', 23, 9],
+    // alcoba secreta tras un muro agrietado (el Ojo de la Noche la revela): dos cristales de vida
+    ['P', 41, 13, 4], ['P', 46, 10, 4], ['P', 41, 7, 4],
+    ['B', 45, 1, 6, 2], ['B', 45, 3, 1, 2], ['K', 45, 5, 1, 2], ['B', 50, 3, 1, 4], ['B', 45, 7, 6, 1], ['cry', 47, 6], ['cry', 49, 6]]);
+  area('jardin', 'Jardín Colgante', 7, 18, 0, 2, 1, [['pit', 7, 17], ['P', 10, 13, 3], ['B', 30, 4, 3, 11], ['B', 36, 4, 3, 13], ['P', 42, 13, 3], ['P', 46, 9, 3], ['cry', 47, 8],
+    ['E', 'gh', 22, 9], ['E', 'bat', 14, 6], ['E', 'bat', 41, 7], ['E', 'kn', 25, 16], ['E', 'sentinel', 44, 16]]);
+  // Segunda mazmorra de plataformas: suelo de pinchos, huecos para el impulso y sierras
+  area('mazC', 'Mazmorra de Nubes', 7, 20, 0, 2, 1, [['pit', 2, 49], ['P', 3, 13, 4], ['P', 10, 11, 3], ['P', 17, 9, 3], ['P', 26, 9, 3], ['P', 36, 11, 3], ['P', 43, 13, 3], ['P', 47, 10, 3], ['cry', 48, 9],
+    ['E', 'saw', 14, 10, { ax: 'v', r: 55, w: 1.5 }], ['E', 'saw', 30, 8, { ax: 'h', r: 80, w: 1.3 }], ['E', 'bat', 22, 5], ['E', 'bat', 40, 6], ['E', 'gh', 33, 8]]);
+
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
   const E = (a, b, size = 3, o = {}) => LINKS.push({ t: 'E', a, b, size, ...o });
@@ -106,6 +122,7 @@
   S('archivo', 'escal'); S('escal', 'salon'); S('obs', 'gbib'); S('pozo', 'cubil'); S('calab', 'pozo');
   E('escalaR', 'fosoC', 3, { gate: 'conde' }); E('fosoC', 'alba1', 3, { gate: 'conde' }); S('pasR', 'escalaR', 16, 4);
   E('alba1', 'albaH', 3); E('albaH', 'albaA', 4); S('albaH', 'albaB', 24, 4);
+  E('albaB', 'cielo1', 3, { gate: 'alba' }); E('cielo1', 'torreC', 3); E('torreC', 'cumbre', 3); E('cumbre', 'jardin', 3); E('jardin', 'mazC', 3); // 'alba' = cae Aurora o Vesper
   S('naveP', 'naveS'); S('abs', 'naveP'); S('clkC', 'torre'); S('mir', 'galeria', 16, 4); S('torre', 'caden');
 
   function climbOps(rw, rh, hx, hw, type) {

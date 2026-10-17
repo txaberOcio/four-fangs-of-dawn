@@ -235,7 +235,8 @@ class CastleScene extends Phaser.Scene {
     this.mmImg = this.add.image(0, 0, 'mapcv').setOrigin(0).setScale(3).setScrollFactor(0).setDepth(30);
     this.mmDots = this.add.graphics().setScrollFactor(0).setDepth(31);
     this.bigBg = this.add.rectangle(0, 0, SW, SH, 0x000000, 0.86).setOrigin(0).setScrollFactor(0).setDepth(39).setVisible(false);
-    this.bigImg = this.add.image(26, 90, 'mapcv').setOrigin(0).setScale(2).setScrollFactor(0).setDepth(40).setVisible(false);
+    this.bigS = Math.min(3, Math.floor((SW - 52) / this.W.Wt * 10) / 10);
+    this.bigImg = this.add.image(26, 90, 'mapcv').setOrigin(0).setScale(this.bigS).setScrollFactor(0).setDepth(40).setVisible(false);
     this.bigDots = this.add.graphics().setScrollFactor(0).setDepth(41);
     this.bigTitle = this.add.text(SW / 2, 40, 'MAPA DEL CASTILLO  (M para cerrar)', f('18px', '#ffd98a')).setOrigin(0.5).setScrollFactor(0).setDepth(41).setVisible(false);
     this.objTxt = this.add.text(SW / 2, 18, '', f('13px', '#9fffb0')).setOrigin(0.5).setScrollFactor(0).setDepth(30);
@@ -290,7 +291,7 @@ class CastleScene extends Phaser.Scene {
     const p = this.player, tx = p.x / T, ty = p.y / T;
     if (this.showMap) {
       const g = this.bigDots; g.clear();
-      const W = this.W, mx = x => 26 + x * 2, my = y => 90 + y * 2;
+      const W = this.W, mx = x => 26 + x * this.bigS, my = y => 90 + y * this.bigS;
       W.altars.forEach(a => { if (this.visited.has(a.area)) g.fillStyle(0xffd23b, 1).fillRect(mx(a.x / T) - 2, my(a.y / T) - 3, 4, 4); });
       if (this.objective && ((this.time.now >> 8) & 1)) g.fillStyle(0x6bff8a, 1).fillRect(mx(this.objective.x / T) - 4, my(this.objective.y / T) - 4, 8, 8);
       W.bosses.forEach(b => { if (this.visited.has(b.area) && !this.bossGone(b)) g.fillStyle(0xff3b3b, 1).fillRect(mx(b.x / T) - 3, my(b.y / T) - 6, 6, 6); });
@@ -365,10 +366,10 @@ class CastleScene extends Phaser.Scene {
   bossGone(b) { const r = World.BOSSES[b.id] && World.BOSSES[b.id].rival; return this.progress.bosses.includes(b.id) || !!(r && this.progress.bosses.includes(r)); }
   openGates(show) { // los muros que cierran el foso caen cuando el Conde huye
     (this.W.gates || []).forEach(gt => {
-      if (gt.open || !this.progress.bosses.includes(gt.boss)) return;
+      const pb = this.progress.bosses; if (gt.open || !(gt.boss === 'alba' ? (pb.includes('aurora') || pb.includes('vesper')) : pb.includes(gt.boss))) return;
       gt.open = true; gt.tiles.forEach(t => { this.fg.removeTileAt(t.gx, t.gy); if (show) this.poof((t.gx + 0.5) * T, (t.gy + 0.5) * T, 3, 0xaaaaaa); });
       this.wallBroken();
-      if (show) { this.cameras.main.shake(900, 0.012); SFX.boss(); this.toast('¡Los muros del foso se derrumban! Se abren dos caminos...', 6000); }
+      if (show) { this.cameras.main.shake(900, 0.012); SFX.boss(); this.toast(gt.boss === 'alba' ? '¡Se abre el camino hacia el cielo! La puerta este de la cámara de Vesper ya está libre.' : '¡Los muros del foso se derrumban! Se abren dos caminos...', 7000); }
     });
   }
   albaScene(killed) { // al caer uno de los rivales, el otro acude, se lo lleva y huye
@@ -465,6 +466,7 @@ class CastleScene extends Phaser.Scene {
     Object.values(this.relics).forEach(r => lamp(r.x, r.y, 110, 1));
     this.ents.forEach(e => { if (e.boss && e.aggro) lamp(e.spr.x, e.spr.y, 150, 0.85); });
     this.projs.forEach(pr => lamp(pr.spr.x, pr.spr.y, 55, 0.9));
+    this.drawBond(time);
     // ojos rojos de los enemigos que están en la oscuridad
     const g = this.eyeG; g.clear(); g.fillStyle(0xff2a2a, 0.9);
     this.ents.forEach(e => {

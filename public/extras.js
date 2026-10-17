@@ -91,17 +91,24 @@ const NPC_DEFS = {
       'Si ves un fantasma, no lo mires a los ojos. Mira la luz.'] ] },
   oracle: { name: 'Oráculo del Alba', tex: 'npc_oracle', pick: (sc, pages, visits) => ((sc.progress.bosses.includes('aurora') || sc.progress.bosses.includes('vesper')) ? pages[2] : (visits === 1 ? pages[0] : pages[1])), lines: [
     ['Has llegado más alto que nadie... El Conde solo era el portero.',
-      'Aquí viven dos hermanos rivales: AURORA, Dama del Alba, y VESPER, Señor del Ocaso.',
+      'Aquí viven dos hermanos rivales: AURORA, Dama del Alba, y VESPER, Señor del Ocaso. Los dos comparten el mismo emblema: media luna y medio sol.',
       'Solo podréis derrotar a UNO. Cuando uno caiga, el otro acudirá, lo recogerá y huirá para siempre.',
-      'AURORA (puerta del este): su premio son las ALAS DEL ALBA. Mantén saltar en el aire y planearás para cruzar grandes abismos.',
-      'VESPER (por el hueco del centro de esta sala): su premio es el OJO DE LA NOCHE. Verás los secretos tras los muros agrietados y tu luz crecerá.',
-      'Elegid bien: la decisión no se puede deshacer. Hay una hoguera aquí por si queréis guardar antes.'],
-    ['Dos hermanos, dos regalos, una sola elección.',
-      'AURORA (puerta del este): ALAS DEL ALBA, mantén saltar en el aire para planear.',
-      'VESPER (hueco del centro): OJO DE LA NOCHE, ves los secretos tras los muros agrietados y tu luz crece.',
-      'Recordad: derrotar a uno hace que el otro se lo lleve y desaparezca.'],
+      'Si SIGUES RECTO por la puerta del este de esta sala, te enfrentarás a AURORA. Su premio: las ALAS DEL ALBA. Mantén saltar en el aire y planearás para cruzar grandes abismos.',
+      'Si BAJAS por el hueco del centro del suelo, te enfrentarás a VESPER. Su premio: el OJO DE LA NOCHE. Verás los secretos tras los muros agrietados y tu luz crecerá.',
+      'Hay carteles en el suelo y en la pared que lo recuerdan. Elegid bien: la decisión no se puede deshacer. Aquí hay una hoguera por si queréis guardar antes.',
+      'Cuando uno de los dos caiga, se abrirá la puerta este de la cámara de Vesper: el camino hacia el cielo.'],
+    ['Dos hermanos, un solo emblema, una sola elección.',
+      'RECTO por la puerta del este: AURORA, con las ALAS DEL ALBA (planear al mantener saltar).',
+      'BAJANDO por el hueco del suelo: VESPER, con el OJO DE LA NOCHE (ves los secretos tras los muros agrietados y tu luz crece).',
+      'Derrotar a uno hace que el otro se lo lleve. Luego el camino al cielo queda abierto.'],
     ['El rival que sobrevivió se ha llevado a su hermano lejos. Algún día volveréis a verlos... en otras torres.',
-      'Este castillo aún esconde muchos más pisos. Seguid explorando.'] ] },
+      'El camino al cielo está abierto: baja a la cámara de Vesper y cruza su puerta este.'] ] },
+  watcher: { name: 'Vigía del Cielo', tex: 'npc_watcher', lines: [
+    ['Habéis subido hasta la Cumbre del Alba. Aquí no hay jefes: es un lugar para explorar con todo lo que habéis aprendido.',
+      'Dicen que quien venció a Vesper puede ver un tesoro oculto tras un muro agrietado, al fondo de esta sala: dos cristales de vida.',
+      'Y que quien venció a Aurora puede planear hasta el balcón lejano, sobre el vacío, donde brilla otro cristal.',
+      'Al este hay un jardín colgante: hace falta impulso, doble salto y salto de pared. Descansad en la hoguera cuando queráis.'],
+    ['El viento aquí huele a ceniza y a amanecer. Pronto habrá más que ver.'] ] },
   monk: { name: 'Monje Trastornado', tex: 'npc_monk', lines: [
     ['¡Hermano, hermano! El Obispo reza al revés... ¡y su dios responde al derecho!',
       'Arriba, en el Ábside, espera. La Nave tiene un hueco enorme: el primer escalón está lejos. Necesitas el Impulso: C en el aire.',
@@ -202,6 +209,7 @@ const _hurt = CastleScene.prototype.hurt, _die = CastleScene.prototype.die, _res
 Object.assign(CastleScene.prototype, {
   // ---- inicio
   initExtras() {
+    this.buildAlbaDecor();
     if (/[?&]dev=1/.test(location.search)) this.setupDev();
     const w = this.W;
     this.wpn = WEAPONS[this.color] || WEAPONS.red; this.pas = PASSIVES[this.color] || {}; this.wlv = 1;
@@ -502,6 +510,31 @@ Object.assign(CastleScene.prototype, {
   },
   devTeleport(id) { const a = this.W.areas[id]; if (a) this.devTeleportTo(a.x0 + Math.floor(a.rw / 2), a.y0 + a.rh - 2); },
 
+  // ---- los rivales del Alba: emblema compartido (luna y sol), carteles y chispas que los unen
+  buildAlbaDecor() {
+    const W = this.W, h = W.areas.albaH, A = W.areas.albaA, B = W.areas.albaB; if (!h || !A || !B) return;
+    const g = this.add.graphics().setDepth(-6);
+    const emblem = (x, y, r) => { // mitad luna azul, mitad sol dorado
+      g.fillStyle(0x8aa8ff, 0.55).beginPath().arc(x, y, r, Math.PI / 2, Math.PI * 1.5).closePath().fillPath();
+      g.fillStyle(0xffd27a, 0.55).beginPath().arc(x, y, r, -Math.PI / 2, Math.PI / 2).closePath().fillPath();
+      g.fillStyle(0x140c22, 1).fillCircle(x - r * 0.28, y - r * 0.1, r * 0.62); // la luna es creciente
+      g.fillStyle(0x8aa8ff, 0.55).beginPath().arc(x, y, r, Math.PI / 2, Math.PI * 1.5).closePath().fillPath();
+      g.fillStyle(0x140c22, 1).fillCircle(x - r * 0.62, y - r * 0.12, r * 0.74);
+      g.lineStyle(3, 0xffe9b0, 0.8).strokeCircle(x, y, r);
+      for (let i = -3; i <= 3; i++) { const an = i * 0.38; g.lineStyle(3, 0xffd27a, 0.7).lineBetween(x + Math.cos(an) * (r + 6), y + Math.sin(an) * (r + 6), x + Math.cos(an) * (r + 20), y + Math.sin(an) * (r + 20)); }
+    };
+    emblem((h.x0 + 26) * T, (h.y0 + 5) * T, 46); emblem((A.x0 + 26) * T, (A.y0 + 6) * T, 64); emblem((B.x0 + 26) * T, (B.y0 + 6) * T, 64);
+    const lab = (x, y, txt, col) => this.add.text(x, y, txt, { fontSize: '15px', fontFamily: 'Courier New', color: col, stroke: '#000', strokeThickness: 4, align: 'center' }).setOrigin(0.5).setDepth(-3);
+    lab((h.x0 + 46) * T, (h.y0 + 11) * T, 'AURORA  ►\nsiguiendo recto\nAlas del Alba', '#ffd27a');
+    lab((h.x0 + 26) * T, (h.y0 + 12.4) * T, 'VESPER\n▼ bajando por aquí ▼\nOjo de la Noche', '#9fb8ff');
+  },
+  drawBond(time) { // cada rival lleva chispas del color de su hermano
+    const g = this.bondG || (this.bondG = this.add.graphics().setDepth(12)); g.clear();
+    [['aurora', 0x8aa8ff], ['vesper', 0xffd27a]].forEach(([t, col]) => {
+      const en = this.ents.get(t); if (!en || en.dead) return;
+      for (let i = 0; i < 4; i++) { const an = time * 0.004 + i * Math.PI / 2, r = 46 + Math.sin(time * 0.006 + i) * 6; g.fillStyle(col, 0.95).fillRect(en.spr.x + Math.cos(an) * r - 3, en.spr.y + Math.sin(an) * r * 0.8 - 3, 6, 6); }
+    });
+  },
   crackGlow() { // con el Ojo de la Noche los muros agrietados cercanos brillan
     if (!this.abil.eye) { if (this.eyeCr) this.eyeCr.clear(); return; }
     const g = this.eyeCr || (this.eyeCr = this.add.graphics().setDepth(4)), D = this.fg.layer.data, p = this.player;
