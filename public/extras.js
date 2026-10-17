@@ -21,22 +21,29 @@ const PASSIVES = {
   green: { name: 'Cazadora de almas', souls: 1.5, dmgTaken: 1.5 },    // desventaja: +50% daño recibido y sin romper muros
   purple: { name: 'Piel de sombra', hp: 2, speed: 0.82 },             // desventaja: más lento
 };
-// need = jefes derrotados necesarios para que el mercader lo venda
+// catálogo de objetos; qué vende cada mercader y cuándo se define en SHOP_STOCK
 const ITEMS = [
-  { id: 'pot', need: 0, tier: 0, name: 'Poción de sangre', price: 30, desc: 'Cura 3 corazones.' },
-  { id: 'spd', need: 0, tier: 1, name: 'Elixir de velocidad', price: 40, desc: '+35% de velocidad durante 20 s.' },
-  { id: 'lamp', need: 0, tier: 1, name: 'Aceite de linterna', price: 35, desc: 'Tu luz crece durante 60 s.' },
-  { id: 'bomb', need: 0, tier: 0, name: 'Bomba de mano', price: 25, desc: 'Explota a los 1,3 s: rompe muros agrietados y daña enemigos.' },
-  { id: 'pot2', need: 1, tier: 1, name: 'Poción mayor', price: 75, desc: 'Cura toda la vida.' },
-  { id: 'str', need: 1, tier: 2, name: 'Elixir de fuerza', price: 60, desc: '+1 de daño durante 25 s.' },
-  { id: 'ward', need: 1, tier: 2, name: 'Piel de piedra', price: 55, desc: 'Bloquea los próximos 2 golpes.' },
-  { id: 'amu', need: 2, tier: 2, name: 'Amuleto de resurrección', price: 120, desc: 'Si mueres, revives (se gasta solo).' },
-  { id: 'rage', need: 2, tier: 2, name: 'Elixir de furia', price: 70, desc: 'Atacas un 40% más rápido durante 20 s.' },
-  { id: 'tonic', need: 2, tier: 2, name: 'Tónico de almas', price: 80, desc: 'Doble de almas durante 60 s.' },
-  { id: 'fruit', need: 3, tier: 2, name: 'Fruto de sangre', price: 200, desc: '+1 corazón máximo para siempre.' },
+  { id: 'pot', name: 'Poción de sangre', price: 30, desc: 'Cura 3 corazones.' },
+  { id: 'spd', name: 'Elixir de velocidad', price: 40, desc: '+35% de velocidad durante 20 s.' },
+  { id: 'lamp', name: 'Aceite de linterna', price: 35, desc: 'Tu luz crece durante 60 s.' },
+  { id: 'bomb', name: 'Bomba de mano', price: 25, desc: 'Explota a los 1,3 s: rompe muros agrietados y daña enemigos.' },
+  { id: 'pot2', name: 'Poción mayor', price: 75, desc: 'Cura toda la vida.' },
+  { id: 'str', name: 'Elixir de fuerza', price: 60, desc: '+1 de daño durante 25 s.' },
+  { id: 'ward', name: 'Piel de piedra', price: 55, desc: 'Bloquea los próximos 2 golpes.' },
+  { id: 'amu', name: 'Amuleto de resurrección', price: 120, desc: 'Si mueres, revives (se gasta solo).' },
+  { id: 'rage', name: 'Elixir de furia', price: 70, desc: 'Atacas un 40% más rápido durante 20 s.' },
+  { id: 'tonic', name: 'Tónico de almas', price: 80, desc: 'Doble de almas durante 60 s.' },
+  { id: 'fruit', name: 'Fruto de sangre', price: 200, desc: '+1 corazón máximo para siempre.' },
 ];
-// nivel de cada mercader según su sala
-const SHOP_TIER = { vest: 0, naveS: 1, mir: 2 };
+// Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
+// [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
+// Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
+const SHOP_STOCK = {
+  vest: [['pot', 0], ['bomb', 1, 'green'], ['lamp', 2], ['spd', 3]],
+  naveS: [['pot', 0], ['bomb', 0], ['lamp', 0], ['spd', 1], ['pot2', 1], ['ward', 2], ['str', 3]],
+  mir: [['pot', 0], ['bomb', 0], ['lamp', 0], ['spd', 0], ['pot2', 0], ['ward', 1], ['str', 1], ['rage', 2], ['amu', 2], ['tonic', 3], ['fruit', 3]]
+};
+const SHOP_ORDER = ['vest', 'naveS', 'mir'];
 // ---------- Bestiario y diarios ----------
 const BESTIARY = {
   sk: { name: 'Esqueleto', text: 'Soldados de la guardia caídos. Patrullan y, si te ven cerca, te persiguen. Son débiles pero muchos.', tip: 'Un par de golpes bastan.' },
@@ -391,13 +398,14 @@ Object.assign(CastleScene.prototype, {
   hookSolid(wx, wy) { const t = this.fg.getTileAtWorldXY(wx, wy); return !!t && t.index >= 0 && [K.SOLID, K.FLOOR, K.CRACK].includes(t.index % 8); },
   hookFind(dir) {
     const b = this.player.body, cx = b.center.x, feet = b.bottom, gx0 = Math.floor(cx / T);
-    for (let i = 1; i <= 4; i++) {
+    for (let i = 1; i <= 2; i++) {
       const gx = gx0 + dir * i;
-      for (let gy = Math.floor((feet - 3.6 * T) / T); gy <= Math.floor((feet - 4) / T); gy++) {
+      for (let gy = Math.floor((feet - 1.25 * T) / T); gy <= Math.floor((feet - 4) / T); gy++) {
         const t = this.fg.getTileAt(gx, gy), tu = this.fg.getTileAt(gx, gy - 1), tu2 = this.fg.getTileAt(gx, gy - 2);
         const st = !!t && t.index >= 0 && [K.SOLID, K.FLOOR, K.CRACK, K.ONEWAY].includes(t.index % 8);
         const free = q => !q || q.index < 0 || ![K.SOLID, K.FLOOR, K.CRACK].includes(q.index % 8);
         if (!st || !free(tu) || !free(tu2)) continue;
+        const gap = dir > 0 ? gx * T - b.right : b.left - (gx + 1) * T; if (gap > T || gap < -12) continue; // alcance: 1 casilla
         const tx = (gx + 0.5) * T, ty = gy * T - (b.height / 2) - 1;
         let clear = true; // camino libre: primero hacia arriba y luego hacia el borde
         const py = b.center.y;
@@ -698,8 +706,11 @@ Object.assign(CastleScene.prototype, {
   },
 
   // ---- tienda (más mercancía según los jefes derrotados)
-  shopTier() { return this.curNpc ? (SHOP_TIER[this.curNpc.area] ?? 0) : 0; },
-  shopItems() { const tier = this.shopTier(); return ITEMS.filter(it => it.tier <= tier && this.progress.bosses.length >= it.need); },
+  shopStock() { return (this.curNpc && SHOP_STOCK[this.curNpc.area]) || SHOP_STOCK.vest; },
+  shopItems() {
+    const nb = this.progress.bosses.length;
+    return this.shopStock().filter(([, need, color]) => nb >= need || color === this.color).map(([id]) => ITEMS.find(it => it.id === id));
+  },
   buildShopUi() {
     const f = (s, c = '#fff') => ({ fontSize: s, fontFamily: 'Courier New', color: c });
     const cx = SW / 2, cy = SH / 2;
@@ -740,10 +751,11 @@ Object.assign(CastleScene.prototype, {
       r.ownT.setText('tienes ' + this.inv[r.it.id]); r.priceT.setColor(this.souls >= r.it.price ? '#d9b3ff' : '#ff7a7a');
     });
     this.shopDesc.setText(list[this.shopSel].desc);
-    const tier = this.shopTier(), nb = this.progress.bosses.length;
-    const byBoss = ITEMS.filter(it => it.tier <= tier && it.need > nb), byTier = ITEMS.filter(it => it.tier > tier);
-    const falta = byBoss.length ? Math.min(...byBoss.map(i => i.need)) - nb : 0;
-    this.shopMore.setText(byBoss.length ? 'Tengo más mercancía para quien derrote a ' + falta + ' jefe' + (falta > 1 ? 's' : '') + ' más...' : (byTier.length ? 'Mis colegas más adelante venden cosas mejores...' : 'Esto es todo lo que tengo.'));
+    const nb = this.progress.bosses.length;
+    const pend = this.shopStock().filter(([, need, color]) => nb < need && color !== this.color).map(s => s[1]);
+    const falta = pend.length ? Math.min(...pend) - nb : 0;
+    const last = !this.curNpc || SHOP_ORDER.indexOf(this.curNpc.area) >= SHOP_ORDER.length - 1;
+    this.shopMore.setText(pend.length ? 'Tendré más mercancía cuando derrotes a ' + falta + ' jefe' + (falta > 1 ? 's' : '') + ' más...' : (last ? 'Esto es todo lo que tengo.' : 'Mis colegas más adelante venden cosas mejores...'));
   },
   shopKeys(J) {
     const n = this.shopItems().length;
