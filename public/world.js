@@ -135,16 +135,16 @@
   // ===== Zona 9: Calabozos Profundos (se baja en ascensor desde el Santuario de las Sombras) =====
   area('asc', 'Pozo del Ascensor', 9, 16, 2, 1, 1, [['lift', 11, 4], ['altar', 4, 16], ['npc', 'jardinero', 20, 16]]);
   area('rai', 'Galería de Raíces', 9, 17, 2, 2, 1, [['page', 47, 16], ['B', 12, 1, 2, 6], ['B', 33, 1, 2, 5], ['pit', 20, 30], ['P', 21, 14, 3], ['P', 25, 13, 3], ['P', 29, 14, 3],
-    ['E', 'sk', 8, 16], ['E', 'sk', 16, 16], ['E', 'bat', 26, 8], ['E', 'gh', 36, 10], ['E', 'kn', 46, 16]]);
+    ['E', 'slug', 8, 16], ['E', 'slug', 16, 16], ['E', 'vine', 23, 1], ['E', 'vine', 28, 1], ['E', 'bat', 26, 8], ['E', 'gh', 36, 10], ['E', 'pris', 46, 16]]);
   area('cist', 'Cisterna de Musgo', 9, 17, 3, 2, 2, [['climb', 40, 4, 'norm', true], ['P', 24, 23, 4],
-    ['E', 'bat', 28, 10], ['E', 'bat', 20, 24], ['E', 'gh', 14, 14], ['E', 'gh', 46, 12], ['E', 'sk', 20, 34], ['E', 'sk', 30, 34]]);
+    ['E', 'bat', 28, 10], ['E', 'bat', 20, 24], ['E', 'gh', 14, 14], ['E', 'gh', 46, 12], ['E', 'slug', 20, 34], ['E', 'slug', 30, 34], ['E', 'shroom', 40, 34]]);
   area('cel', 'Celdas Cubiertas', 9, 15, 4, 2, 1, [['page', 47, 16], ['B', 14, 1, 2, 11], ['B', 26, 1, 2, 11], ['B', 38, 1, 2, 11],
     ['B', 1, 1, 6, 8], ['B', 6, 9, 1, 4], ['K', 6, 13, 1, 4], ['cry', 3, 16],
-    ['E', 'sk', 10, 16], ['E', 'sk', 20, 16], ['E', 'gh', 32, 8], ['E', 'bat', 44, 6],
+    ['E', 'pris', 10, 16], ['E', 'slug', 20, 16], ['E', 'gh', 32, 8], ['E', 'shroom', 42, 16], ['E', 'bat', 44, 6],
     ['E', 'kn', 32, 16, { elite: true, name: 'Verdugo Cubierto de Musgo', reward: { souls: 90, item: 'ward' } }]]);
   area('rez', 'Refectorio Podrido', 9, 17, 5, 2, 1, [['climb', 8, 4, 'norm', true], ['page', 13, 16], ['B', 20, 15, 3, 2], ['B', 25, 15, 2, 2],
     ['TP', 28, 14, 3, 4, 2.4, 0], ['TP', 33, 11, 3, 4, 2.4, 1], ['TP', 38, 8, 3, 4, 2.4, 2], ['P', 43, 5, 7],
-    ['E', 'sk', 18, 16], ['E', 'kn', 33, 16], ['E', 'sk', 44, 16], ['E', 'gh', 26, 8], ['E', 'gh', 40, 4], ['E', 'bat', 46, 10]]);
+    ['E', 'slug', 18, 16], ['E', 'pris', 33, 16], ['E', 'shroom', 44, 16], ['E', 'vine', 22, 1], ['E', 'gh', 26, 8], ['E', 'gh', 40, 4], ['E', 'bat', 46, 10]]);
   area('tun', 'Pasaje de Zarzas', 9, 19, 5, 2, 1, [['pit', 4, 38], ['pit', 45, 50],
     ['P', 6, 14, 3], ['P', 12, 13, 3], ['P', 18, 12, 3], ['P', 24, 13, 3], ['P', 30, 12, 3], ['P', 36, 13, 3], ['P', 46, 14, 4],
     ['E', 'saw', 15, 9, { ax: 'v', r: 55, w: 1.4 }], ['E', 'saw', 27, 9, { ax: 'v', r: 60, w: 1.6 }], ['E', 'saw', 33, 10, { ax: 'h', r: 60, w: 1.2 }],
@@ -252,7 +252,7 @@
           const gx = A.x0 + l.x + i, gyA = A.y0 + A.rh - 1, gyB = B.y0;
           if (gx < B.x0 + 1 || gx >= B.x0 + B.rw - 1) throw new Error('Hueco fuera de rango ' + l.a + '→' + l.b);
           fg[gyA][gx] = -1; fg[gyB][gx] = -1;
-          A.seal.push({ gx, gy: gyA }); B.seal.push({ gx, gy: gyB });
+          if (!l.roots) A.seal.push({ gx, gy: gyA }); B.seal.push({ gx, gy: gyB }); // la tapa de raíces ya es sólida: no se sella
           if (l.roots) { fg[gyA][gx] = A.z * 8 + K.CRACK; world.roots.add(gyA * Wt + gx); } // tapa de raíces sobre el hueco
         }
       }

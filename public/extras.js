@@ -38,7 +38,7 @@ const ITEMS = [
   { id: 'talis', name: 'Talismán de almas', price: 0, gems: 3, perm: 'souls', max: 2, desc: '+20% de almas de los enemigos para siempre (hasta 2 veces).' },
 ];
 // Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
-const GEMS_BOSS = { garg: 2, bishop: 3, clock: 4, archon: 4, reina: 4, conde: 5, aurora: 6, vesper: 6 }; // gemas que suelta cada jefe la primera vez
+const GEMS_BOSS = { garg: 2, bishop: 3, clock: 4, archon: 4, reina: 4, conde: 5, aurora: 6, vesper: 6, alcaide: 5, madre: 7 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
 // [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
 // Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
@@ -74,6 +74,12 @@ const BESTIARY = {
   sk: { name: 'Esqueleto', text: 'Soldados de la guardia caídos. Patrullan y, si te ven cerca, te persiguen. Son débiles pero muchos.', tip: 'Un par de golpes bastan.' },
   kn: { name: 'Caballero maldito', text: 'Armaduras vacías que aún obedecen al Conde. Lentos y pesados, golpean fuerte.', tip: 'Golpea y retrocede; no te quedes pegado.' },
   bat: { name: 'Murciélago', text: 'Duermen en las bóvedas hasta que alguien se acerca. Temen la luz de las antorchas.', tip: 'Enciende antorchas ({act}) para mantenerlos a raya.' },
+  slug: { name: 'Babosa de Musgo', text: 'Se arrastra por las celdas dejando un rastro de baba que frena a quien lo pisa.', tip: 'No pises la baba cuando haya más enemigos cerca.' },
+  shroom: { name: 'Hongo Esporífero', text: 'Arraigado al suelo. Se hincha y suelta esporas que te persiguen despacio.', tip: 'Usa el impulso a través de las esporas o mátalo antes de que termine de hincharse.' },
+  vine: { name: 'Liana Estranguladora', text: 'Cuelga del techo y cae sobre quien pasa justo debajo.', tip: 'Cruza corriendo en cuanto empiece a temblar.' },
+  pris: { name: 'Prisionero Mohoso', text: 'Un preso que el musgo no dejó morir. Cae al suelo la primera vez y se levanta con la mitad de vida.', tip: 'Quémalo, o remátalo con el Pisotón mientras está en el suelo.' },
+  alcaide: { name: 'Alcaide Verdín', text: 'Antiguo compañero de armas del Conde. Guarda las llaves y obedece una orden que ya nadie recuerda. Guarda el Pisotón de Raíces.', tip: 'Cuando se hunde en el suelo es invulnerable: sal de las marcas y golpéalo cuando salga.' },
+  madre: { name: 'La Madre Moho', text: 'El corazón del musgo. No se mueve, pero su armadura de raíces solo cede ante un pisotón desde el aire.', tip: 'Cae sobre ella con el Pisotón para romper su armadura y golpéala mientras está aturdida.' },
   gh: { name: 'Fantasma', text: 'Almas penitentes que atraviesan los muros. No ven a quien está bajo la luz.', tip: 'Quédate junto a una antorcha o una hoguera.' },
   saw: { name: 'Sierra de raíl', text: 'Maquinaria del castillo y de sus torres. Va y viene por su raíl y nada la detiene.', tip: 'Invulnerable: aprende su ritmo, salta o usa el impulso.' },
   sentinel: { name: 'Centinela', text: 'Armadura sin alma que patrulla sin descanso. Ningún arma le hace daño.', tip: 'Invulnerable: esquívalo, no lo persigas.' },
@@ -103,7 +109,7 @@ PAGES.rai = { title: 'Nota del Montacargas', text: 'Orden del Herrero: el ascens
 PAGES.cel = { title: 'Registro de Reos', text: 'Reo 14: pidió ver el sol. Reo 15: pidió ver la luna. Reo 16: no pidió nada y fue el único que durmió sin miedo. El musgo lo abrazó primero.' };
 PAGES.rez = { title: 'Menú del último banquete', text: 'Sopa de raíces, pan de piedra y vino sin cosecha. Los carceleros comían de pie; los presos, de rodillas. Ya nadie se acuerda de quién era cada cual.' };
 PAGES.ant = { title: 'Última orden del Alcaide', text: 'Me dejaron las llaves con una sola orden: no abrir hasta que los hermanos vuelvan juntos. Nunca volvieron. Ahora el musgo me habla con la voz de los dos y ya no sé a cuál obedezco. Quien me venza no es mi enemigo: es mi relevo.' };
-const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160 };
+const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160, alcaide: 140, madre: 300, slug: 5, shroom: 6, vine: 8, pris: 10 };
 const NPC_DEFS = {
   merchant: { name: 'Mercader', tex: 'npc_merchant', shop: true, lines: [['Almas, almas... Las prefiero a las monedas. Mira lo que tengo.']] },
   archivist: { name: 'Archivista Loco', tex: 'npc_archivist', lines: [
@@ -328,7 +334,7 @@ Object.assign(CastleScene.prototype, {
     (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
     this.hammerState = m.hammer | 0; this.smithMet = !!m.met; if (this.progress.bosses.includes('reina') && this.hammerState === 0) this.hammerState = 1; this.syncNpcs();
-    if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
+    if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0); this.hp = this.maxHp;
     const visited = new Set(m.visited || []);
@@ -439,6 +445,7 @@ Object.assign(CastleScene.prototype, {
     if (this.imbueOpen) this.imbueKeys(inp.J);
     if (this.travelOpen) this.travelKeys(inp.J);
     for (const k in this.buffs) this.buffs[k] = Math.max(0, this.buffs[k] - dt);
+    if (this.slowT > 0) this.slowT -= dt;
     if (inp.J.N) this.muteTxt.setAlpha(Music.toggleMute() ? 0.3 : 1);
     if (this.shopOpen) this.shopKeys(inp.J);
     else if (this.dlg && (inp.ePress || inp.J.ENTER || inp.J.SPACE || inp.attackPress)) this.dlgAdvance();
@@ -458,7 +465,7 @@ Object.assign(CastleScene.prototype, {
     const wantCrouch = crouchHeld && onFloor && this.dashT <= 0 && this.stun <= 0;
     if (wantCrouch && !this.crouching) this.setCrouch(true); else if (!wantCrouch && this.crouching && this.canStand()) this.setCrouch(false);
     const wall = b.blocked.left ? -1 : b.blocked.right ? 1 : 0;
-    const speed = P.speed * (this.pas.speed || 1) * (this.buffs.spd > 0 ? 1.35 : 1) * (this.crouching ? 0.5 : 1);
+    const speed = P.speed * (this.slowT > 0 ? 0.5 : 1) * (this.pas.speed || 1) * (this.buffs.spd > 0 ? 1.35 : 1) * (this.crouching ? 0.5 : 1);
     if (!this.crouching) { // caminar / saltar: fotogramas de piernas
       const moving = onFloor && dir !== 0 && this.dashT <= 0 && this.stun <= 0;
       const key = 'hero_' + this.color + (moving ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : (!onFloor ? '_w2' : (((time / 550) | 0) % 2 ? '_i' : '')));
@@ -484,6 +491,13 @@ Object.assign(CastleScene.prototype, {
     }
     if (!held(K_.UP, K_.W, K_.SPACE, K_.Z) && !touch.jump && !pad.jump && b.velocity.y < -200 && this.dashT <= 0 && this.stun <= 0) b.setVelocityY(b.velocity.y * 0.55);
     if (this.abil.wj && wall && !onFloor && b.velocity.y > P.slide && dir === wall) b.setVelocityY(P.slide);
+    // Pisotón de Raíces: en el aire, manteniendo abajo se cae en picado; al aterrizar una onda daña y rompe los suelos de raíces
+    this.poundCd = (this.poundCd || 0) - dt; this.airT = onFloor ? 0 : (this.airT || 0) + dt;
+    if (this.abil.pound && !ui && !onFloor && !this.pounding && this.poundCd <= 0 && this.airT > 0.15 && this.stun <= 0 && this.dashT <= 0 && !this.hook && crouchHeld) { this.pounding = true; b.setMaxVelocityY(800); b.setVelocity(b.velocity.x * 0.3, 780); SFX.dash(); }
+    if (this.pounding) {
+      if (onFloor || this.dead) this.poundLand();
+      else { b.setVelocityY(780); if (Math.random() < 0.5) this.poof(p.x, p.y - 12, 1, 0x8fd35a); }
+    }
     // Alas del Alba: manteniendo saltar en el aire se planea
     if (this.abil.wings && !ui && !onFloor && b.velocity.y > 60 && this.dashT <= 0 && !this.hook && this.stun <= 0 && (held(K_.UP, K_.W, K_.SPACE, K_.Z) || touch.jump || pad.jump)) {
       b.setVelocityY(60); if (this.wjLock <= 0) b.setVelocityX(dir * speed * 1.25);
@@ -582,7 +596,7 @@ Object.assign(CastleScene.prototype, {
     cv.onmousemove = ev => { const [x, y] = at(ev), a = W.areaOf(x, y); info.textContent = a ? a.name + ' (' + a.id + ')' : 'roca'; };
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
-    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
+    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
     box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
     box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
@@ -771,6 +785,20 @@ Object.assign(CastleScene.prototype, {
       return !dead;
     });
   },
+  poundLand() { // onda del Pisotón: daño en 88 px, aturde a los que caminan y rompe el suelo de raíces bajo los pies
+    this.pounding = false; this.poundCd = 0.5; const p = this.player, b = p.body; b.setMaxVelocityY(P.maxFall); this.invuln = Math.max(this.invuln, 0.2);
+    this.cameras.main.shake(160, 0.008); SFX.boss(); this.poof(p.x, p.y + 20, 10, 0x8fd35a);
+    const fy = b.bottom, dmg = 2 + this.dmgBonus();
+    this.ents.forEach(en => {
+      if (en.dead || (en.boss && !en.aggro) || en.cfg.inv) return;
+      const [ex, ey, ew, eh] = this.entBox(en);
+      if (Math.abs(ex - p.x) < 88 + ew / 2 && Math.abs((ey + eh / 2) - fy) < 48) { this.hitEnemy(en, Math.sign(ex - p.x) || 1, dmg, 'pound'); if (!en.boss && en.cfg.kind === 'walk') en.stun = 0.8; }
+    });
+    for (let dx = -T; dx <= T; dx += T) for (const oy of [6, 20, 34]) {
+      const t = this.fg.getTileAtWorldXY(p.x + dx, fy + oy);
+      if (t && t.index >= 0 && t.index % 8 === K.CRACK && this.W.roots.has(t.y * this.W.Wt + t.x)) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 8, 0x8fd35a); }
+    }
+  },
   hitEnemy(e, f, dmg, el) {
     const p = this.player, [ex, ey] = this.entBox(e);
     if (e.cfg.inv) { if (!e.invMsg || Date.now() - e.invMsg > 900) { e.invMsg = Date.now(); this.floatText(ex, ey - 36, '¡Invulnerable!', '#9fd4ff'); } this.poof(ex, ey, 2, 0x9fd4ff); SFX.hurt(); return; }
@@ -794,7 +822,7 @@ Object.assign(CastleScene.prototype, {
     });
     for (let wy = cy - bh / 2; wy <= cy + bh / 2; wy += 16) for (let wx = bx - bw / 2; wx <= bx + bw / 2; wx += 16) {
       const t = this.fg.getTileAtWorldXY(wx, wy);
-      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
+      if (t && t.index >= 0 && t.index % 8 === K.CRACK && !this.W.roots.has(t.y * this.W.Wt + t.x)) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
     }
   },
   damageEnt(e, dmg, dir, by, el, quiet) {
@@ -802,10 +830,17 @@ Object.assign(CastleScene.prototype, {
     if (e.boss && !e.aggro) return;
     if (e.phase === 'intro') return;
     if (e.cfg.inv) return; // invulnerables
+    if (e.down > 0) { if (el === 'pound') { e.down = 0; e.rez = true; e.hp = 0; this.killEnt(e, by); } return; } // el prisionero caído solo muere aplastado
+    if (e.type === 'alcaide' && e.shield) return; // hundido bajo el suelo
+    if (e.type === 'madre' && e.armor > 0) { // armadura de raíces
+      if (el === 'pound' || (e.hitsAcc = (e.hitsAcc || 0) + 1) >= 15) { e.hitsAcc = 0; e.armor--; e.flash = 0.2; this.poof(e.spr.x, e.spr.y - 20, 10, 0x8fd35a); this.cameras.main.shake(200, 0.008); this.floatText(e.spr.x, e.spr.y - 70, e.armor > 0 ? '¡Armadura dañada!' : '¡Armadura rota!', '#8fd35a'); if (e.armor <= 0) { e.windowT = e.hp < e.max * 0.25 ? 5 : (e.hp < e.max * 0.5 ? 6 : 7); e.stunT = 1; e.act = null; e.tele = false; } }
+      return;
+    }
     if (e.markT > 0) dmg = Math.ceil(dmg * 1.3); // marcado por Marchitar
     if (e.type === 'clock' && this.lightLevel(e.spr.x, e.spr.y) > 0.18) return; // la luz lo protege
     e.hp -= dmg; if (!quiet) { e.flash = 0.12; e.spr.setTintFill(0xffffff); }
     if (!quiet && !e.boss && !e.elite && e.cfg.kind === 'walk') { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
+    if (e.hp <= 0 && e.cfg.rez && !e.rez && !(e.dotT > 0) && el !== 'pound') { e.rez = true; e.down = 2.5; e.hp = Math.ceil(e.max / 2); e.shield = true; e.spr.setAngle(90); e.spr.body.setVelocityX(0); this.poof(e.spr.x, e.spr.y, 8, 0x8fd35a); return; } // primera muerte: cae y se levanta
     if (e.hp > 0 && el && !quiet) this.applyElement(e, el, dmg, dir, by);
     if (e.hp <= 0) this.killEnt(e, by);
   },
@@ -826,7 +861,7 @@ Object.assign(CastleScene.prototype, {
   },
   killEnt(e, by) {
     if (!e.boss) SFX.die();
-    let base = (SOULS[e.type] || 0) * (e.elite ? 5 : 1); base = Math.round(base * (1 + 0.2 * (e.zone !== undefined ? e.zone : 0)));
+    let base = (SOULS[e.type] || 0) * (e.elite ? 5 : 1); base = Math.round(base * (1 + 0.2 * Math.min(7, e.zone !== undefined ? e.zone : 0)));
     const x = e.spr.x, y = e.spr.y, summoned = e.summoned, type = e.type, elite = e.elite, name = e.name, reward = e.reward;
     _kill.call(this, e);
     if (summoned) return;
@@ -858,13 +893,14 @@ Object.assign(CastleScene.prototype, {
   contact() {
     const p = this.player, pw = 26, ph = this.crouching ? 22 : 36, cy = p.y + (this.crouching ? 7 : 0);
     this.ents.forEach(e => {
-      if (e.dead || (e.boss && !e.aggro)) return;
+      if (e.dead || (e.boss && !e.aggro) || (e.cfg.rez && e.shield)) return;
       const [ex, ey, ew, eh] = this.entBox(e);
       if (rectsOverlap(p.x, cy, pw, ph, ex, ey, ew, eh)) this.hurt(e.cfg.dmg + (e.dmgBonus || 0), ex);
     });
     this.projs.forEach((pr, id) => {
       if (this.hurtProjs.has(id)) return;
-      const c = PR[pr.type]; if (!c.dmg) return;
+      const c = PR[pr.type]; if (c.slow) { if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1])) this.slowT = 0.6; return; }
+      if (!c.dmg) return;
       if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { if (!c.linger) this.hurtProjs.add(id); this.hurt(c.dmg + (this.pas.projPlus || 0), pr.spr.x); }
     });
     if (this.hurtProjs.size > 200) this.hurtProjs.clear();
@@ -936,7 +972,7 @@ Object.assign(CastleScene.prototype, {
     for (let wy = y - r; wy <= y + r; wy += 16) for (let wx = x - r; wx <= x + r; wx += 16) {
       if (Math.hypot(wx - x, wy - y) > r) continue;
       const t = this.fg.getTileAtWorldXY(wx, wy);
-      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); }
+      if (t && t.index >= 0 && t.index % 8 === K.CRACK && !this.W.roots.has(t.y * this.W.Wt + t.x)) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); }
     }
     this.ents.forEach(e => {
       if (e.dead || e.cfg.inv) return;

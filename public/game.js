@@ -128,6 +128,13 @@ const EN = {
   reina: { tex: 'reina', sc: 4, body: [12, 14], hp: 30, dmg: 2, hb: [50, 56], kind: 'boss' },
   aurora: { tex: 'aurora', sc: 4, body: [10, 14], hp: 24, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   vesper: { tex: 'vesper', sc: 4, body: [10, 15], hp: 24, dmg: 2, hb: [48, 60], kind: 'boss' },
+  // Calabozos Profundos
+  slug: { tex: 'limo', sc: 3, body: [14, 10], hp: 3, dmg: 1, spd: 28, hb: [40, 26], kind: 'walk', slime: true },
+  shroom: { tex: 'hongo', sc: 3, body: [14, 14], hp: 4, dmg: 1, spd: 0, hb: [40, 40], kind: 'turret' },
+  vine: { tex: 'raiz', sc: 3, body: [12, 14], hp: 5, dmg: 1, spd: 0, hb: [40, 44], kind: 'ceil', fly: true },
+  pris: { tex: 'preso', sc: 3, body: [12, 15], hp: 6, dmg: 2, spd: 42, hb: [34, 44], kind: 'walk', rez: true },
+  alcaide: { tex: 'carcelero', sc: 4, body: [12, 15], hp: 32, dmg: 2, hb: [54, 62], kind: 'boss' },
+  madre: { tex: 'driade', sc: 5, body: [14, 15], hp: 44, dmg: 2, hb: [64, 74], kind: 'boss' },
   // enemigos invulnerables: solo se esquivan
   saw: { tex: 'saw', sc: 3, body: [12, 12], hp: 9999, dmg: 2, hb: [34, 34], kind: 'saw', inv: true },
   sentinel: { tex: 'sentinel', sc: 3, body: [12, 15], hp: 9999, dmg: 2, spd: 70, hb: [34, 44], kind: 'walk', inv: true, patrol: true },
@@ -138,6 +145,7 @@ const ELITE_AB = {
   'Bibliotecario Maldito': { kind: 'orbs', range: 380, tele: 0.45, act: 0.1, cd: 3.2 },
   'Carcelero': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 4.2 },
   'Espectro Penitente': { kind: 'blink', range: 420, tele: 0.5, act: 0.1, cd: 4.5 },
+  'Verdugo Cubierto de Musgo': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 3.8 },
   'Relojero Oxidado': { kind: 'haste', range: 260, tele: 0.5, act: 2.6, cd: 5, trail: true } // deja un rastro de veneno de 3 s y, un ciclo sí y otro no, lanza una nube que dura 5 s
 };
 const PR = {
@@ -147,6 +155,11 @@ const PR = {
   mark: { tex: 'ring', sc: 3, hb: [0, 0], dmg: 0 },
   pillar: { tex: 'pillar', sc: 3, hb: [28, 150], dmg: 2 },
   toxin: { tex: 'puff', sc: 3, hb: [30, 14], dmg: 1, tint: 0x66ff44, alpha: 0.7, linger: true }, // charco de veneno (Relojero Oxidado)
+  slime: { tex: 'puff', sc: 3, hb: [30, 10], dmg: 0, slow: true, tint: 0x9a8a3a, alpha: 0.6, linger: true }, // baba: ralentiza
+  spore: { tex: 'puff', sc: 4, hb: [34, 34], dmg: 1, tint: 0xc08aff, alpha: 0.6, linger: true }, // espora que persigue despacio
+  lash: { tex: 'shock', sc: 5, hb: [150, 16], dmg: 2, tint: 0x6fbf4a }, // latigazo
+  vine: { tex: 'pillar', sc: 3, hb: [22, 170], dmg: 2, tint: 0x3f8f3a }, // liana que cae
+  rootwave: { tex: 'shock', sc: 2, hb: [34, 26], dmg: 2, tint: 0x3f8f3a }, // ola de raíces por el suelo
   cloud: { tex: 'puff', sc: 7, hb: [48, 48], dmg: 1, tint: 0x66ff44, alpha: 0.5, linger: true }, // nube de veneno: se queda en el aire
 };
 const ZONE_SCALE = [1, 1.25, 1.5, 1.35, 1.7, 2, 1, 2.4, 2.8, 3]; // vida de los enemigos corrientes según la zona
@@ -374,7 +387,7 @@ class CastleScene extends Phaser.Scene {
     this.syncRelics(); this.openGates(!silent);
     this.scenes = this.scenes || new Set();
     (p.bosses || []).forEach(id => { if (World.BOSSES[id] && World.BOSSES[id].rival && !this.scenes.has(id)) { this.scenes.add(id); if (!silent) this.albaScene(id); } });
-    this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
+    this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye', 'pound'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
   }
   bossGone(b) { const r = World.BOSSES[b.id] && World.BOSSES[b.id].rival; return this.progress.bosses.includes(b.id) || !!(r && this.progress.bosses.includes(r)); }
   gateOk(gt) { const pb = this.progress.bosses; return gt.boss === 'alba' ? (pb.includes('aurora') || pb.includes('vesper')) : gt.boss === 'sellos' ? (pb.includes('conde') || (pb.includes('archon') && pb.includes('reina'))) : pb.includes(gt.boss); }
@@ -405,7 +418,7 @@ class CastleScene extends Phaser.Scene {
   }
   grantAbility(a) {
     this.abil[a] = true; SFX.pick();
-    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.' })[a], 6000);
+    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.', pound: 'En el aire, mantén abajo para caer en picado: rompe los suelos de raíces y aturde a los enemigos.' })[a], 6000);
     this.wallBroken();
     this.syncRelics(); this.applyProgress(this.progress, true); this.autoSave();
   }
@@ -651,9 +664,10 @@ class CastleScene extends Phaser.Scene {
     [...this.projs.values()].forEach(p => {
       p.life -= dt; p.vy += p.grav * dt; p.spr.x += p.vx * dt; p.spr.y += p.vy * dt;
       if (p.brake !== undefined) { p.brake -= dt; if (p.brake <= 0) { p.vx = 0; p.vy = 0; p.brake = undefined; } } // la nube frena y se queda flotando
+      if (p.homing && p.brake === undefined) { const t = this.nearest(p.spr.x, p.spr.y, 700); if (t) { const an = Math.atan2(t.y - p.spr.y, t.x - p.spr.x); p.vx = Math.cos(an) * p.homing; p.vy = Math.sin(an) * p.homing; } } // espora teledirigida
       p.spr.setFlipX(p.vx < 0);
       if (p.ground && (!this.solidAt(p.spr.x, p.spr.y + 12) || this.solidAt(p.spr.x + Math.sign(p.vx) * 14, p.spr.y))) p.life = 0; // la onda muere en el borde de la plataforma o en un muro
-      if (p.life <= 0 || (p.type !== 'shock' && this.solidAt(p.spr.x, p.spr.y))) { p.spr.destroy(); this.projs.delete(p.id); }
+      if (p.life <= 0 || (!['shock', 'lash', 'vine'].includes(p.type) && this.solidAt(p.spr.x, p.spr.y))) { p.spr.destroy(); this.projs.delete(p.id); }
     });
     // instantánea
     this.snapT -= dt;
@@ -726,7 +740,22 @@ class CastleScene extends Phaser.Scene {
       const t = this.simT * o.w + e.ph, nx = e.ox + (o.ax === 'h' ? Math.sin(t) * o.r : 0), ny = e.oy + (o.ax === 'v' ? Math.sin(t) * o.r : 0);
       b.setVelocity((nx - e.spr.x) * 9, (ny - e.spr.y) * 9); return;
     }
+    if (e.down > 0) { e.down -= dt; b.setVelocityX(0); if (e.down <= 0) { e.down = 0; e.shield = false; e.spr.setAngle(0); this.poof(e.spr.x, e.spr.y, 6, 0x8fd35a); } return; } // el prisionero caído se levanta
     if (e.elite && this.eliteAbility(e, dt, tg)) return;
+    if (cfg.kind === 'turret') { // hongo: se hincha y suelta esporas que persiguen
+      b.setVelocityX(0); e.cd = (e.cd === undefined ? 2 : e.cd) - dt * slow;
+      if (!e.ph && e.cd <= 0 && tg && Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) < 300) { e.ph = 'tele'; e.abT = 0.8; }
+      if (e.ph === 'tele') { e.tele = true; e.abT -= dt; if (e.abT <= 0) { e.tele = false; e.ph = null; e.cd = 3.5; for (const an of [-100, -90, -80]) { const r = an * Math.PI / 180, pr = this.spawnProj('spore', e.spr.x, e.spr.y - 20, Math.cos(r) * 90, Math.sin(r) * 90, 4.5); pr.brake = 0.5; pr.homing = 38; } } }
+      return;
+    }
+    if (cfg.kind === 'ceil') { // liana: cuelga del techo y cae sobre quien pasa debajo
+      b.setVelocity(0, 0); const dx = tg ? Math.abs(tg.x - e.spr.x) : 999, below = tg && tg.y > e.spr.y && tg.y < e.spr.y + 260;
+      if (!e.ph) { e.cd = (e.cd === undefined ? 1.5 : e.cd) - dt; e.armT = dx < 90 && below ? (e.armT || 0) + dt : 0; if (e.armT > 0.4 && e.cd <= 0) { e.ph = 'tele'; e.abT = 0.5; e.armT = 0; } }
+      else if (e.ph === 'tele') { e.tele = true; e.abT -= dt; if (e.abT <= 0) { e.tele = false; e.ph = 'act'; e.abT = 0.35; this.spawnProj('vine', e.spr.x, e.spr.y + 95, 0, 0, 0.35); } }
+      else { e.abT -= dt; if (e.abT <= 0) { e.ph = null; e.cd = 1.5; } }
+      return;
+    }
+    if (cfg.slime) { e.slimeT = (e.slimeT || 0) - dt; if (e.slimeT <= 0 && (b.blocked.down || b.touching.down)) { e.slimeT = 1.0; this.spawnProj('slime', e.spr.x, b.bottom - 5, 0, 0, 3); } }
     if (cfg.kind === 'walk') {
       if (e.stun > 0) { e.stun -= dt; return; }
       let dir = e.dir, mul = (e.abPh === 'act' && (ELITE_AB[e.name] || {}).kind === 'haste' && !e.cloudTurn) ? 1.8 : 1;
@@ -784,7 +813,7 @@ class CastleScene extends Phaser.Scene {
       return;
     }
     if (!tgs.length) { e.emptyT += dt; if (e.emptyT > 4) { // reinicio del jefe
-      e.aggro = false; e.hp = e.max = cfg.hp; e.act = null; e.tele = false; e.marked = e.erupted = e.moved = e.fired = e.diving = false; e.chan = 0; e.phase = null; if (!this.floorBroken) this.floorState = 0; e.spr.setPosition(e.home.x, e.home.y); b.setVelocity(0, 0); e.spr.setAlpha(1);
+      e.aggro = false; e.hp = e.max = cfg.hp; e.act = null; e.tele = false; e.marked = e.erupted = e.moved = e.fired = e.diving = false; e.chan = 0; e.phase = null; e.armor = undefined; e.stunT = 0; e.shield = false; e.second = false; if (!this.floorBroken) this.floorState = 0; e.spr.setPosition(e.home.x, e.home.y); b.setVelocity(0, 0); e.spr.setAlpha(1);
       this.projs.forEach(p => p.spr.destroy()); this.projs.clear();
       this.ents.forEach(x => { if (x.summoned) { x.spr.destroy(); this.ents.delete(x.id); } });
       this.sealKey = null; this.applySeal(null); } return; }
@@ -794,6 +823,12 @@ class CastleScene extends Phaser.Scene {
     const tg = tgs.reduce((m, t) => (Math.hypot(t.x - e.spr.x, t.y - e.spr.y) < Math.hypot(m.x - e.spr.x, m.y - e.spr.y) ? t : m), tgs[0]);
     const x = e.spr.x, y = e.spr.y, rage = e.hp < e.max * 0.5, dirT = Math.sign(tg.x - x) || 1;
     e.spr.setFlipX(tg.x < x);
+    if (e.type === 'madre') { // armadura de raíces: solo el Pisotón la rompe (o 15 golpes normales)
+      if (e.armor === undefined) { e.armor = tgs.length >= 3 ? 3 : 2; e.windowT = 0; }
+      if (e.armor <= 0) { e.windowT -= dt; if (e.windowT <= 0) { e.armor = tgs.length >= 3 ? 3 : 2; this.poof(e.spr.x, e.spr.y, 12, 0x8fd35a); } }
+      e.shield = e.armor > 0;
+      if (e.stunT > 0) { e.stunT -= dt; e.tele = false; b.setVelocity(0, 0); return; }
+    }
     const floorY = a.floor;
     const shock = (n = 1) => { // las ondas salen de la superficie que pisa el jefe (suelo o plataforma)
       const sy = this.surfaceBelow(x, y, floorY), onPlat = sy < floorY - 4;
@@ -801,7 +836,9 @@ class CastleScene extends Phaser.Scene {
       mk(230, 1.4); mk(-230, 1.4); if (rage && n > 1) { mk(340, 1.2); mk(-340, 1.2); } this.cameras.main.shake(180, 0.006); };
     const fan = (cnt) => { const base = Math.atan2(tg.y - y, tg.x - x); for (let i = -cnt; i <= cnt; i++) { const an = base + i * 0.24; this.spawnProj('orb', x, y, Math.cos(an) * 200, Math.sin(an) * 200, 4); } };
     const gear = () => this.spawnProj('gear', Phaser.Math.Between(a.x0 + 20, a.x1 - 20), a.y0 + 12, 0, 240, 3.5, 0);
-    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'reina' ? 'sk' : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
+    const ring = (n, sp, off) => { for (let i = 0; i < n; i++) { const an = off + i * Math.PI * 2 / n, pr = this.spawnProj('spore', x, y - 10, Math.cos(an) * sp, Math.sin(an) * sp, 4); pr.brake = 1.0; } };
+    const sporeFan = (n) => { for (let i = 0; i < n; i++) { const an = (-90 + (i - (n - 1) / 2) * 14) * Math.PI / 180, pr = this.spawnProj('spore', x, y - 30, Math.cos(an) * 90, Math.sin(an) * 90, 4.5); pr.brake = 0.5; pr.homing = 38; } };
+    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'reina' ? 'sk' : e.type === 'alcaide' ? 'shroom' : e.type === 'madre' ? (i < 2 ? 'shroom' : 'slug') : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
 
     if (!e.act) {
       e.cd -= dt;
@@ -817,6 +854,8 @@ class CastleScene extends Phaser.Scene {
         if (e.type === 'reina') { const o = ['leap', 'charge', 'pillars', 'leap'].filter(x => x !== e.last); if (e.hp < e.max * 0.7 && e.summonCd <= 0) e.act = 'summon'; else e.act = pick(o); e.last = e.act; }
         if (e.type === 'aurora') { const o = ['fan', 'dive', 'rays', 'sweep'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'vesper') { const o = ['charge', 'ambush', 'pillars', 'leap'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'alcaide') { const rg = e.hp < e.max * 0.5; if (rg && e.summonCd <= 0 && [...this.ents.values()].filter(x => x.summoned).length < 2) e.act = 'brood'; else { const o = ['whip', 'spores', 'burrow'].filter(x => x !== e.last); e.act = pick(o); } e.last = e.act; }
+        if (e.type === 'madre') { const near = Math.hypot(tg.x - x, tg.y - y) < 150; if (near && Math.random() < 0.6) e.act = 'slap'; else if (rage && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 3) e.act = 'brood'; else { const o = ['bloom', 'rootwave'].filter(q => q !== e.last); e.act = pick(o); } e.last = e.act; }
         if (e.type === 'clock') e.act = (e.relightT <= 0 && this.torchObjs.some(o => o.area === 'clkC' && !o.lit)) ? 'relight' : pick(['charge', 'slam', 'rain']);
         if (e.type === 'bishop') { e.summonCd -= 0; e.act = e.hp < e.max * 0.6 && e.summonCd <= 0 ? 'summon' : pick(['fan', 'tele', 'fan']); }
         if (e.type === 'conde') {
@@ -909,6 +948,47 @@ class CastleScene extends Phaser.Scene {
         if (e.t < 0.7) e.tele = true;
         else { e.tele = false; const tot = rage ? 14 : 9; if (e.t > 0.7 + e.n * 0.22 && e.n < tot) { const rx = e.n % 3 === 0 ? Phaser.Math.Clamp(tg.x, a.x0 + 20, a.x1 - 20) : Phaser.Math.Between(a.x0 + 20, a.x1 - 20); this.spawnProj('orb', rx, a.y0 + 14, 0, 240, 3.5); e.n++; } if (e.n >= tot && e.t > 0.7 + tot * 0.22 + 0.8) done(1.1); }
         break;
+      case 'whip': // Alcaide: latigazo
+        b.setVelocityX(0);
+        if (e.t < 0.8) e.tele = true;
+        else if (!e.fired) { e.tele = false; this.spawnProj('lash', x + e.dirT * 85, y + 18, 0, 0, 0.3); e.fired = true; e.second = false; this.cameras.main.shake(120, 0.005); }
+        else if (rage && !e.second && e.t > 1.25) { e.second = true; this.spawnProj('lash', x - e.dirT * 85, y + 18, 0, 0, 0.3); }
+        else if (e.t > 1.9) { e.second = false; done(0.9); }
+        break;
+      case 'spores': // Alcaide: nube de moho
+        b.setVelocityX(0);
+        if (e.t < 0.6) e.tele = true; else if (!e.fired) { e.tele = false; sporeFan(rage ? 5 : 3); e.fired = true; } else if (e.t > 1.6) done(1.0);
+        break;
+      case 'burrow': // Alcaide: se hunde, viaja bajo el suelo y brotan pilares
+        if (e.t < 0.5) { e.tele = true; e.shield = true; b.setVelocityX(0); e.spr.setAlpha(Math.max(0.25, 1 - e.t * 1.6)); }
+        else if (e.t < 1.3) { e.tele = false; e.spr.setAlpha(0.25); b.setVelocityX(Math.abs(tg.x - x) > 24 ? Math.sign(tg.x - x) * 260 : 0); }
+        else if (!e.marked) { b.setVelocityX(0); e.marked = true; e.tele = true; const xs = rage ? [-180, -90, 0, 90, 180] : [-90, 0, 90]; e.pxs = xs.map(d => { const px = Phaser.Math.Clamp(x + d, a.x0 + 30, a.x1 - 30); return [px, this.surfaceBelow(px, y - 20, floorY)]; }); e.pxs.forEach(([px, sy]) => this.spawnProj('mark', px, sy - 6, 0, 0, 0.9)); }
+        else if (!e.erupted && e.t > 2.2) { e.erupted = true; e.tele = false; e.pxs.forEach(([px, sy]) => this.spawnProj('pillar', px, sy - 72, 0, 0, 0.5)); this.cameras.main.shake(160, 0.006); e.spr.setAlpha(1); e.shield = false; }
+        else if (e.t > (rage ? 3.2 : 3.6)) { e.marked = false; e.erupted = false; e.shield = false; e.spr.setAlpha(1); done(0.8); }
+        break;
+      case 'brood': // brote de hongos
+        b.setVelocity(0, 0); e.tele = e.t < 0.8;
+        if (e.t > 0.8) { summon(e.type === 'madre' ? 3 : 2); e.summonCd = 16; done(1.2); }
+        break;
+      case 'bloom': // Madre: anillos de esporas
+        b.setVelocity(0, 0);
+        if (e.t < 1.0) e.tele = true;
+        else if (!e.fired) { e.tele = false; ring(8, 90, 0); e.fired = true; e.n = 0; }
+        else if (e.n === 0 && e.t > 2.1) { ring(8, 130, Math.PI / 8); e.n = 1; }
+        else if (e.n === 1 && e.hp < e.max * 0.25 && e.t > 2.8) { ring(8, 110, Math.PI / 16); e.n = 2; }
+        else if (e.t > 3.2) { e.fired = false; done(1.2); }
+        break;
+      case 'rootwave': { // Madre: olas de raíces por el suelo
+        b.setVelocity(0, 0);
+        if (e.t < 0.7) { e.tele = true; if (e.t < 0.1) this.cameras.main.shake(300, 0.004); }
+        else { e.tele = false; const sy = this.surfaceBelow(x, y, floorY), sp = rage ? 280 : 220;
+          const wave = () => { for (const s2 of [-1, 1]) { const pr = this.spawnProj('rootwave', x + s2 * 50, sy - 14, s2 * sp, 0, 3); pr.ground = true; } };
+          if (!e.fired) { wave(); e.fired = true; } else if (rage && !e.second && e.t > 1.5) { wave(); e.second = true; } else if (e.t > 2.4) { e.fired = false; e.second = false; done(1.3); } }
+        break; }
+      case 'slap': // Madre: zarpazo a los que se pegan a ella
+        b.setVelocity(0, 0);
+        if (e.t < 0.5) e.tele = true; else if (!e.fired) { e.tele = false; for (const s2 of [-1, 1]) this.spawnProj('lash', x + s2 * 100, y + 30, 0, 0, 0.25); e.fired = true; this.cameras.main.shake(140, 0.005); } else if (e.t > 1.1) { e.fired = false; done(0.9); }
+        break;
       case 'summon':
         b.setVelocity(0, 0); e.tele = e.t < 0.6;
         if (e.t > 0.6) { summon(e.type === 'conde' ? 3 : 2); e.summonCd = 14; done(1.2); }
@@ -926,7 +1006,7 @@ class CastleScene extends Phaser.Scene {
       if (!e) { e = this.createEnt(id, type, x, y, false); }
       e.tx = x; e.ty = y; e.spr.setFlipX(!!flip);
       if (hp < e.hp) { e.flash = 0.12; e.spr.setTintFill(0xffffff); }
-      e.hp = hp; e.max = max; e.aggro = !!(flags & 1); e.tele = !!(flags & 2); e.shield = !!(flags & 4);
+      e.hp = hp; e.max = max; e.aggro = !!(flags & 1); e.tele = !!(flags & 2); e.shield = !!(flags & 4); if (e.cfg.rez) e.spr.setAngle(e.shield ? 90 : 0);
       if ((flags & 8) && !e.elite) this.makeElite(e, { name }); if (name) e.name = name;
     });
     this.ents.forEach((e, id) => { if (!seen.has(id)) { this.poof(e.spr.x, e.spr.y, e.boss ? 18 : 6); e.spr.destroy(); this.ents.delete(id); } });
