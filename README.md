@@ -89,7 +89,7 @@ En **Windows** también puedes hacer doble clic en `Iniciar-servidor.bat`: insta
 
 ### Instalador para Windows (sin instalar Node)
 
-**Descarga directa (Windows):** [FourFangsOfDawn-Setup.exe](https://github.com/txaberOcio/four-fangs-of-dawn/releases/download/v0.2.0/FourFangsOfDawn-Setup.exe) · [todas las versiones](https://github.com/txaberOcio/four-fangs-of-dawn/releases)
+**Descarga directa (Windows):** [FourFangsOfDawn-Setup.exe](https://github.com/txaberOcio/four-fangs-of-dawn/releases/download/v0.3.0/FourFangsOfDawn-Setup.exe) · [todas las versiones](https://github.com/txaberOcio/four-fangs-of-dawn/releases)
 
 Si alguien solo quiere probar el juego, puedes darle **`FourFangsOfDawn-Setup.exe`**: lo instala en su carpeta de usuario (sin permisos de administrador), crea accesos directos en el escritorio y en el menú Inicio y abre el juego en el navegador. Para jugar con amigos en la misma red, el que ejecuta el juego comparte la dirección `http://IP:3000` que muestra su ventana. Sus partidas se guardan en `%APPDATA%\FourFangsOfDawn`. Windows puede avisar de que el programa no está firmado: pulsa *Más información → Ejecutar de todos modos*.
 
