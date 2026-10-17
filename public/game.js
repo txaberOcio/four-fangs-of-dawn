@@ -728,6 +728,11 @@ class CastleScene extends Phaser.Scene {
     }
   }
 
+  surfaceBelow(x, y, maxY) { // y de la superficie (plataforma o suelo) que hay justo bajo un punto
+    for (let yy = y; yy < maxY; yy += 4) if (this.solidAt(x, yy)) return Math.floor(yy / T) * T;
+    return maxY;
+  }
+
   bossAI(e, dt) {
     const b = e.spr.body, a = e.arena, cfg = e.cfg;
     // protección: si el jefe sale de su sala (p. ej. cae por un hueco), vuelve a su sitio
@@ -839,10 +844,10 @@ class CastleScene extends Phaser.Scene {
       case 'pillars': { // pilares de sangre: marcas en el suelo y erupción
         if (e.t < 0.5) { b.setVelocity(0, 0); e.tele = true; }
         else if (!e.marked) {
-          e.tele = false; e.marked = true; e.pxs = tgs.map(t => Phaser.Math.Clamp(t.x, a.x0 + 30, a.x1 - 30));
-          for (let i = 0; i < (rage ? 5 : 3); i++) e.pxs.push(Phaser.Math.Between(a.x0 + 60, a.x1 - 60));
-          e.pxs.forEach(px => this.spawnProj('mark', px, a.floor - 6, 0, 0, 0.9));
-        } else if (!e.erupted && e.t > 1.4) { e.erupted = true; e.pxs.forEach(px => this.spawnProj('pillar', px, a.floor - 72, 0, 0, 0.5)); this.cameras.main.shake(160, 0.006); }
+          e.tele = false; e.marked = true; e.pxs = tgs.map(t => { const px = Phaser.Math.Clamp(t.x, a.x0 + 30, a.x1 - 30); return [px, this.surfaceBelow(px, t.y, a.floor)]; }); // el pilar sale bajo cada jugador: en su plataforma, no en el suelo
+          for (let i = 0; i < (rage ? 5 : 3); i++) e.pxs.push([Phaser.Math.Between(a.x0 + 60, a.x1 - 60), a.floor]);
+          e.pxs.forEach(([px, sy]) => this.spawnProj('mark', px, sy - 6, 0, 0, 0.9));
+        } else if (!e.erupted && e.t > 1.4) { e.erupted = true; e.pxs.forEach(([px, sy]) => this.spawnProj('pillar', px, sy - 72, 0, 0, 0.5)); this.cameras.main.shake(160, 0.006); }
         else if (e.t > 2.3) { e.marked = false; e.erupted = false; done(1.0); }
         break; }
       case 'dive': // sube al techo y cae en picado
