@@ -133,7 +133,7 @@ const ELITE_AB = {
   'Bibliotecario Maldito': { kind: 'orbs', range: 380, tele: 0.45, act: 0.1, cd: 3.2 },
   'Carcelero': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 4.2 },
   'Espectro Penitente': { kind: 'blink', range: 420, tele: 0.5, act: 0.1, cd: 4.5 },
-  'Relojero Oxidado': { kind: 'haste', range: 260, tele: 0.5, act: 2.6, cd: 5 }
+  'Relojero Oxidado': { kind: 'haste', range: 260, tele: 0.5, act: 2.6, cd: 5, trail: true } // deja un rastro de veneno de 3 s y, un ciclo sí y otro no, lanza una nube que dura 5 s
 };
 const PR = {
   orb: { tex: 'orb', sc: 2, hb: [14, 14], dmg: 1 },
@@ -141,6 +141,8 @@ const PR = {
   gear: { tex: 'gear', sc: 2.5, hb: [26, 26], dmg: 1 },
   mark: { tex: 'ring', sc: 3, hb: [0, 0], dmg: 0 },
   pillar: { tex: 'pillar', sc: 3, hb: [28, 150], dmg: 2 },
+  toxin: { tex: 'puff', sc: 3, hb: [30, 14], dmg: 1, tint: 0x66ff44, alpha: 0.7, linger: true }, // charco de veneno (Relojero Oxidado)
+  cloud: { tex: 'puff', sc: 7, hb: [48, 48], dmg: 1, tint: 0x66ff44, alpha: 0.5, linger: true }, // nube de veneno: se queda en el aire
 };
 const ZONE_SCALE = [1, 1.25, 1.5, 1.35, 1.7, 2, 1, 2.4, 2.8]; // vida de los enemigos corrientes según la zona
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
@@ -572,7 +574,7 @@ class CastleScene extends Phaser.Scene {
 
   spawnProj(type, x, y, vx, vy, life = 3, grav = 0) {
     const c = PR[type], id = 'p' + (this.nid++);
-    const spr = this.add.sprite(x, y, c.tex).setScale(c.sc).setDepth(7);
+    const spr = this.add.sprite(x, y, c.tex).setScale(c.sc).setDepth(7).setTint(c.tint || 0xffffff).setAlpha(c.alpha || 1);
     const pr = { id, type, spr, vx, vy, life, grav, tx: x, ty: y }; this.projs.set(id, pr); return pr;
   }
 
@@ -640,6 +642,7 @@ class CastleScene extends Phaser.Scene {
     // proyectiles
     [...this.projs.values()].forEach(p => {
       p.life -= dt; p.vy += p.grav * dt; p.spr.x += p.vx * dt; p.spr.y += p.vy * dt;
+      if (p.brake !== undefined) { p.brake -= dt; if (p.brake <= 0) { p.vx = 0; p.vy = 0; p.brake = undefined; } } // la nube frena y se queda flotando
       p.spr.setFlipX(p.vx < 0);
       if (p.ground && (!this.solidAt(p.spr.x, p.spr.y + 12) || this.solidAt(p.spr.x + Math.sign(p.vx) * 14, p.spr.y))) p.life = 0; // la onda muere en el borde de la plataforma o en un muro
       if (p.life <= 0 || (p.type !== 'shock' && this.solidAt(p.spr.x, p.spr.y))) { p.spr.destroy(); this.projs.delete(p.id); }
@@ -660,6 +663,7 @@ class CastleScene extends Phaser.Scene {
     const ab = ELITE_AB[e.name]; if (!ab) return false;
     const b = e.spr.body, x = e.spr.x, d = tg ? Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) : 1e9;
     e.abCd = (e.abCd === undefined ? 2 : e.abCd) - dt;
+    if (ab.trail) { e.trailT = (e.trailT || 0) - dt; if (e.trailT <= 0 && (b.blocked.down || b.touching.down) && Math.abs(b.velocity.x) > 8) { e.trailT = 0.3; this.spawnProj('toxin', e.spr.x, b.bottom - 6, 0, 0, 3); } } // rastro de veneno al andar
     if (e.abPh === 'tele') {
       e.abT -= dt; e.tele = true; b.setVelocityX(0); if (e.cfg.kind === 'ghost') b.setVelocityY(0);
       if (e.abT <= 0) { e.tele = false; e.abPh = 'act'; e.abT = ab.act || 0.05; if (tg) this.eliteFire(e, ab, tg); }
@@ -679,7 +683,10 @@ class CastleScene extends Phaser.Scene {
   }
   eliteFire(e, ab, tg) {
     const x = e.spr.x, y = e.spr.y, an = Math.atan2(tg.y - y, tg.x - x);
-    if (ab.kind === 'orbs') { for (const o of [-0.3, 0, 0.3]) this.spawnProj('orb', x, y - 6, Math.cos(an + o) * 190, Math.sin(an + o) * 190, 3); }
+    if (ab.kind === 'haste') {
+      e.abN = (e.abN || 0) + 1; e.cloudTurn = e.abN % 2 === 0; // un ciclo furia, el siguiente nube de veneno
+      if (e.cloudTurn) { const dist = Math.hypot(tg.x - x, tg.y - (y - 16)), sp = 230, pr = this.spawnProj('cloud', x, y - 16, Math.cos(an) * sp, Math.sin(an) * sp, dist / sp + 5); pr.brake = Math.min(1.3, dist / sp); }
+    } else if (ab.kind === 'orbs') { for (const o of [-0.3, 0, 0.3]) this.spawnProj('orb', x, y - 6, Math.cos(an + o) * 190, Math.sin(an + o) * 190, 3); }
     else if (ab.kind === 'quake') { this.cameras.main.shake(180, 0.006); 
       const feet = y + (e.cfg.body[1] * e.cfg.sc) / 2;
       for (const s of [-1, 1]) { // las ondas viajan pegadas al suelo que pisa el enemigo (también en plataformas)
@@ -714,7 +721,7 @@ class CastleScene extends Phaser.Scene {
     if (e.elite && this.eliteAbility(e, dt, tg)) return;
     if (cfg.kind === 'walk') {
       if (e.stun > 0) { e.stun -= dt; return; }
-      let dir = e.dir, mul = (e.abPh === 'act' && (ELITE_AB[e.name] || {}).kind === 'haste') ? 1.8 : 1;
+      let dir = e.dir, mul = (e.abPh === 'act' && (ELITE_AB[e.name] || {}).kind === 'haste' && !e.cloudTurn) ? 1.8 : 1;
       const x = e.spr.x, feet = e.spr.y + (cfg.body[1] * cfg.sc) / 2 + 6;
       if (!cfg.patrol && tg && Math.abs(tg.y - e.spr.y) < 80 && Math.abs(tg.x - x) < 240) { dir = Math.sign(tg.x - x) || dir; mul = 1.7; }
       const ahead = this.solidAt(x + dir * 22, feet);
@@ -919,7 +926,7 @@ class CastleScene extends Phaser.Scene {
     s.p.forEach(([id, type, x, y]) => {
       ps.add(id);
       let p = this.projs.get(id);
-      if (!p) { const c = PR[type]; p = { id, type, spr: this.add.sprite(x, y, c.tex).setScale(c.sc).setDepth(7), tx: x, ty: y }; this.projs.set(id, p); }
+      if (!p) { const c = PR[type]; p = { id, type, spr: this.add.sprite(x, y, c.tex).setScale(c.sc).setDepth(7).setTint(c.tint || 0xffffff).setAlpha(c.alpha || 1), tx: x, ty: y }; this.projs.set(id, p); }
       p.tx = x; p.ty = y;
     });
     this.projs.forEach((p, id) => { if (!ps.has(id)) { p.spr.destroy(); this.projs.delete(id); } });
@@ -1044,7 +1051,7 @@ class CastleScene extends Phaser.Scene {
     this.projs.forEach((pr, id) => {
       if (this.hurtProjs.has(id)) return;
       const c = PR[pr.type];
-      if (rectsOverlap(p.x, p.y, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { this.hurtProjs.add(id); this.hurt(c.dmg, pr.spr.x); }
+      if (rectsOverlap(p.x, p.y, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { if (!c.linger) this.hurtProjs.add(id); this.hurt(c.dmg, pr.spr.x); }
     });
     if (this.hurtProjs.size > 200) this.hurtProjs.clear();
   }

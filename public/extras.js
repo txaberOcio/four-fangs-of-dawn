@@ -831,7 +831,7 @@ Object.assign(CastleScene.prototype, {
     this.projs.forEach((pr, id) => {
       if (this.hurtProjs.has(id)) return;
       const c = PR[pr.type]; if (!c.dmg) return;
-      if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { this.hurtProjs.add(id); this.hurt(c.dmg + (this.pas.projPlus || 0), pr.spr.x); }
+      if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { if (!c.linger) this.hurtProjs.add(id); this.hurt(c.dmg + (this.pas.projPlus || 0), pr.spr.x); }
     });
     if (this.hurtProjs.size > 200) this.hurtProjs.clear();
   },
