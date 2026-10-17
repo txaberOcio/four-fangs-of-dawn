@@ -59,7 +59,8 @@ const ELEMENTS = {
   wither: { name: 'Marchitar', tint: 0x8a5a9a, desc: 'marca al enemigo: recibe un 30% más de daño durante 4 s', long: 'El filo marchita. El enemigo golpeado queda marcado 4 s y recibe un 30% más de daño de TODOS los jugadores: perfecto para jugar en equipo.' }
 };
 const ELEMENT_ORDER = ['', 'fire', 'ice', 'bolt', 'poison']; // Forja de los Elementos (Aurora)
-const SHRINE_ORDER = ['', 'shadow', 'eclipse', 'wither']; // Santuario de las Sombras (Vesper)
+const SHRINE_ORDER = ['', 'shadow', 'eclipse', 'wither']; // poderes de sombra
+const ALL_ORDER = ['', 'fire', 'ice', 'bolt', 'poison', 'shadow', 'eclipse', 'wither']; // el herrero en su santuario ofrece todos
 // Textos con teclas según el dispositivo: {act}, {dash}, {down} se sustituyen por la tecla, el botón del mando o el botón táctil
 function inputMode() {
   if (IS_TOUCH) return 'touch';
@@ -82,7 +83,7 @@ const BESTIARY = {
   aurora: { name: 'Aurora, Dama del Alba', text: 'Hermana de Vesper y señora del Conde, vuela entre rayos de luz. Si cae, su hermano la rescata y huye. Premio: Alas del Alba.', tip: 'Esquiva la lluvia de rayos y sus picados; golpéala cuando baje.' },
   vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora y señor del Conde, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y huye. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
   archon: { name: 'Archimago Silente', text: 'Guardián del sello de tinta. Entre sus libros flotan tormentas de luz y fantasmas que acuden a su llamada.', tip: 'Esquiva sus abanicos de orbes y la lluvia de rayos; cuando invoque ayuda, golpéalo sin parar.' },
-  reina: { name: 'Reina de Huesos', text: 'Guardiana del sello de hueso. Salta con todo su peso, embiste y llama a los esqueletos de la cripta.', tip: 'Vigila los pilares marcados en el suelo y no te quedes bajo sus saltos.' },
+  reina: { name: 'Reina de Huesos', text: 'Guardiana del sello de hueso. Salta con todo su peso, embiste y llama a los esqueletos de la cripta. Guarda el Martillo Latente del herrero.', tip: 'Vigila los pilares marcados en el suelo y no te quedes bajo sus saltos.' },
   conde: { name: 'El Conde', text: 'Siervo de los hermanos del Alba y portero de su castillo. Rompe el suelo de su trono para enterrar a sus cazadores en el foso, y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
 };
 const PAGES = {
@@ -138,7 +139,9 @@ const NPC_DEFS = {
       'Y que quien venció a Aurora puede planear hasta el balcón lejano, sobre el vacío, donde brilla otro cristal.',
       'Al este hay un jardín colgante: hace falta impulso, doble salto y salto de pared. Descansad en la hoguera cuando queráis.'],
     ['El viento aquí huele a ceniza y a amanecer. Pronto habrá más que ver.'] ] },
-  smith: { name: 'Herrero de la Cueva', tex: 'npc_smith', menu: 'imbue', lines: [['Aquí abajo el fuego no se apaga nunca. Dime qué poder quieres en tu arma.']] },
+  // El herrero empieza en la Cueva del Abismo. Si le llevas el Martillo Latente (lo guarda la Reina de Huesos) se muda a su santuario secreto bajo la Cumbre del Alba.
+  smith: { name: 'Herrero de la Cueva', tex: 'npc_smith', menu: 'imbue', show: sc => sc.hammerState < 2, talk: (sc, n) => sc.smithTalk(n), lines: [['Aquí abajo el fuego no se apaga nunca. Dime qué poder quieres en tu arma.']] },
+  smith2: { name: 'Herrero de la Cueva', tex: 'npc_smith', menu: 'all', show: sc => sc.hammerState >= 2, lines: [['Mi nuevo taller. Con el Martillo Latente puedo forjar cualquier poder: fuego, hielo, rayo, veneno... y las sombras.']] },
   monk: { name: 'Monje Trastornado', tex: 'npc_monk', lines: [
     ['¡Hermano, hermano! El Obispo reza al revés... ¡y su dios le responde con su propia voz!',
       'Arriba, en el Ábside, espera. La Nave Principal tiene un hueco enorme: el primer escalón está lejos. Necesitas el Impulso: {dash} en el aire.',
@@ -239,7 +242,7 @@ const _hurt = CastleScene.prototype.hurt, _die = CastleScene.prototype.die, _res
 Object.assign(CastleScene.prototype, {
   // ---- inicio
   initExtras() {
-    this.element = ''; this.travel = false; this.travelOpen = false; this.imbueOpen = false;
+    this.element = ''; this.travel = false; this.travelOpen = false; this.imbueOpen = false; this.hammerState = 0; this.smithMet = false; // hammerState: 0 sin martillo, 1 lo llevas, 2 entregado
     this.buildAlbaDecor(); this.buildHelp();
     if (/[?&]dev=1/.test(location.search)) this.setupDev();
     const w = this.W;
@@ -267,6 +270,7 @@ Object.assign(CastleScene.prototype, {
       this.tweens.add({ targets: [spr, glow], y: gm.y - 4, yoyo: true, repeat: -1, duration: 950 + (gm.x % 300), ease: 'Sine.inOut' });
       return { ...gm, spr, glow };
     });
+    this.timed = (w.timed || []).map(t => ({ ...t, shown: true })); this.timedG = this.add.graphics().setDepth(5); // plataformas que aparecen y desaparecen
     this.sforgeObjs = (w.sforges || []).map(f => { // forja especial: poder elemental para el arma
       const sh = f.kind === 'shrine';
       const spr = this.add.image(f.x, f.y, sh ? 'altar' : 'forge').setScale(sh ? 3 : 3.6).setDepth(2).setTint(sh ? 0xb06aff : 0xff9a3b);
@@ -282,7 +286,7 @@ Object.assign(CastleScene.prototype, {
       return { ...n, def, spr, name, visits: 0 };
     });
     this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor();
-    this.npcObjs.filter(n => n.type === 'smith').forEach(n => this.smithWorks(n));
+    this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
     this.canAuto = !!saveMe || !saves[this.color]; // evita pisar una partida guardada de este vampiro en una partida nueva
@@ -301,6 +305,7 @@ Object.assign(CastleScene.prototype, {
     this.gems = m.gems | 0; this.perm = { dmg: (m.perm && m.perm.dmg) | 0, souls: (m.perm && m.perm.souls) | 0 };
     (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
+    this.hammerState = m.hammer | 0; this.smithMet = !!m.met; if (this.progress.bosses.includes('reina') && this.hammerState === 0) this.hammerState = 1; this.syncNpcs();
     if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0); this.hp = this.maxHp;
@@ -332,7 +337,9 @@ Object.assign(CastleScene.prototype, {
   addGems(n, x, y) { this.gems += n; SFX.pick(); this.floatText(x !== undefined ? x : this.player.x, (y !== undefined ? y : this.player.y) - 24, '+' + n + ' ✦', '#7ae8ff'); },
   payBossGems(silent) { // cada jefe suelta gemas la primera vez que cae
     if (!this.bossGemsPaid) return; let got = 0;
-    (this.progress.bosses || []).forEach(id => { if (this.bossGemsPaid.has(id)) return; this.bossGemsPaid.add(id); if (!silent && GEMS_BOSS[id]) got += GEMS_BOSS[id]; });
+    (this.progress.bosses || []).forEach(id => { if (this.bossGemsPaid.has(id)) return; this.bossGemsPaid.add(id); if (!silent && GEMS_BOSS[id]) got += GEMS_BOSS[id];
+      if (id === 'reina' && this.hammerState === 0) { this.hammerState = 1; if (!silent) this.time.delayedCall(2500, () => this.toast('La Reina de Huesos guardaba el Martillo Latente. Llévaselo al Herrero de la Cueva, en la Cueva del Abismo.', 8000)); }
+    });
     if (got) { this.addGems(got); this.toast('Recompensa del jefe: ' + got + ' gemas ✦', 5000); this.autoSave(); }
   },
   itemCost(it) { return it.perm ? it.gems + 2 * this.perm[it.perm === 'dmg' ? 'dmg' : 'souls'] : (it.gems || 0); },
@@ -369,7 +376,7 @@ Object.assign(CastleScene.prototype, {
     const b = this.buffs, parts = [];
     if (b.spd > 0) parts.push('VEL ' + Math.ceil(b.spd) + 's'); if (b.str > 0) parts.push('FUE ' + Math.ceil(b.str) + 's'); if (b.lamp > 0) parts.push('LUZ ' + Math.ceil(b.lamp) + 's'); if (b.rage > 0) parts.push('FUR ' + Math.ceil(b.rage) + 's'); if (b.tonic > 0) parts.push('ALM ' + Math.ceil(b.tonic) + 's'); if (this.ward > 0) parts.push('PIEL x' + this.ward);
     this.buffTxt.setText(parts.join('  '));
-    this.hudSouls.setText(`◆ ${this.souls}  ✦ ${this.gems}    ${this.wpn.name} Nv.${this.wlv}${this.element ? ' [' + ELEMENTS[this.element].name + ']' : ''}    ${this.pas.name || ''}`);
+    this.hudSouls.setText(`◆ ${this.souls}  ✦ ${this.gems}${this.hammerState === 1 ? '  [Martillo Latente]' : ''}    ${this.wpn.name} Nv.${this.wlv}${this.element ? ' [' + ELEMENTS[this.element].name + ']' : ''}    ${this.pas.name || ''}`);
   },
   floatText(x, y, text, color = '#d9b3ff') {
     const t = this.add.text(x, y, text, { fontSize: '14px', fontFamily: 'Courier New', color, stroke: '#000', strokeThickness: 4 }).setOrigin(0.5).setDepth(28);
@@ -500,7 +507,7 @@ Object.assign(CastleScene.prototype, {
       return list;
     };
     const tmp = this._hidTmp || (this._hidTmp = new Uint8Array(W_ * H_));
-    const seeds = [...this.W.altars, ...this.W.bosses, ...this.W.npcs, { x: this.player.x, y: this.player.y }];
+    const seeds = [...this.W.altars, ...this.W.bosses, ...this.W.npcs.filter(n => n.type !== 'smith2'), { x: this.player.x, y: this.player.y }];
     seeds.forEach(s => { const x = Math.floor(s.x / T), y = Math.floor(s.y / T); if (x >= 0 && y >= 0 && x < W_ && y < H_ && !reach[y * W_ + x] && !isWall(x, y)) fill(x, y, reach, 0); });
     for (let y = 0; y < H_; y++) for (let x = 0; x < W_; x++) {
       if (!isCrack(x, y)) continue;
@@ -637,6 +644,7 @@ Object.assign(CastleScene.prototype, {
     this.coverDirty = false;
   },
   hiddenSweep() {
+    this.syncNpcs();
     if (this.coverDirty || this.coverEye !== !!this.abil.eye || !this.hidCover) this.redrawHidCover();
     if (this.sealLabel) { const pb = this.progress.bosses, n = (pb.includes('archon') ? 1 : 0) + (pb.includes('reina') ? 1 : 0), open = pb.includes('conde') || n === 2; this.sealLabel.setText(open ? 'La puerta del trono\nestá abierta' : 'Sellos del trono: ' + n + '/2\n(Archimago y Reina de Huesos)'); }
     this.crackGlow(); // oculta lo que está dentro de una sala secreta aún cerrada
@@ -918,10 +926,10 @@ Object.assign(CastleScene.prototype, {
   // ---- interacción: NPC primero, antorchas después
   interact(ePress) {
     const p = this.player; let best = null, bd = 1e9;
-    for (const n of this.npcObjs) { const dx = Math.abs(n.x - p.x), dy = Math.abs((n.y - 30) - p.y); if (dx < 70 && dy < 80 && dx < bd) { bd = dx; best = n; } }
+    for (const n of this.npcObjs) { if (n.off) continue; const dx = Math.abs(n.x - p.x), dy = Math.abs((n.y - 30) - p.y); if (dx < 70 && dy < 80 && dx < bd) { bd = dx; best = n; } }
     if (best) {
       this.promptTxt.setVisible(!(this.shopOpen || this.dlg || this.imbueOpen)).setPosition(best.x, best.y - 74).setText(best.def.shop ? '{act}: comerciar' : (best.def.menu ? '{act}: imbuir el arma' : '{act}: hablar'));
-      if (ePress) { this.curNpc = best; if (best.def.shop) this.openShop(best); else if (best.def.menu) this.openImbue('forge', best); else this.openDialogue(best); }
+      if (ePress) { this.curNpc = best; if (best.def.talk && best.def.talk(this, best)) return; if (best.def.shop) this.openShop(best); else if (best.def.menu) this.openImbue(best.def.menu === 'all' ? 'all' : 'forge', best); else this.openDialogue(best); }
       return;
     }
     // forja de los elementos
@@ -960,7 +968,7 @@ Object.assign(CastleScene.prototype, {
   },
   savePersonal(a) {
     socket.emit('save', { souls: this.souls, inv: this.inv, wlv: this.wlv, maxHp: this.maxHp, cry: [...this.cryGot], forge: [...this.forgeGot],
-      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: [...this.gemGot], perm: this.perm, bg: [...this.bossGemsPaid] });
+      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: [...this.gemGot], perm: this.perm, bg: [...this.bossGemsPaid], hammer: this.hammerState, met: this.smithMet });
   },
 
   // ---- diálogo
@@ -1130,8 +1138,8 @@ Object.assign(CastleScene.prototype, {
     const add = o => { o.setScrollFactor(0).setDepth(63); this.imbueObjs.push(o); return o; };
     add(this.add.rectangle(cx, cy, 700, 470, 0x140c22, 0.97).setStrokeStyle(4, 0xff9a3b));
     this.imbueTitle = add(this.add.text(cx, cy - 212, '', f('17px', '#ffb36a')).setOrigin(0.5));
-    for (let i = 0; i < 5; i++) {
-      const y = cy - 160 + i * 38, row = add(this.add.rectangle(cx - 180, y, 300, 34, 0x2a1d4d, 1)).setInteractive();
+    for (let i = 0; i < 8; i++) {
+      const y = cy - 178 + i * 36, row = add(this.add.rectangle(cx - 180, y, 300, 34, 0x2a1d4d, 1)).setInteractive();
       const sw = add(this.add.rectangle(cx - 312, y, 18, 18, 0xffffff, 1)), txt = add(this.add.text(cx - 296, y, '', f('15px')).setOrigin(0, 0.5));
       row.on('pointerdown', () => { if (this.imbueList[i]) { if (this.imbueSel === i) this.imbueGo(); else { this.imbueSel = i; this.refreshImbue(); } } });
       this.imbueRows.push({ row, sw, txt });
@@ -1144,10 +1152,10 @@ Object.assign(CastleScene.prototype, {
     this.imbueObjs.forEach(o => o.setVisible(false));
   },
   openImbue(kind, from) {
-    const order = kind === 'shrine' ? SHRINE_ORDER : ELEMENT_ORDER;
+    const order = kind === 'all' ? ALL_ORDER : (kind === 'shrine' ? SHRINE_ORDER : ELEMENT_ORDER);
     this.imbueKind = kind; this.imbueList = order.map(id => ({ id }));
     this.imbueSel = Math.max(0, order.indexOf(this.element));
-    this.imbueTitle.setText(kind === 'shrine' ? 'SANTUARIO DE LAS SOMBRAS — ofrenda a la noche' : 'HERRERO DE LA CUEVA — ¿qué poder quieres en tu arma?');
+    this.imbueTitle.setText(kind === 'all' ? 'HERRERO EN SU SANTUARIO — ¿qué poder quieres en tu arma?' : (kind === 'shrine' ? 'SANTUARIO DE LAS SOMBRAS — ofrenda a la noche' : 'HERRERO DE LA CUEVA — ¿qué poder quieres en tu arma?'));
     this.imbueOpen = true; this.imbueObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false); this.refreshImbue();
   },
   refreshImbue() {
@@ -1175,9 +1183,47 @@ Object.assign(CastleScene.prototype, {
     SFX.pick(); this.poof(from.x || this.player.x, (from.y || this.player.y) - 20, 12, col); this.cameras.main.flash(160, (col >> 16) & 255, (col >> 8) & 255, col & 255);
     this.toast(sel.id ? 'Arma imbuida de ' + ELEMENTS[sel.id].name + ': ' + ELEMENTS[sel.id].desc : 'Arma sin elemento', 5000); this.autoSave();
   },
+  timedStep(time) { // plataformas temporales: aparecen y desaparecen con parpadeo de aviso (cada jugador las ve en su propio ritmo)
+    if (!this.timed || !this.timed.length) return;
+    const t = time / 1000, g = this.timedG; g.clear();
+    for (const p of this.timed) {
+      const ph = (((t + p.phase) % p.period) + p.period) % p.period, shown = ph < p.on, warn = shown && ph > p.on - 0.8;
+      if (shown !== p.shown) {
+        p.shown = shown;
+        for (let i = 0; i < p.w; i++) {
+          if (shown) { const tl = this.fg.putTileAt(p.idx, p.gx + i, p.gy); if (tl) { tl.setCollision(false, false, true, false); this.map.calculateFacesAt(p.gx + i, p.gy); } }
+          else { this.fg.removeTileAt(p.gx + i, p.gy); this.map.calculateFacesAt(p.gx + i, p.gy); }
+        }
+        if (!LITE) this.poof((p.gx + p.w / 2) * T, (p.gy + 0.5) * T, 2, 0xffd6f0);
+      }
+      const x = p.gx * T, y = p.gy * T, wd = p.w * T;
+      if (shown) { if (warn && ((time >> 7) & 1)) g.fillStyle(0xffffff, 0.6).fillRect(x, y, wd, 8); else g.fillStyle(0xffb3d9, 0.35).fillRect(x, y, wd, 4); }
+      else g.lineStyle(2, 0xffb3d9, 0.3).strokeRect(x + 1, y + 1, wd - 2, 6);
+    }
+  },
+  showLines(n, lines) { // diálogo corto con un NPC
+    this.dlg = { npc: n, page: lines, i: 0 }; this.dlgObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false);
+    this.dlgName.setText(n.def.name); this.dlgText.setText(lines[0]); SFX.altar();
+  },
+  smithTalk(n) { // el herrero de la cueva: primera charla, entrega del Martillo Latente o menú de imbuir
+    if (this.hammerState === 1) {
+      this.hammerState = 2; this.syncNpcs(); this.smithMet = true; SFX.pick();
+      this.showLines(n, ['¡El Martillo Latente! Todavía late... lo siento caliente en las manos.', 'Con él puedo forjar el poder de las sombras, pero necesito un lugar oculto: me mudo al Santuario de las Sombras, bajo el suelo agrietado de la Cumbre del Alba.', 'Ven a verme allí: te imbuiré con cualquier poder que quieras.']);
+      this.toast('El herrero se muda a su santuario secreto, bajo el suelo agrietado de la Cumbre del Alba', 7000); return true;
+    }
+    if (!this.smithMet) { this.smithMet = true; this.showLines(n, ['Soy el herrero de la Cueva. Aquí abajo el fuego no se apaga nunca, y con él puedo imbuir tu arma.', 'Pero mi Martillo Latente se perdió hace siglos. Dicen que la Reina de Huesos lo guarda en las Catacumbas, bajo la Mazmorra de Hierro.', 'Tráemelo y podré forjar poderes de sombra... aunque tendría que mudarme a un santuario oculto, bajo la Cumbre del Alba.']); return true; }
+    return false;
+  },
+  syncNpcs() { // muestra u oculta a los NPC según la historia (el herrero se muda al santuario)
+    (this.npcObjs || []).forEach(n => {
+      if (!n.def.show) return; const v = n.def.show(this) && !this.hiddenAt(n.x, n.y - 24); n.off = !n.def.show(this);
+      n.spr.setVisible(v); n.name.setVisible(v); if (n.hammer) n.hammer.setVisible(v);
+    });
+  },
   // herrero trabajando: martillo que golpea el yunque con chispas
   smithWorks(n) {
     const h = this.add.image(n.x + 24, n.y - 36, 'forge').setScale(1.5).setDepth(5).setOrigin(0.85, 0.9).setRotation(-0.9);
+    n.hammer = h;
     this.tweens.add({ targets: h, rotation: 0.35, duration: 360, yoyo: true, repeat: -1, ease: 'Sine.in', hold: 220,
       onYoyo: () => { const d = Math.hypot(this.player.x - n.x, this.player.y - n.y); if (d < 420) { beep(180, 0.05, 'square', 0.02, -60); } this.poof(n.x + 44, n.y - 16, 3, 0xffb347); } });
   },

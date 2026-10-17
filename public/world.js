@@ -96,7 +96,9 @@
   area('albaB', 'Cámara de Vesper', 7, 11, 1, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 24, 4, 'norm', true], ['boss', 'vesper', 40, 16]]);
 
   // --- Siguiente fase: tras vencer a uno de los rivales se abre la puerta de la cámara de Vesper hacia el cielo ---
-  area('cielo1', 'Antecámara del Cielo', 7, 13, 1, 2, 1, [['altar', 8, 16], ['tri', 'tl', 4], ['tri', 'tr', 4], ['cry', 42, 16]]);
+  area('cielo1', 'Antecámara del Cielo', 7, 13, 1, 2, 1, [['altar', 8, 16], ['tri', 'tl', 4], ['tri', 'tr', 4], ['cry', 42, 16],
+    // puzle de tiempo: cada escalón aparece un segundo después del anterior y desaparece enseguida
+    ['TP', 28, 14, 3, 4, 2.4, 0], ['TP', 33, 11, 3, 4, 2.4, 1], ['TP', 38, 8, 3, 4, 2.4, 2], ['P', 43, 5, 7], ['cry', 46, 4]]);
   area('torreC', 'Escalera al Cielo', 7, 15, 0, 1, 2, [['P', 3, 32, 5], ['P', 10, 29, 5], ['P', 17, 26, 5], ['P', 9, 23, 5], ['P', 3, 20, 5], ['P', 10, 17, 5], ['P', 17, 17, 8],
     ['E', 'kn', 14, 34], ['E', 'bat', 12, 10], ['E', 'gh', 18, 22], ['E', 'gh', 6, 14], ['E', 'bat', 20, 28], ['E', 'saw', 13, 24, { ax: 'h', r: 90, w: 1.3 }]]);
   area('cumbre', 'Cumbre del Alba', 7, 16, 0, 2, 1, [['npc', 'watcher', 20, 16], ['altar', 6, 16], ['tri', 'tl', 5], ['tri', 'tr', 5],
@@ -110,7 +112,8 @@
     ['E', 'gh', 22, 9], ['E', 'bat', 14, 6], ['E', 'bat', 41, 7], ['E', 'kn', 25, 16], ['E', 'sentinel', 44, 16]]);
   // Segunda mazmorra de plataformas: suelo de pinchos, huecos para el impulso y sierras
   area('mazC', 'Mazmorra de Nubes', 7, 20, 0, 2, 1, [['pit', 2, 49], ['P', 3, 13, 4], ['P', 10, 11, 3], ['P', 17, 9, 3], ['P', 26, 9, 3], ['P', 36, 11, 3], ['P', 43, 13, 3], ['P', 47, 10, 3], ['cry', 48, 9],
-    ['E', 'saw', 14, 10, { ax: 'v', r: 55, w: 1.5 }], ['E', 'saw', 30, 8, { ax: 'h', r: 80, w: 1.3 }], ['E', 'bat', 22, 5], ['E', 'bat', 40, 6], ['E', 'gh', 33, 8]]);
+    ['E', 'saw', 14, 10, { ax: 'v', r: 55, w: 1.5 }], ['E', 'saw', 30, 8, { ax: 'h', r: 80, w: 1.3 }], ['E', 'bat', 22, 5], ['E', 'bat', 40, 6], ['E', 'gh', 33, 8],
+    ['TP', 14, 8, 3, 3.6, 2.2, 0], ['TP', 18, 5, 3, 3.6, 2.2, 0.9], ['P', 22, 3, 6], ['cry', 24, 2]]);
 
   // --- El Abismo: tras planear sobre los pinchos de la Cripta Olvidada, una caída libre lleva a la Forja de los Elementos y a la Gran Hoguera ---
   area('caida', 'Caída Libre', 8, 0, 7, 1, 2, [['E', 'saw', 9, 9, { ax: 'h', r: 60, w: 1.3 }], ['E', 'saw', 16, 18, { ax: 'h', r: 70, w: 1.6 }], ['E', 'saw', 10, 27, { ax: 'h', r: 60, w: 1.1 }],
@@ -121,9 +124,9 @@
   // Gemas: la segunda moneda. Se encuentran por el mapa (zonas opcionales y secretos) y las sueltan los jefes y los élites.
   // [sala, x, y] en coordenadas locales; cada gema reposa sobre una plataforma o el suelo
   const GEMS = [['hidden', 8, 16], ['salon', 30, 11], ['foso', 13, 12], ['lect', 6, 10], ['gbib', 26, 10], ['osario', 36, 10], ['mazm', 36, 10], ['galeria', 8, 8], ['mir', 7, 13],
-    ['arch1', 22, 9], ['cat1', 14, 11], ['cielo1', 30, 16], ['santuario', 20, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['mazC', 28, 8], ['fragua', 6, 16]];
+    ['arch1', 22, 9], ['cat1', 14, 11], ['cielo1', 30, 16], ['cielo1', 48, 4], ['mazC', 26, 2], ['santuario', 20, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['mazC', 28, 8], ['fragua', 6, 16]];
 
-  area('santuario', 'Santuario de las Sombras', 7, 16, 1, 2, 1, [['sshrine', 26, 16], ['cry', 36, 16], ['K', 30, 0, 3, 1], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+  area('santuario', 'Santuario de las Sombras', 7, 16, 1, 2, 1, [['npc', 'smith2', 26, 16], ['cry', 36, 16], ['K', 30, 0, 3, 1], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
 
   // --- Acto II antes del Conde: dos segmentos con jefe; sus sellos abren la Sala del Trono ---
   // Segmento A: el Archivo Prohibido (sobre el Observatorio)
@@ -177,7 +180,7 @@
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [] };
+    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [] };
     let uid = 1;
     // 1) interior de cada área
     for (const a of AREAS) {
@@ -236,6 +239,8 @@
       for (const op of ops) {
         switch (op[0]) {
           case 'P': for (let x = op[1]; x < op[1] + op[3]; x++) if (free(a, x, op[2])) setF(a, x, op[2], K.ONEWAY); break;
+          // ['TP', x, y, ancho, periodo, segundos visible, desfase]: plataforma que aparece y desaparece (para el validador siempre está)
+          case 'TP': { const n = (cnt.tp = (cnt.tp || 0) + 1); world.timed.push({ id: 'tp_' + a.id + '_' + n, area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], period: op[4], on: op[5], phase: op[6] || 0, idx: a.z * 8 + K.ONEWAY }); for (let x = op[1]; x < op[1] + op[3]; x++) if (free(a, x, op[2])) setF(a, x, op[2], K.ONEWAY); break; }
           case 'B': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); break;
           case 'K': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.CRACK); break;
           case 'S': for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, op[2], K.SPIKES); break;

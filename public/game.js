@@ -469,9 +469,10 @@ class CastleScene extends Phaser.Scene {
     this.torchObjs.forEach(o => { if (o.lit && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, (o.r || 215) * (1 + 0.03 * Math.sin(time * 0.009 + o.id)), 1); });
     this.altars.forEach(a => { if (a.lit) lamp(a.x, a.y - 40, a.big ? 330 : 160, 0.9); });
     lamp(p.x, p.y, 120 * this.auraMul(), 0.95);
-    this.npcObjs.forEach(n => lamp(n.x, n.y - 20, n.def.shop ? 110 : 80, 0.85));
+    this.npcObjs.forEach(n => { if (!n.off) lamp(n.x, n.y - 20, n.def.shop ? 110 : 80, 0.85); });
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id) && !this.hiddenAt(f.x, f.y)) lamp(f.x, f.y, 70, 0.8); });
     (this.sforgeObjs || []).forEach(f => lamp(f.x, f.y, 120, 0.9));
+    if (this.timedStep) this.timedStep(time);
     (this.caveLamps || []).forEach(L => lamp(L.x, L.y, L.r, 0.85)); this.caveEmbers(time);
     (this.gemObjs || []).forEach(o => { if (!this.gemGot.has(o.id) && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, 45, 0.8); });
     Object.values(this.remotes).forEach(r => lamp(r.spr.x, r.spr.y, 90, 0.8));
