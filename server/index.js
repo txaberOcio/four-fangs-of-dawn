@@ -37,7 +37,7 @@ function normalizeStats(u) {
 Object.values(users).forEach(normalizeStats);
 // migración: la partida única antigua pasa a la ranura del vampiro carmesí
 Object.values(users).forEach(u => { if (u.save && !u.saves) u.saves = { red: u.save }; delete u.save; });
-const ELEMS = ['fire', 'ice', 'bolt', 'poison'];
+const ELEMS = ['fire', 'ice', 'bolt', 'poison', 'shadow', 'eclipse', 'wither'];
 const ITEM_IDS = ['pot', 'pot2', 'spd', 'str', 'lamp', 'amu', 'ward', 'rage', 'tonic', 'fruit', 'bomb'];
 const clampInt = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(+v) ? Math.floor(+v) : lo));
 const strList = (a, max, len = 24) => (Array.isArray(a) ? a.filter(x => typeof x === 'string' && x.length <= len).slice(0, max) : []);

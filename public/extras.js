@@ -11,7 +11,7 @@ const WEAPONS = {
   blue: { name: 'Lanza', kind: 'melee', fx: 'spear', fxScale: 2.2, tint: 0x9fd4ff, off: 56, h: 26, act: 0.14,
     lv: [{ dmg: 1, w: 104, cd: 0.44 }, { dmg: 1, w: 120, cd: 0.40 }, { dmg: 2, w: 120, cd: 0.40 }, { dmg: 2, w: 140, cd: 0.36 }, { dmg: 3, w: 150, cd: 0.34 }] },
   green: { name: 'Arco', kind: 'ranged', fx: 'arrow', tint: 0xb8ff9a,
-    lv: [{ dmg: 1, cd: 0.45, n: 1, range: 360 }, { dmg: 1, cd: 0.40, n: 1, range: 440 }, { dmg: 1, cd: 0.40, n: 2, range: 440 }, { dmg: 2, cd: 0.36, n: 2, range: 520 }, { dmg: 2, cd: 0.30, n: 3, range: 560 }] },
+    lv: [{ dmg: 1, cd: 0.45, n: 1, range: 360 }, { dmg: 1, cd: 0.42, n: 1, range: 440 }, { dmg: 1, cd: 0.42, n: 2, range: 440 }, { dmg: 2, cd: 0.40, n: 2, range: 520 }, { dmg: 2, cd: 0.36, n: 2, range: 560 }] },
   purple: { name: 'Guadaña', kind: 'melee', fx: 'slash', fxScale: 3.2, tint: 0xc07aff, off: 26, h: 74, act: 0.22,
     lv: [{ dmg: 2, w: 92, cd: 0.62 }, { dmg: 2, w: 102, cd: 0.56 }, { dmg: 3, w: 102, cd: 0.56 }, { dmg: 3, w: 114, cd: 0.50 }, { dmg: 4, w: 124, cd: 0.50 }] },
 };
@@ -53,9 +53,13 @@ const ELEMENTS = {
   fire: { name: 'Fuego', tint: 0xff7a2a, desc: 'quema al enemigo: daño extra durante 3 s' },
   ice: { name: 'Hielo', tint: 0x7ad8ff, desc: 'ralentiza a los enemigos a la mitad durante 3 s' },
   bolt: { name: 'Rayo', tint: 0xfff06a, desc: 'salta a otro enemigo cercano con parte del daño' },
-  poison: { name: 'Veneno', tint: 0x7aff6a, desc: 'envenena: daño continuo durante 6 s' }
+  poison: { name: 'Veneno', tint: 0x7aff6a, desc: 'envenena: daño continuo durante 6 s' },
+  shadow: { name: 'Sombra', tint: 0xb06aff, desc: 'tus golpes te curan a veces (50% de curar medio corazón)' },
+  eclipse: { name: 'Eclipse', tint: 0xf4f0ff, desc: '25% de probabilidad de golpe crítico: daño doble' },
+  wither: { name: 'Marchitar', tint: 0x8a5a9a, desc: 'marca al enemigo: recibe un 30% más de daño durante 4 s' }
 };
-const ELEMENT_ORDER = ['', 'fire', 'ice', 'bolt', 'poison'];
+const ELEMENT_ORDER = ['', 'fire', 'ice', 'bolt', 'poison']; // Forja de los Elementos (Aurora)
+const SHRINE_ORDER = ['', 'shadow', 'eclipse', 'wither']; // Santuario de las Sombras (Vesper)
 // Textos con teclas según el dispositivo: {act}, {dash}, {down} se sustituyen por la tecla, el botón del mando o el botón táctil
 function inputMode() {
   if (IS_TOUCH) return 'touch';
@@ -114,7 +118,7 @@ const NPC_DEFS = {
       'Aquí viven dos hermanos rivales: AURORA, Dama del Alba, y VESPER, Señor del Ocaso. Los dos comparten el mismo emblema: media luna y medio sol.',
       'Solo podréis derrotar a UNO. Cuando uno caiga, el otro acudirá, lo recogerá y huirá para siempre.',
       'Si SIGUES RECTO por la puerta del este de esta sala, te enfrentarás a AURORA. Su premio: las ALAS DEL ALBA. Mantén saltar en el aire y planearás para cruzar grandes abismos.',
-      'Si BAJAS por el hueco del centro del suelo, te enfrentarás a VESPER. Su premio: el OJO DE LA NOCHE. Verás los secretos tras los muros agrietados y tu luz crecerá.',
+      'Si BAJAS por el hueco del centro del suelo, te enfrentarás a VESPER. Su premio: el OJO DE LA NOCHE. Verás los secretos tras los muros agrietados, tu luz crecerá y se te abrirá un santuario secreto de poderes de sombra.',
       'Hay carteles en el suelo y en la pared que lo recuerdan. Elegid bien: la decisión no se puede deshacer. Aquí hay una hoguera por si queréis guardar antes.',
       'Cuando uno de los dos caiga, se abrirá la puerta este de la cámara de Vesper: el camino hacia el cielo.'],
     ['Dos hermanos, un solo emblema, una sola elección.',
@@ -125,7 +129,7 @@ const NPC_DEFS = {
       'El camino al cielo está abierto: baja a la cámara de Vesper y cruza su puerta este.'] ] },
   watcher: { name: 'Vigía del Cielo', tex: 'npc_watcher', lines: [
     ['Habéis subido hasta la Cumbre del Alba. Aquí no hay jefes: es un lugar para explorar con todo lo que habéis aprendido.',
-      'Dicen que quien venció a Vesper puede ver un tesoro oculto tras un muro agrietado, al fondo de esta sala: dos cristales de vida.',
+      'Dicen que quien venció a Vesper ve un tesoro tras un muro agrietado, al fondo de esta sala (dos cristales de vida), y que el suelo agrietado de aquí abajo guarda el Santuario de las Sombras.',
       'Y que quien venció a Aurora puede planear hasta el balcón lejano, sobre el vacío, donde brilla otro cristal.',
       'Al este hay un jardín colgante: hace falta impulso, doble salto y salto de pared. Descansad en la hoguera cuando queráis.'],
     ['El viento aquí huele a ceniza y a amanecer. Pronto habrá más que ver.'] ] },
@@ -258,8 +262,9 @@ Object.assign(CastleScene.prototype, {
       return { ...gm, spr, glow };
     });
     this.sforgeObjs = (w.sforges || []).map(f => { // forja especial: poder elemental para el arma
-      const spr = this.add.image(f.x, f.y, 'forge').setScale(3.6).setDepth(2).setTint(0xff9a3b);
-      const glow = this.add.image(f.x, f.y, 'glow').setScale(2.2).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.65).setDepth(1).setVisible(!LITE);
+      const sh = f.kind === 'shrine';
+      const spr = this.add.image(f.x, f.y, sh ? 'altar' : 'forge').setScale(sh ? 3 : 3.6).setDepth(2).setTint(sh ? 0xb06aff : 0xff9a3b);
+      const glow = this.add.image(f.x, f.y, 'glow').setScale(2.2).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.65).setDepth(1).setVisible(!LITE).setTint(sh ? 0xb06aff : 0xffffff);
       this.tweens.add({ targets: [spr, glow], y: f.y - 6, yoyo: true, repeat: -1, duration: 1100, ease: 'Sine.inOut' });
       return { ...f, spr, glow };
     });
@@ -493,7 +498,7 @@ Object.assign(CastleScene.prototype, {
       if (!isCrack(x, y)) continue;
       for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
         const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W_ || ny >= H_ || reach[ny * W_ + nx] || hid[ny * W_ + nx] || isWall(nx, ny)) continue;
-        const touched = [], list = fill(nx, ny, tmp, 800, touched);
+        const touched = [], list = fill(nx, ny, tmp, 1500, touched);
         if (list) list.forEach(i => { hid[i] = 1; });
         touched.forEach(i => { tmp[i] = 0; }); // se limpia solo lo tocado: el búfer se reutiliza
       }
@@ -703,8 +708,10 @@ Object.assign(CastleScene.prototype, {
     const p = this.player, [ex, ey] = this.entBox(e);
     if (e.cfg.inv) { if (!e.invMsg || Date.now() - e.invMsg > 900) { e.invMsg = Date.now(); this.floatText(ex, ey - 36, '¡Invulnerable!', '#9fd4ff'); } this.poof(ex, ey, 2, 0x9fd4ff); SFX.hurt(); return; }
     if (e.type === 'clock' && e.shield) { if (!e.shieldMsg || Date.now() - e.shieldMsg > 1200) { e.shieldMsg = Date.now(); this.floatText(ex, ey - 40, '¡La luz lo protege!', '#8fc8ff'); } SFX.hurt(); return; }
+    if (el === 'eclipse' && Math.random() < 0.25) { dmg *= 2; this.floatText(ex, ey - 40, '¡Eclipse!', '#f4f0ff'); }
+    if (el === 'shadow' && !this.dead && this.hp < this.maxHp && Math.random() < 0.5) { this.hp = Math.min(this.maxHp, this.hp + 0.5); this.poof(p.x, p.y - 10, 3, 0xb06aff); }
     SFX.hit();
-    const chance = this.pas.life || 0.25;
+    const chance = e.boss ? Math.min(this.pas.life || 0.25, 0.25) : (this.pas.life || 0.25);
     if (!this.dead && this.hp < this.maxHp && Math.random() < chance) { this.hp = Math.min(this.maxHp, this.hp + (e.boss ? 0.25 : 0.5)); this.poof(p.x, p.y - 10, 3, 0xff3b5c); }
     if (this.isHost) this.damageEnt(e, dmg, f, socket.id, el); else socket.emit('hit', { id: e.id, dmg, dir: f, el });
     e.flash = 0.1; e.spr.setTintFill(0xffffff); this.poof(ex, ey, 3, 0xffe9a0);
@@ -728,6 +735,7 @@ Object.assign(CastleScene.prototype, {
     if (e.boss && !e.aggro) return;
     if (e.phase === 'intro') return;
     if (e.cfg.inv) return; // invulnerables
+    if (e.markT > 0) dmg = Math.ceil(dmg * 1.3); // marcado por Marchitar
     if (e.type === 'clock' && this.lightLevel(e.spr.x, e.spr.y) > 0.18) return; // la luz lo protege
     e.hp -= dmg; if (!quiet) { e.flash = 0.12; e.spr.setTintFill(0xffffff); }
     if (!quiet && !e.boss && !e.elite && e.cfg.kind === 'walk') { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
@@ -737,6 +745,7 @@ Object.assign(CastleScene.prototype, {
   applyElement(e, el, dmg, dir, by) { // solo lo ejecuta el anfitrión
     if (el === 'fire') { e.dotT = 3; e.dotTick = 0.75; e.dotCol = 0xff7a2a; e.dotBy = by; }
     else if (el === 'poison') { e.dotT = 6; e.dotTick = 1; e.dotCol = 0x7aff6a; e.dotBy = by; }
+    else if (el === 'wither') { e.markT = 4; if (!e.boss) e.spr.setTint(0x8a5a9a); }
     else if (el === 'ice') { if (!e.boss) { e.slowT = 3; e.spr.setTint(0x9ad0ff); } }
     else if (el === 'bolt') {
       let best = null, bd = 190; this.ents.forEach(o => { if (o === e || o.dead || o.cfg.inv || (o.boss && !o.aggro)) return; const d = Math.hypot(o.spr.x - e.spr.x, o.spr.y - e.spr.y); if (d < bd) { bd = d; best = o; } });
@@ -744,6 +753,7 @@ Object.assign(CastleScene.prototype, {
     }
   },
   statusTick(e, dt) { // daño continuo y ralentización (lo ejecuta el anfitrión)
+    if (e.markT > 0) { e.markT -= dt; if (e.markT <= 0 && !e.elite && !(e.slowT > 0)) e.spr.clearTint(); }
     if (e.slowT > 0) { e.slowT -= dt; if (e.slowT <= 0 && !e.elite) e.spr.clearTint(); }
     if (e.dotT > 0) { e.dotT -= dt; e.dotAcc = (e.dotAcc || 0) + dt; if (e.dotAcc >= e.dotTick) { e.dotAcc -= e.dotTick; this.poof(e.spr.x, e.spr.y - 10, 2, e.dotCol); this.damageEnt(e, 1, 0, e.dotBy, undefined, true); } }
   },
@@ -884,8 +894,8 @@ Object.assign(CastleScene.prototype, {
     let sf = null, sfd = 1e9;
     for (const f of this.sforgeObjs || []) { const dx = Math.abs(f.x - p.x), dy = Math.abs(f.y - p.y); if (dx < 80 && dy < 90 && dx < sfd) { sfd = dx; sf = f; } }
     if (sf) {
-      const cur = this.element ? ELEMENTS[this.element].name : 'sin elemento', nxt = ELEMENT_ORDER[(ELEMENT_ORDER.indexOf(this.element) + 1) % ELEMENT_ORDER.length];
-      this.promptTxt.setVisible(true).setPosition(sf.x, sf.y - 70).setText('{act}: imbuir el arma (ahora: ' + cur + ' → ' + (nxt ? ELEMENTS[nxt].name : 'sin elemento') + ')');
+      const cur = this.element ? ELEMENTS[this.element].name : 'sin elemento', nxt = this.nextElement(sf);
+      this.promptTxt.setVisible(true).setPosition(sf.x, sf.y - 70).setText('{act}: ' + (sf.kind === 'shrine' ? 'ofrenda a las sombras' : 'imbuir el arma') + ' (ahora: ' + cur + ' → ' + (nxt ? ELEMENTS[nxt].name : 'sin elemento') + ')');
       if (ePress) this.cycleElement(sf);
       return;
     }
@@ -1080,8 +1090,12 @@ Object.assign(CastleScene.prototype, {
     const pct = Math.round(35 * vis / rooms.length + 25 * gotItems / items + 10 * litB / bon + 20 * dead / bos + 10 * gotExtra / extra);
     return { pct, vis, rooms: rooms.length, gotItems, items, litB, bon, dead, bos, pages: this.pagesGot.size, nPages: w.pages.length, elites: this.eliteGot.size, nElites: this.W.spawns.filter(s => s.opts && s.opts.elite).length };
   },
+  nextElement(f) { // la forja y el santuario ofrecen elementos distintos; si llevas uno del otro, se pasa a su primero
+    const order = f.kind === 'shrine' ? SHRINE_ORDER : ELEMENT_ORDER, i = order.indexOf(this.element);
+    return i < 0 ? order[1] : order[(i + 1) % order.length];
+  },
   cycleElement(f) { // forja de los elementos: cada pulsación cambia el poder del arma
-    const nxt = ELEMENT_ORDER[(ELEMENT_ORDER.indexOf(this.element) + 1) % ELEMENT_ORDER.length]; this.element = nxt;
+    const nxt = this.nextElement(f); this.element = nxt;
     const col = nxt ? ELEMENTS[nxt].tint : 0xffffff; SFX.pick(); this.poof(f.x, f.y, 10, col); this.cameras.main.flash(160, (col >> 16) & 255, (col >> 8) & 255, col & 255);
     this.toast(nxt ? 'Arma imbuida de ' + ELEMENTS[nxt].name + ': ' + ELEMENTS[nxt].desc : 'Arma sin elemento', 5000); this.autoSave();
   },

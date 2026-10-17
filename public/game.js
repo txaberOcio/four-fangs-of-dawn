@@ -118,7 +118,7 @@ const EN = {
   bishop: { tex: 'bishop', sc: 4, body: [10, 14], hp: 15, dmg: 1, hb: [40, 56], kind: 'boss', fly: true },
   clock: { tex: 'clock', sc: 4, body: [12, 15], hp: 18, dmg: 2, hb: [52, 60], kind: 'boss' },
   conde: { tex: 'conde', sc: 4, body: [10, 15], hp: 42, dmg: 2, hb: [48, 60], kind: 'boss', fly: true },
-  aurora: { tex: 'aurora', sc: 4, body: [10, 14], hp: 20, dmg: 1, hb: [40, 56], kind: 'boss', fly: true },
+  aurora: { tex: 'aurora', sc: 4, body: [10, 14], hp: 24, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   vesper: { tex: 'vesper', sc: 4, body: [10, 15], hp: 24, dmg: 2, hb: [48, 60], kind: 'boss' },
   // enemigos invulnerables: solo se esquivan
   saw: { tex: 'saw', sc: 3, body: [12, 12], hp: 9999, dmg: 2, hb: [34, 34], kind: 'saw', inv: true },

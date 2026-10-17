@@ -22,7 +22,7 @@
     clock: { name: 'Guardián del Reloj', hp: 18, drop: 'wj' },
     conde: { name: 'El Conde', hp: 42, drop: null },
     // los dos rivales del Alba: al caer uno, el otro lo rescata y huye (solo se puede elegir a uno)
-    aurora: { name: 'Aurora, Dama del Alba', hp: 20, drop: 'wings', rival: 'vesper', reward: 'Alas del Alba: mantén saltar en el aire para planear' },
+    aurora: { name: 'Aurora, Dama del Alba', hp: 24, drop: 'wings', rival: 'vesper', reward: 'Alas del Alba: mantén saltar en el aire para planear' },
     vesper: { name: 'Vesper, Señor del Ocaso', hp: 24, drop: 'eye', rival: 'aurora', reward: 'Ojo de la Noche: ves los secretos tras los muros agrietados y tu luz crece' },
   };
 
@@ -55,18 +55,18 @@
   area('escal', 'Escalera de los Retratos', 0, 3, 4, 1, 2, [['tri', 'tl', 6], ['tri', 'tr', 6], ['climb', 11, 4, 'norm', true], ['E', 'bat', 6, 10], ['E', 'bat', 20, 20], ['E', 'gh', 8, 28], ['E', 'sk', 20, 34]]);
   area('hidden', 'Sala Oculta', 0, 2, 5, 1, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['cry', 13, 16]]);
   // --- Ala de la Biblioteca (rama larga y opcional) ---
-  area('archivo', 'Archivo', 1, 3, 3, 1, 1, [['npc', 'archivist', 17, 16], ['tri', 'tr', 6], ['E', 'sk', 7, 16], ['E', 'sk', 21, 16], ['E', 'bat', 18, 8]]);
+  area('archivo', 'Archivo', 1, 3, 3, 1, 1, [['npc', 'archivist', 17, 16], ['altar', 11, 16], ['tri', 'tr', 6], ['E', 'sk', 7, 16], ['E', 'sk', 21, 16], ['E', 'bat', 18, 8]]);
   area('lect', 'Sala de Lectura', 1, 2, 3, 1, 1, [['page', 12, 16], ['forge', 21, 10], ['tri', 'tl', 5], ['B', 8, 14, 2, 3], ['B', 17, 15, 3, 2], ['P', 4, 11, 4], ['P', 20, 11, 4], ['E', 'sk', 6, 16], ['E', 'kn', 22, 16], ['E', 'bat', 12, 8]]);
   area('gbib', 'Gran Biblioteca', 1, 0, 3, 2, 1, [['forge', 42, 11], ['tri', 'tl', 8], ['tri', 'tr', 8], ['climb', 11, 4, 'norm', true], ['B', 20, 14, 2, 3], ['B', 30, 15, 3, 2], ['P', 24, 11, 5], ['P', 40, 12, 5],
     ['E', 'kn', 17, 16, { elite: true, name: 'Bibliotecario Maldito', reward: { souls: 50, item: 'bomb' } }], ['E', 'kn', 36, 16], ['E', 'gh', 26, 7], ['E', 'gh', 44, 8], ['E', 'bat', 10, 6]]);
   area('obs', 'Observatorio', 1, 0, 1, 1, 2, [['tri', 'tl', 7], ['tri', 'tr', 7], ['climb', 11, 4, 'dash', false], ['cry', 13, 2], ['E', 'gh', 6, 24], ['E', 'gh', 20, 14], ['E', 'bat', 12, 30]]);
   // --- Pozo y calabozos (camino principal tras la Gárgola) ---
   area('pozo', 'Pozo de las Almas', 3, 7, 4, 1, 2, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 11, 4, 'norm', true], ['E', 'bat', 8, 28], ['E', 'gh', 18, 20], ['E', 'gh', 8, 10], ['E', 'sk', 20, 34]]);
-  area('calab', 'Calabozo Norte', 3, 7, 3, 1, 1, [['npc', 'prisoner', 18, 16], ['tri', 'tr', 4], ['E', 'gh', 10, 9], ['E', 'kn', 23, 16], ['E', 'sk', 6, 16]]);
+  area('calab', 'Calabozo Norte', 3, 7, 3, 1, 1, [['npc', 'prisoner', 18, 16], ['altar', 11, 16], ['tri', 'tr', 4], ['E', 'gh', 10, 9], ['E', 'kn', 23, 16], ['E', 'sk', 6, 16]]);
   area('mazm', 'Mazmorra de Hierro', 3, 8, 3, 2, 1, [['tri', 'tl', 6], ['P', 30, 14, 4], ['P', 34, 11, 4], ['B', 40, 6, 8, 1], ['cry', 43, 5], ['E', 'gh', 18, 9], ['E', 'kn', 14, 16], ['E', 'sk', 27, 16]]);
   area('caden', 'Pasaje de Cadenas', 3, 5, 3, 2, 1, [['page', 45, 16], ['B', 1, 1, 36, 11], ['B', 41, 1, 10, 11], ['E', 'kn', 10, 16, { elite: true, name: 'Carcelero', reward: { souls: 70, item: 'pot2' } }], ['E', 'sk', 20, 16], ['E', 'sk', 30, 16], ['E', 'kn', 41, 16]]);
   // --- Capilla (camino principal hacia el Obispo) ---
-  area('naveS', 'Capilla: Nave Sur', 2, 4, 3, 1, 1, [['npc', 'monk', 18, 16], ['npc', 'merchant', 22, 16], ['tri', 'tl', 7], ['tri', 'tr', 7], ['climb', 11, 4, 'norm', true], ['altar', 5, 16], ['E', 'kn', 8, 16], ['E', 'gh', 18, 6], ['E', 'kn', 14, 16]]);
+  area('naveS', 'Capilla: Nave Sur', 2, 4, 3, 1, 1, [['npc', 'monk', 18, 16], ['npc', 'merchant', 22, 16], ['tri', 'tl', 7], ['tri', 'tr', 7], ['climb', 11, 4, 'norm', true], ['bigfire', 5, 16], ['E', 'kn', 8, 16], ['E', 'gh', 18, 6], ['E', 'kn', 14, 16]]);
   area('naveP', 'Capilla: Nave Principal', 2, 4, 1, 1, 2, [['page', 5, 34], ['tri', 'tl', 9], ['tri', 'tr', 9], ['climb', 11, 4, 'dash', true], ['E', 'gh', 8, 14], ['E', 'gh', 18, 24, { elite: true, name: 'Espectro Penitente', reward: { souls: 80, item: 'spd' } }], ['E', 'bat', 10, 28], ['E', 'kn', 20, 34]]);
   area('abs', 'Ábside', 2, 4, 0, 1, 1, [['tri', 'tl', 7], ['tri', 'tr', 7], ['boss', 'bishop', 13, 12]]);
   area('mir', 'Mirador', 2, 5, 0, 1, 1, [['npc', 'merchant', 23, 16], ['tri', 'tr', 6], ['B', 11, 9, 4, 8], ['P', 6, 14, 4], ['altar', 21, 16], ['E', 'gh', 20, 10], ['E', 'sk', 4, 16]]);
@@ -101,7 +101,8 @@
     ['P', 3, 13, 4], ['P', 1, 10, 3], ['P', 3, 7, 4], ['P', 22, 10, 3], ['cry', 23, 9],
     // alcoba secreta tras un muro agrietado (el Ojo de la Noche la revela): dos cristales de vida
     ['P', 41, 13, 4], ['P', 46, 10, 4], ['P', 41, 7, 4],
-    ['B', 45, 1, 6, 2], ['B', 45, 3, 1, 2], ['K', 45, 5, 1, 2], ['B', 50, 3, 1, 4], ['B', 45, 7, 6, 1], ['cry', 47, 6], ['cry', 49, 6]]);
+    ['B', 45, 1, 6, 2], ['B', 45, 3, 1, 2], ['K', 45, 5, 1, 2], ['B', 50, 3, 1, 4], ['B', 45, 7, 6, 1], ['cry', 47, 6], ['cry', 49, 6],
+    ['K', 30, 17, 3, 1]]); // suelo agrietado: bajo él, el Santuario de las Sombras
   area('jardin', 'Jardín Colgante', 7, 18, 0, 2, 1, [['pit', 7, 17], ['P', 10, 13, 3], ['B', 30, 4, 3, 11], ['B', 36, 4, 3, 13], ['P', 42, 13, 3], ['P', 46, 9, 3], ['cry', 47, 8],
     ['E', 'gh', 22, 9], ['E', 'bat', 14, 6], ['E', 'bat', 41, 7], ['E', 'kn', 25, 16], ['E', 'sentinel', 44, 16]]);
   // Segunda mazmorra de plataformas: suelo de pinchos, huecos para el impulso y sierras
@@ -117,7 +118,9 @@
   // Gemas: la segunda moneda. Se encuentran por el mapa (zonas opcionales y secretos) y las sueltan los jefes y los élites.
   // [sala, x, y] en coordenadas locales; cada gema reposa sobre una plataforma o el suelo
   const GEMS = [['hidden', 8, 16], ['salon', 30, 11], ['foso', 13, 12], ['lect', 6, 10], ['gbib', 26, 10], ['osario', 36, 10], ['mazm', 36, 10], ['galeria', 8, 8], ['mir', 7, 13],
-    ['cielo1', 30, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['mazC', 28, 8], ['fragua', 6, 16]];
+    ['cielo1', 30, 16], ['santuario', 20, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['mazC', 28, 8], ['fragua', 6, 16]];
+
+  area('santuario', 'Santuario de las Sombras', 7, 16, 1, 2, 1, [['sshrine', 26, 16], ['cry', 36, 16], ['K', 30, 0, 3, 1], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
 
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
@@ -226,7 +229,8 @@
           case 'E': if (a.safe) break; world.spawns.push({ id: 'e' + (uid++), area: a.id, type: op[1], x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, opts: op[4] || null, zone: a.z }); break;
           case 'page': world.pages.push({ id: sid('p'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'cry': world.crystals.push({ id: sid('c'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
-          case 'sforge': world.sforges.push({ id: sid('sf'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
+          case 'sforge': world.sforges.push({ id: sid('sf'), area: a.id, kind: 'forge', x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
+          case 'sshrine': world.sforges.push({ id: sid('sf'), area: a.id, kind: 'shrine', x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'bigfire': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T, big: true }); break;
           case 'altar': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T }); break;
           case 'boss': world.bosses.push({ id: op[1], area: a.id, x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, ...BOSSES[op[1]] }); a.boss = op[1]; break;
