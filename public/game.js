@@ -139,7 +139,7 @@ const PR = {
   mark: { tex: 'ring', sc: 3, hb: [0, 0], dmg: 0 },
   pillar: { tex: 'pillar', sc: 3, hb: [28, 150], dmg: 2 },
 };
-const ZONE_SCALE = [1, 1.25, 1.5, 1.35, 1.7, 2, 1, 2.4]; // vida de los enemigos corrientes según la zona
+const ZONE_SCALE = [1, 1.25, 1.5, 1.35, 1.7, 2, 1, 2.4, 2.8]; // vida de los enemigos corrientes según la zona
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 
@@ -157,7 +157,7 @@ class CastleScene extends Phaser.Scene {
     this.bgLayer = bgMap.createLayer(0, bgMap.addTilesetImage('tiles', 'tiles', T, T, 0, 0), 0, 0).setDepth(-10);
     this.map = this.make.tilemap({ data: w.fg.map(r => r.slice()), tileWidth: T, tileHeight: T });
     this.fg = this.map.createLayer(0, this.map.addTilesetImage('tiles', 'tiles', T, T, 0, 0), 0, 0).setDepth(-5);
-    const solids = []; for (let z = 0; z < 8; z++) solids.push(z * 8 + K.SOLID, z * 8 + K.FLOOR, z * 8 + K.CRACK);
+    const solids = []; for (let z = 0; z < 9; z++) solids.push(z * 8 + K.SOLID, z * 8 + K.FLOOR, z * 8 + K.CRACK);
     this.fg.setCollision(solids);
     this.fg.forEachTile(t => { if (t.index >= 0 && t.index % 8 === K.ONEWAY) t.setCollision(false, false, true, false); });
     this.map.calculateFacesWithin(0, 0, w.Wt, w.Ht);
@@ -176,7 +176,7 @@ class CastleScene extends Phaser.Scene {
     this.time.addEvent({ delay: 160, loop: true, callback: () => { this.fl = !this.fl; this.torchObjs.forEach(o => { if (o.lit) o.flame.setTexture(this.fl ? 'flame2' : 'flame1'); }); this.altars.forEach(a => a.spr.setTexture(a.lit ? (this.fl ? 'bonfire2' : 'bonfire1') : 'bonfire_off')); } });
 
     // altares, cristales, reliquias
-    this.altars = w.altars.map(a => ({ ...a, lit: a.area === 'vest', spr: this.add.image(a.x, a.y - 18, 'bonfire_off').setScale(3).setDepth(-2) }));
+    this.altars = w.altars.map(a => ({ ...a, lit: a.area === 'vest', spr: this.add.image(a.x, a.y - (a.big ? 36 : 18), 'bonfire_off').setScale(a.big ? 6 : 3).setDepth(-2) }));
     this.bonfireLit = new Set(this.altars.filter(a => a.lit).map(a => a.id));
     this.cryGot = new Set();
     this.crystals = w.crystals.map(c => ({ ...c, spr: this.add.image(c.x, c.y, 'crystal').setScale(2.6).setDepth(2) }));
@@ -333,7 +333,7 @@ class CastleScene extends Phaser.Scene {
     });
     on('snap', s => this.onSnap(s));
     on('torch', ({ id, on: v }) => this.setTorch(id, v));
-    on('hit', h => { if (!this.isHost) return; const e = this.ents.get(h.id); if (e && e.sim) this.damageEnt(e, h.dmg, h.dir, h.from); });
+    on('hit', h => { if (!this.isHost) return; const e = this.ents.get(h.id); if (e && e.sim) this.damageEnt(e, h.dmg, h.dir, h.from, h.el); });
     on('progress', p => this.applyProgress(p, false));
     on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
     on('victory', v => { // el Conde cae, pero el castillo continúa: se despide y desaparece
@@ -418,7 +418,7 @@ class CastleScene extends Phaser.Scene {
   }
   rebuildLights() {
     this.litList = this.torchObjs.filter(o => o.lit).map(o => ({ x: o.x, y: o.y, r: o.r || 215 }));
-    this.altars.filter(a => a.lit).forEach(a => this.litList.push({ x: a.x, y: a.y - 40, r: 160 }));
+    this.altars.filter(a => a.lit).forEach(a => this.litList.push({ x: a.x, y: a.y - 40, r: a.big ? 330 : 160 }));
   }
   lightLevel(x, y) {
     let best = 0;
@@ -457,10 +457,11 @@ class CastleScene extends Phaser.Scene {
     rt.clear(); rt.fill(0x04020a, 0.9);
     const lamp = (x, y, r, a = 1) => { const X = x - sx0, Y = y - sy0; if (X < -r || X > SW + r || Y < -r || Y > SH + r) return; img.setScale(r / 64 / q).setAlpha(a); rt.erase(img, X / q, Y / q); };
     this.torchObjs.forEach(o => { if (o.lit && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, (o.r || 215) * (1 + 0.03 * Math.sin(time * 0.009 + o.id)), 1); });
-    this.altars.forEach(a => { if (a.lit) lamp(a.x, a.y - 40, 160, 0.9); });
+    this.altars.forEach(a => { if (a.lit) lamp(a.x, a.y - 40, a.big ? 330 : 160, 0.9); });
     lamp(p.x, p.y, 120 * this.auraMul(), 0.95);
     this.npcObjs.forEach(n => lamp(n.x, n.y - 20, n.def.shop ? 110 : 80, 0.85));
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id) && !this.hiddenAt(f.x, f.y)) lamp(f.x, f.y, 70, 0.8); });
+    (this.sforgeObjs || []).forEach(f => lamp(f.x, f.y, 120, 0.9));
     Object.values(this.remotes).forEach(r => lamp(r.spr.x, r.spr.y, 90, 0.8));
     this.crystals.forEach(c => { if (!this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y)) lamp(c.x, c.y, 60, 0.8); });
     Object.values(this.relics).forEach(r => lamp(r.x, r.y, 110, 1));
@@ -625,7 +626,7 @@ class CastleScene extends Phaser.Scene {
     }
     // IA
     [...this.ents.values()].forEach(e => { if (e.sim && !e.dead && !e.boss) { const sa = this.W.areaOf(Math.floor(e.spr.x / T), Math.floor(e.spr.y / T)); if (sa && sa.safe) { this.poof(e.spr.x, e.spr.y, 4); e.spr.destroy(); this.ents.delete(e.id); return; } }
-      if (e.sim && !e.dead) { if (e.flash > 0) { e.flash -= dt; if (e.flash <= 0) this.clearFlash(e); } if (e.boss) this.bossAI(e, dt); else this.aiUpdate(e, dt); } });
+      if (e.sim && !e.dead) { if (e.flash > 0) { e.flash -= dt; if (e.flash <= 0) this.clearFlash(e); } this.statusTick(e, dt); if (e.boss) this.bossAI(e, dt); else this.aiUpdate(e, dt); } });
     // proyectiles
     [...this.projs.values()].forEach(p => {
       p.life -= dt; p.vy += p.grav * dt; p.spr.x += p.vx * dt; p.spr.y += p.vy * dt;
@@ -692,6 +693,7 @@ class CastleScene extends Phaser.Scene {
   }
 
   aiUpdate(e, dt) {
+    const slow = e.slowT > 0 ? 0.5 : 1; // hielo: la mitad de velocidad
     const b = e.spr.body, cfg = e.cfg, tg = this.nearest(e.spr.x, e.spr.y, 420);
     if (cfg.kind === 'saw') { // sierra: va y viene por su raíl, no se puede matar
       const o = e.opts || { ax: 'h', r: 100, w: 1.4 };
@@ -707,7 +709,7 @@ class CastleScene extends Phaser.Scene {
       if (!cfg.patrol && tg && Math.abs(tg.y - e.spr.y) < 80 && Math.abs(tg.x - x) < 240) { dir = Math.sign(tg.x - x) || dir; mul = 1.7; }
       const ahead = this.solidAt(x + dir * 22, feet);
       if (b.blocked.left || b.blocked.right || !ahead) { if (mul > 1) { b.setVelocityX(0); e.spr.setFlipX(dir < 0); return; } dir = -dir; }
-      e.dir = dir; b.setVelocityX(dir * cfg.spd * mul); e.spr.setFlipX(dir < 0);
+      e.dir = dir; b.setVelocityX(dir * cfg.spd * slow * mul); e.spr.setFlipX(dir < 0);
     } else if (cfg.kind === 'bat') {
       e.spr.setTexture(((this.simT * 8) | 0) % 2 ? 'bat1' : 'bat2');
       // los murciélagos huyen de la luz y no pueden entrar en ella
@@ -716,7 +718,7 @@ class CastleScene extends Phaser.Scene {
       if (!e.awake) { if (tg && Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) < 260) e.awake = true; else { b.setVelocity(0, Math.sin(this.simT * 3 + e.spr.x) * 8); return; } }
       if (!tg) { b.setVelocity(0, 0); return; }
       const dx = tg.x - e.spr.x, dy = tg.y - e.spr.y;
-      let vx = Phaser.Math.Clamp(dx, -1, 1) * cfg.spd, vy = Phaser.Math.Clamp(dy * 1.2, -90, 90) + Math.sin(this.simT * 6 + e.spr.x) * 45;
+      let vx = Phaser.Math.Clamp(dx, -1, 1) * cfg.spd * slow, vy = Phaser.Math.Clamp(dy * 1.2, -90, 90) + Math.sin(this.simT * 6 + e.spr.x) * 45;
       if (this.lightLevel(e.spr.x + vx * 0.4, e.spr.y + vy * 0.4) > 0.12) { vx = -vx * 0.3; vy = Math.sin(this.simT * 4 + e.spr.x) * 30; }
       b.setVelocity(vx, vy);
       e.spr.setFlipX(dx < 0);
@@ -726,7 +728,7 @@ class CastleScene extends Phaser.Scene {
       const tgd = this.nearestDark(e.spr.x, e.spr.y, 400);
       if (!tgd) { b.setVelocity(0, Math.sin(this.simT * 2 + e.spr.x) * 14); return; }
       const ang = Math.atan2(tgd.y - e.spr.y, tgd.x - e.spr.x);
-      b.setVelocity(Math.cos(ang) * cfg.spd, Math.sin(ang) * cfg.spd); e.spr.setFlipX(tgd.x < e.spr.x);
+      b.setVelocity(Math.cos(ang) * cfg.spd * slow, Math.sin(ang) * cfg.spd * slow); e.spr.setFlipX(tgd.x < e.spr.x);
     }
   }
 

@@ -24,6 +24,7 @@ function normalizeStats(u) {
 Object.values(users).forEach(normalizeStats);
 // migración: la partida única antigua pasa a la ranura del vampiro carmesí
 Object.values(users).forEach(u => { if (u.save && !u.saves) u.saves = { red: u.save }; delete u.save; });
+const ELEMS = ['fire', 'ice', 'bolt', 'poison'];
 const ITEM_IDS = ['pot', 'pot2', 'spd', 'str', 'lamp', 'amu', 'ward', 'rage', 'tonic', 'fruit', 'bomb'];
 const clampInt = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(+v) ? Math.floor(+v) : lo));
 const strList = (a, max, len = 24) => (Array.isArray(a) ? a.filter(x => typeof x === 'string' && x.length <= len).slice(0, max) : []);
@@ -31,6 +32,7 @@ function sanitizeMe(m = {}) {
   const inv = {}; ITEM_IDS.forEach(k => { inv[k] = clampInt(m.inv && m.inv[k], 0, 9); });
   return { souls: clampInt(m.souls, 0, 99999), inv, wlv: clampInt(m.wlv, 1, 5), maxHp: clampInt(m.maxHp, 5, 20), cry: strList(m.cry, 20), forge: strList(m.forge, 20),
     abil: { dash: !!(m.abil && m.abil.dash), dj: !!(m.abil && m.abil.dj), wj: !!(m.abil && m.abil.wj), wings: !!(m.abil && m.abil.wings), eye: !!(m.abil && m.abil.eye) }, elite: strList(m.elite, 20, 40), pages: strList(m.pages, 20), seen: strList(m.seen, 20), kills: (() => { const o = {}; for (const k of ['sk', 'kn', 'bat', 'gh', 'saw', 'sentinel', 'garg', 'bishop', 'clock', 'conde', 'aurora', 'vesper']) o[k] = clampInt(m.kills && m.kills[k], 0, 99999); return o; })(),
+    travel: !!m.travel, el: ELEMS.includes(m.el) ? m.el : '',
     altar: typeof m.altar === 'string' ? m.altar.slice(0, 24) : '', lit: strList(m.lit, 20), visited: strList(m.visited, 60) };
 }
 const slotInfo = s => (s ? { at: s.at, bosses: (s.world && s.world.bosses ? s.world.bosses.length : 0) } : null);
@@ -198,11 +200,11 @@ io.on('connection', socket => {
     socket.to(r.code).volatile.emit('snap', s);
   });
   // Golpe de un jugador a un enemigo -> anfitrión
-  socket.on('hit', ({ id, dmg, dir } = {}) => {
+  socket.on('hit', ({ id, dmg, dir, el } = {}) => {
     const r = myRoom();
     if (!r || !r.started || typeof id !== 'string') return;
     if (r.host === socket.id) return;
-    io.to(r.host).emit('hit', { id, dmg: Math.min(8, Math.max(1, +dmg || 1)), dir: dir < 0 ? -1 : 1, from: socket.id });
+    io.to(r.host).emit('hit', { id, dmg: Math.min(8, Math.max(1, +dmg || 1)), dir: dir < 0 ? -1 : 1, from: socket.id, el: ELEMS.includes(el) ? el : undefined });
   });
   socket.on('ability', a => {
     const r = myRoom();

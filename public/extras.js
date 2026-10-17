@@ -44,6 +44,14 @@ const SHOP_STOCK = {
   mir: [['pot', 0], ['bomb', 0], ['lamp', 0], ['spd', 0], ['pot2', 0], ['ward', 1], ['str', 1], ['rage', 2], ['amu', 2], ['tonic', 3], ['fruit', 3]]
 };
 const SHOP_ORDER = ['vest', 'naveS', 'mir'];
+// poderes elementales de la Forja de los Elementos: cambian el color del ataque y añaden un efecto
+const ELEMENTS = {
+  fire: { name: 'Fuego', tint: 0xff7a2a, desc: 'quema al enemigo: daño extra durante 3 s' },
+  ice: { name: 'Hielo', tint: 0x7ad8ff, desc: 'ralentiza a los enemigos a la mitad durante 3 s' },
+  bolt: { name: 'Rayo', tint: 0xfff06a, desc: 'salta a otro enemigo cercano con parte del daño' },
+  poison: { name: 'Veneno', tint: 0x7aff6a, desc: 'envenena: daño continuo durante 6 s' }
+};
+const ELEMENT_ORDER = ['', 'fire', 'ice', 'bolt', 'poison'];
 // ---------- Bestiario y diarios ----------
 const BESTIARY = {
   sk: { name: 'Esqueleto', text: 'Soldados de la guardia caídos. Patrullan y, si te ven cerca, te persiguen. Son débiles pero muchos.', tip: 'Un par de golpes bastan.' },
@@ -209,6 +217,7 @@ const _hurt = CastleScene.prototype.hurt, _die = CastleScene.prototype.die, _res
 Object.assign(CastleScene.prototype, {
   // ---- inicio
   initExtras() {
+    this.element = ''; this.travel = false; this.travelOpen = false;
     this.buildAlbaDecor();
     if (/[?&]dev=1/.test(location.search)) this.setupDev();
     const w = this.W;
@@ -229,6 +238,12 @@ Object.assign(CastleScene.prototype, {
       this.tweens.add({ targets: [spr, glow], y: f.y - 6, yoyo: true, repeat: -1, duration: 900, ease: 'Sine.inOut' });
       return { ...f, spr, glow };
     });
+    this.sforgeObjs = (w.sforges || []).map(f => { // forja especial: poder elemental para el arma
+      const spr = this.add.image(f.x, f.y, 'forge').setScale(3.6).setDepth(2).setTint(0xff9a3b);
+      const glow = this.add.image(f.x, f.y, 'glow').setScale(2.2).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.65).setDepth(1).setVisible(!LITE);
+      this.tweens.add({ targets: [spr, glow], y: f.y - 6, yoyo: true, repeat: -1, duration: 1100, ease: 'Sine.inOut' });
+      return { ...f, spr, glow };
+    });
     const nameStyle = { fontSize: '11px', fontFamily: 'Courier New', color: '#ffe9a0', stroke: '#000', strokeThickness: 3 };
     this.npcObjs = w.npcs.map(n => {
       const def = NPC_DEFS[n.type];
@@ -236,7 +251,7 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi();
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi();
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
     this.canAuto = !!saveMe || !saves[this.color]; // evita pisar una partida guardada de este vampiro en una partida nueva
     if (saveMe) this.loadPersonal(saveMe);
@@ -250,6 +265,7 @@ Object.assign(CastleScene.prototype, {
   },
   // Recupera los datos personales de la partida guardada
   loadPersonal(m) {
+    this.travel = !!m.travel; this.element = ELEMENTS[m.el] ? m.el : '';
     if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0); this.hp = this.maxHp;
@@ -311,7 +327,7 @@ Object.assign(CastleScene.prototype, {
     const b = this.buffs, parts = [];
     if (b.spd > 0) parts.push('VEL ' + Math.ceil(b.spd) + 's'); if (b.str > 0) parts.push('FUE ' + Math.ceil(b.str) + 's'); if (b.lamp > 0) parts.push('LUZ ' + Math.ceil(b.lamp) + 's'); if (b.rage > 0) parts.push('FUR ' + Math.ceil(b.rage) + 's'); if (b.tonic > 0) parts.push('ALM ' + Math.ceil(b.tonic) + 's'); if (this.ward > 0) parts.push('PIEL x' + this.ward);
     this.buffTxt.setText(parts.join('  '));
-    this.hudSouls.setText(`◆ ${this.souls}    ${this.wpn.name} Nv.${this.wlv}    ${this.pas.name || ''}`);
+    this.hudSouls.setText(`◆ ${this.souls}    ${this.wpn.name} Nv.${this.wlv}${this.element ? ' [' + ELEMENTS[this.element].name + ']' : ''}    ${this.pas.name || ''}`);
   },
   floatText(x, y, text, color = '#d9b3ff') {
     const t = this.add.text(x, y, text, { fontSize: '14px', fontFamily: 'Courier New', color, stroke: '#000', strokeThickness: 4 }).setOrigin(0.5).setDepth(28);
@@ -347,8 +363,9 @@ Object.assign(CastleScene.prototype, {
   playerStep(dt, time, inp) {
     const K_ = this.keys, p = this.player, b = p.body, held = inp.held;
     if (inp.bookPress && !this.shopOpen && !this.dlg) this.toggleBook();
-    const ui = this.shopOpen || !!this.dlg || this.bookOpen;
+    const ui = this.shopOpen || !!this.dlg || this.bookOpen || this.travelOpen;
     if (this.bookOpen) this.bookKeys(inp.J);
+    if (this.travelOpen) this.travelKeys(inp.J);
     for (const k in this.buffs) this.buffs[k] = Math.max(0, this.buffs[k] - dt);
     if (inp.J.N) this.muteTxt.setAlpha(Music.toggleMute() ? 0.3 : 1);
     if (this.shopOpen) this.shopKeys(inp.J);
@@ -604,20 +621,20 @@ Object.assign(CastleScene.prototype, {
     this.slashFx(p.x, p.y + (this.crouching ? 7 : 0), this.facing, this.color);
   },
   slashFx(x, y, dir, color) {
-    const W_ = WEAPONS[color] || WEAPONS.red;
+    const W_ = WEAPONS[color] || WEAPONS.red, tint = (color === this.color && this.element) ? ELEMENTS[this.element].tint : W_.tint;
     if (W_.kind === 'ranged') {
-      const s = this.add.image(x + dir * 22, y - 4, 'arrow').setScale(2).setFlipX(dir < 0).setDepth(9).setTint(W_.tint);
+      const s = this.add.image(x + dir * 22, y - 4, 'arrow').setScale(2).setFlipX(dir < 0).setDepth(9).setTint(tint);
       this.tweens.add({ targets: s, x: x + dir * 70, alpha: 0, duration: 220, onComplete: () => s.destroy() }); return;
     }
-    const s = this.add.image(x + dir * W_.off, y - 2, W_.fx).setScale(W_.fxScale).setFlipX(dir < 0).setDepth(9).setAlpha(0.9).setTint(W_.tint);
+    const s = this.add.image(x + dir * W_.off, y - 2, W_.fx).setScale(W_.fxScale).setFlipX(dir < 0).setDepth(9).setAlpha(0.9).setTint(tint);
     this.tweens.add({ targets: s, alpha: 0, scaleX: W_.fxScale * 1.2, duration: 190, onComplete: () => s.destroy() });
   },
   fireArrows(w) {
     const p = this.player, f = this.facing, dmg = w.dmg + this.dmgBonus();
     for (let i = 0; i < w.n; i++) {
       const vy = (i - (w.n - 1) / 2) * 46, vx = f * 430;
-      const spr = this.add.image(p.x + f * 22, p.y - 4 + (this.crouching ? 7 : 0), 'arrow').setScale(2).setDepth(9).setTint(0xb8ff9a).setRotation(Math.atan2(vy, vx));
-      this.arrows.push({ spr, vx, vy, life: w.range / 430, dmg });
+      const spr = this.add.image(p.x + f * 22, p.y - 4 + (this.crouching ? 7 : 0), 'arrow').setScale(2).setDepth(9).setTint(this.element ? ELEMENTS[this.element].tint : 0xb8ff9a).setRotation(Math.atan2(vy, vx));
+      this.arrows.push({ spr, vx, vy, life: w.range / 430, dmg, el: this.element });
     }
   },
   updateArrows(dt) {
@@ -635,20 +652,20 @@ Object.assign(CastleScene.prototype, {
       if (!dead) for (const e of this.ents.values()) {
         if (e.dead) continue;
         const [ex, ey, ew, eh] = this.entBox(e);
-        if (rectsOverlap(a.spr.x, a.spr.y, 16, 10, ex, ey, ew, eh)) { this.hitEnemy(e, Math.sign(a.vx) || 1, a.dmg); dead = true; break; }
+        if (rectsOverlap(a.spr.x, a.spr.y, 16, 10, ex, ey, ew, eh)) { this.hitEnemy(e, Math.sign(a.vx) || 1, a.dmg, a.el); dead = true; break; }
       }
       if (dead) a.spr.destroy();
       return !dead;
     });
   },
-  hitEnemy(e, f, dmg) {
+  hitEnemy(e, f, dmg, el) {
     const p = this.player, [ex, ey] = this.entBox(e);
     if (e.cfg.inv) { if (!e.invMsg || Date.now() - e.invMsg > 900) { e.invMsg = Date.now(); this.floatText(ex, ey - 36, '¡Invulnerable!', '#9fd4ff'); } this.poof(ex, ey, 2, 0x9fd4ff); SFX.hurt(); return; }
     if (e.type === 'clock' && e.shield) { if (!e.shieldMsg || Date.now() - e.shieldMsg > 1200) { e.shieldMsg = Date.now(); this.floatText(ex, ey - 40, '¡La luz lo protege!', '#8fc8ff'); } SFX.hurt(); return; }
     SFX.hit();
     const chance = this.pas.life || 0.25;
     if (!this.dead && this.hp < this.maxHp && Math.random() < chance) { this.hp = Math.min(this.maxHp, this.hp + (e.boss ? 0.25 : 0.5)); this.poof(p.x, p.y - 10, 3, 0xff3b5c); }
-    if (this.isHost) this.damageEnt(e, dmg, f, socket.id); else socket.emit('hit', { id: e.id, dmg, dir: f });
+    if (this.isHost) this.damageEnt(e, dmg, f, socket.id, el); else socket.emit('hit', { id: e.id, dmg, dir: f, el });
     e.flash = 0.1; e.spr.setTintFill(0xffffff); this.poof(ex, ey, 3, 0xffe9a0);
   },
   doAttack() {
@@ -658,22 +675,36 @@ Object.assign(CastleScene.prototype, {
     this.ents.forEach(e => {
       if (e.dead || this.swingHit.has(e.id)) return;
       const [ex, ey, ew, eh] = this.entBox(e);
-      if (rectsOverlap(bx, cy, bw, bh, ex, ey, ew, eh)) { this.swingHit.add(e.id); this.hitEnemy(e, f, w.dmg + this.dmgBonus()); }
+      if (rectsOverlap(bx, cy, bw, bh, ex, ey, ew, eh)) { this.swingHit.add(e.id); this.hitEnemy(e, f, w.dmg + this.dmgBonus(), this.element); }
     });
     for (let wy = cy - bh / 2; wy <= cy + bh / 2; wy += 16) for (let wx = bx - bw / 2; wx <= bx + bw / 2; wx += 16) {
       const t = this.fg.getTileAtWorldXY(wx, wy);
       if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
     }
   },
-  damageEnt(e, dmg, dir, by) {
+  damageEnt(e, dmg, dir, by, el, quiet) {
     if (e.dead) return;
     if (e.boss && !e.aggro) return;
     if (e.phase === 'intro') return;
     if (e.cfg.inv) return; // invulnerables
     if (e.type === 'clock' && this.lightLevel(e.spr.x, e.spr.y) > 0.18) return; // la luz lo protege
-    e.hp -= dmg; e.flash = 0.12; e.spr.setTintFill(0xffffff);
-    if (!e.boss && !e.elite && e.cfg.kind === 'walk') { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
+    e.hp -= dmg; if (!quiet) { e.flash = 0.12; e.spr.setTintFill(0xffffff); }
+    if (!quiet && !e.boss && !e.elite && e.cfg.kind === 'walk') { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
+    if (e.hp > 0 && el && !quiet) this.applyElement(e, el, dmg, dir, by);
     if (e.hp <= 0) this.killEnt(e, by);
+  },
+  applyElement(e, el, dmg, dir, by) { // solo lo ejecuta el anfitrión
+    if (el === 'fire') { e.dotT = 3; e.dotTick = 0.75; e.dotCol = 0xff7a2a; e.dotBy = by; }
+    else if (el === 'poison') { e.dotT = 6; e.dotTick = 1; e.dotCol = 0x7aff6a; e.dotBy = by; }
+    else if (el === 'ice') { if (!e.boss) { e.slowT = 3; e.spr.setTint(0x9ad0ff); } }
+    else if (el === 'bolt') {
+      let best = null, bd = 190; this.ents.forEach(o => { if (o === e || o.dead || o.cfg.inv || (o.boss && !o.aggro)) return; const d = Math.hypot(o.spr.x - e.spr.x, o.spr.y - e.spr.y); if (d < bd) { bd = d; best = o; } });
+      if (best) { const g = this.add.graphics().setDepth(12); g.lineStyle(3, 0xfff06a, 1).lineBetween(e.spr.x, e.spr.y, best.spr.x, best.spr.y); this.time.delayedCall(140, () => g.destroy()); this.poof(best.spr.x, best.spr.y, 3, 0xfff06a); this.damageEnt(best, Math.max(1, Math.ceil(dmg * 0.6)), dir, by); }
+    }
+  },
+  statusTick(e, dt) { // daño continuo y ralentización (lo ejecuta el anfitrión)
+    if (e.slowT > 0) { e.slowT -= dt; if (e.slowT <= 0 && !e.elite) e.spr.clearTint(); }
+    if (e.dotT > 0) { e.dotT -= dt; e.dotAcc = (e.dotAcc || 0) + dt; if (e.dotAcc >= e.dotTick) { e.dotAcc -= e.dotTick; this.poof(e.spr.x, e.spr.y - 10, 2, e.dotCol); this.damageEnt(e, 1, 0, e.dotBy, undefined, true); } }
   },
   killEnt(e, by) {
     let base = (SOULS[e.type] || 0) * (e.elite ? 5 : 1); base = Math.round(base * (1 + 0.2 * (e.zone !== undefined ? e.zone : 0)));
@@ -803,11 +834,20 @@ Object.assign(CastleScene.prototype, {
       if (ePress) { this.curNpc = best; best.def.shop ? this.openShop(best) : this.openDialogue(best); }
       return;
     }
+    // forja de los elementos
+    let sf = null, sfd = 1e9;
+    for (const f of this.sforgeObjs || []) { const dx = Math.abs(f.x - p.x), dy = Math.abs(f.y - p.y); if (dx < 80 && dy < 90 && dx < sfd) { sfd = dx; sf = f; } }
+    if (sf) {
+      const cur = this.element ? ELEMENTS[this.element].name : 'sin elemento', nxt = ELEMENT_ORDER[(ELEMENT_ORDER.indexOf(this.element) + 1) % ELEMENT_ORDER.length];
+      this.promptTxt.setVisible(true).setPosition(sf.x, sf.y - 70).setText('E: imbuir el arma (ahora: ' + cur + ' → ' + (nxt ? ELEMENTS[nxt].name : 'sin elemento') + ')');
+      if (ePress) this.cycleElement(sf);
+      return;
+    }
     // hoguera (solo al interactuar: descansar, guardar y reaparecer monstruos)
     let bf = null, bfd = 1e9;
     for (const a of this.altars) { const dx = Math.abs(a.x - p.x), dy = Math.abs((a.y - 20) - p.y); if (dx < 64 && dy < 90 && dx < bfd) { bfd = dx; bf = a; } }
     if (bf) {
-      this.promptTxt.setVisible(true).setPosition(bf.x, bf.y - 82).setText(bf.lit ? 'E: descansar (guarda la partida)' : 'E: encender la hoguera');
+      this.promptTxt.setVisible(true).setPosition(bf.x, bf.y - 82).setText(bf.lit ? 'E: descansar (guarda la partida)' + (this.travel ? ' y viajar' : '') : (bf.big ? 'E: encender la GRAN HOGUERA (viaje rápido)' : 'E: encender la hoguera'));
       if (ePress) this.restAt(bf);
       return;
     }
@@ -817,8 +857,10 @@ Object.assign(CastleScene.prototype, {
     a.lit = true; this.bonfireLit.add(a.id); this.lastAltar = { x: a.x, y: a.y }; this.lastBonfire = a; this.canAuto = true; this.hp = this.maxHp; this.rebuildLights();
     SFX.altar(); this.poof(a.x, a.y - 30, 10, 0xffb347);
     if (this.isHost) this.restReset(); else socket.emit('rest');
+    const first = a.big && !this.travel; if (first) this.travel = true;
     this.savePersonal(a);
-    this.toast('Hoguera: vida restaurada, partida guardada y los monstruos han reaparecido', 4500);
+    this.toast(first ? '¡Viaje rápido desbloqueado! Descansa en cualquier hoguera encendida y elige a cuál viajar.' : 'Hoguera: vida restaurada, partida guardada y los monstruos han reaparecido', first ? 7000 : 4500);
+    if (this.travel) this.openTravel();
   },
   // Guarda al conseguir una mejora permanente (habilidad de jefe, cristal de vida, mejora de arma)
   autoSave() {
@@ -833,7 +875,7 @@ Object.assign(CastleScene.prototype, {
   },
   savePersonal(a) {
     socket.emit('save', { souls: this.souls, inv: this.inv, wlv: this.wlv, maxHp: this.maxHp, cry: [...this.cryGot], forge: [...this.forgeGot],
-      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills });
+      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element });
   },
 
   // ---- diálogo
@@ -987,7 +1029,52 @@ Object.assign(CastleScene.prototype, {
     const pct = Math.round(35 * vis / rooms.length + 25 * gotItems / items + 10 * litB / bon + 20 * dead / bos + 10 * gotExtra / extra);
     return { pct, vis, rooms: rooms.length, gotItems, items, litB, bon, dead, bos, pages: this.pagesGot.size, nPages: w.pages.length, elites: this.eliteGot.size, nElites: this.W.spawns.filter(s => s.opts && s.opts.elite).length };
   },
+  cycleElement(f) { // forja de los elementos: cada pulsación cambia el poder del arma
+    const nxt = ELEMENT_ORDER[(ELEMENT_ORDER.indexOf(this.element) + 1) % ELEMENT_ORDER.length]; this.element = nxt;
+    const col = nxt ? ELEMENTS[nxt].tint : 0xffffff; SFX.pick(); this.poof(f.x, f.y, 10, col); this.cameras.main.flash(160, (col >> 16) & 255, (col >> 8) & 255, col & 255);
+    this.toast(nxt ? 'Arma imbuida de ' + ELEMENTS[nxt].name + ': ' + ELEMENTS[nxt].desc : 'Arma sin elemento', 5000); this.autoSave();
+  },
+  buildTravelUi() {
+    const f = (s, c = '#fff') => ({ fontSize: s, fontFamily: 'Courier New', color: c });
+    const cx = SW / 2, cy = SH / 2; this.travelObjs = []; this.travelRows = []; this.travelList = []; this.travelSel = 0;
+    const add = o => { o.setScrollFactor(0).setDepth(62); this.travelObjs.push(o); return o; };
+    add(this.add.rectangle(cx, cy, 560, 440, 0x140c22, 0.97).setStrokeStyle(4, 0xffb347));
+    add(this.add.text(cx, cy - 200, 'VIAJE RÁPIDO — elige una hoguera', f('18px', '#ffd98a')).setOrigin(0.5));
+    for (let i = 0; i < 12; i++) {
+      const row = add(this.add.rectangle(cx, cy - 160 + i * 28, 520, 24, 0x2a1d4d, 1)).setInteractive(); const txt = add(this.add.text(cx - 240, cy - 160 + i * 28, '', f('14px')).setOrigin(0, 0.5));
+      row.on('pointerdown', () => { if (this.travelList[i]) { this.travelSel = i; this.travelGo(); } }); this.travelRows.push({ row, txt });
+    }
+    add(this.add.text(cx, cy + 205, IS_TOUCH ? 'toca una hoguera para viajar' : '↑↓ elegir · Enter/E viajar · Esc cerrar', f('12px', '#a99bd1')).setOrigin(0.5));
+    const close = add(this.add.text(cx + 262, cy - 205, '✕', f('22px', '#ff8a8a')).setOrigin(0.5)).setInteractive(); close.on('pointerdown', () => this.closeTravel());
+    this.travelObjs.forEach(o => o.setVisible(false));
+  },
+  openTravel() {
+    this.travelList = this.altars.filter(a => a.lit).slice(0, 12).map(a => ({ a, name: this.W.areas[a.area].name }));
+    this.travelSel = Math.max(0, this.travelList.findIndex(t => t.a === this.lastBonfire));
+    this.travelOpen = true; this.travelObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false); this.refreshTravel();
+  },
+  refreshTravel() {
+    this.travelRows.forEach((r, i) => {
+      const t = this.travelList[i]; r.row.setVisible(!!t && this.travelOpen); r.txt.setVisible(!!t && this.travelOpen); if (!t) return;
+      r.txt.setText((t.a.big ? '★ ' : '  ') + t.name + (t.a === this.lastBonfire ? '   (estás aquí)' : '')); r.row.setFillStyle(i === this.travelSel ? 0x5a3a9a : 0x2a1d4d, 1);
+    });
+  },
+  travelKeys(J) {
+    const n = this.travelList.length; if (!n) { this.closeTravel(); return; }
+    if (J.UP || J.W) { this.travelSel = (this.travelSel + n - 1) % n; this.refreshTravel(); SFX.hit(); }
+    if (J.DOWN || J.S) { this.travelSel = (this.travelSel + 1) % n; this.refreshTravel(); SFX.hit(); }
+    if (J.ENTER || J.E || J.SPACE) this.travelGo();
+    if (J.ESC) this.closeTravel();
+  },
+  closeTravel() { this.travelOpen = false; this.travelObjs.forEach(o => o.setVisible(false)); },
+  travelGo() {
+    const t = this.travelList[this.travelSel]; if (!t) return; this.closeTravel();
+    if (t.a === this.lastBonfire) return;
+    const p = this.player; this.poof(p.x, p.y, 10, 0xffb347); p.setPosition(t.a.x, t.a.y - 21); p.body.setVelocity(0, 0); this.lastGround = { x: p.x, y: p.y }; this.invuln = 1.5;
+    this.cameras.main.flash(250, 255, 200, 120); SFX.altar(); this.poof(p.x, p.y, 10, 0xffb347); this.toast('Has viajado a ' + t.name);
+  },
   closeUi() {
+    if (this.travelOpen) this.closeTravel();
     this.shopOpen = false; this.dlg = null; this.curNpc = null;
     if (this.shopObjs) this.shopObjs.forEach(o => o.setVisible(false));
     if (this.dlgObjs) this.dlgObjs.forEach(o => o.setVisible(false));

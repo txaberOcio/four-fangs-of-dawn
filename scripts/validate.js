@@ -55,7 +55,7 @@ function simulate(x, y, plan, abil) {
     // salto corto: si se suelta, corta velocidad
     if (!plan.walkoff && jumpHeldUntil !== undefined && f === Math.round(jumpHeldUntil * 60) && vy < -150) vy *= 0.4;
     // planeo (Alas del Alba): cayendo y manteniendo saltar, caída lenta y algo más de velocidad
-    const glide = !!(abil.wings && plan.glide && !onG && vy > 55);
+    const glide = !!(abil.wings && plan.glide && !onG && vy > 55 && t < (plan.glideEnd || 99));
     // horizontales
     if (dashT > 0) { vx = dashDir * P.dashSpeed; vy = 0; dashT -= DT; }
     else if (wjLock > 0) { wjLock -= DT; }
@@ -118,11 +118,11 @@ function plansFor(abil) {
     const base = { dir, hold, wall: true, ...fl };
     if (base.flipTo === 'inv') { if (dir === 0) continue; base.flipTo = -dir; }
     plans.push(base);
-    if (abil.wings) plans.push({ ...base, glide: true });
     if (abil.dj) for (const dj of [0.25, 0.45, 0.7, 0.95]) plans.push({ ...base, dj });
     if (abil.dash) for (const dash of [0.0, 0.2, 0.4, 0.6]) for (const dd of dir === 0 ? [-1, 1] : [dir]) plans.push({ ...base, dash, dashDir: dd });
     if (abil.dj && abil.dash) for (const dj of [0.35, 0.6]) for (const dash of [0.1, 0.3, 0.6]) for (const dd of dir === 0 ? [-1, 1] : [dir]) plans.push({ ...base, dj, dash, dashDir: dd });
   }
+  if (abil.wings) { const n = plans.length; for (let i = 0; i < n; i++) for (const ge of [1.4, 99]) plans.push({ ...plans[i], glide: true, glideEnd: ge }); } // con planeo (se mantiene saltar)
   return plans;
 }
 

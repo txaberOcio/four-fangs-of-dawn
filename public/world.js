@@ -3,14 +3,14 @@
    (anchas, altas), llevar pasillos rellenos de roca y conectarse con puertas de distinto tamaño. */
 (function (root) {
   'use strict';
-  const T = 32, CW = 26, CH = 18, COLS = 22, ROWS = 7;
+  const T = 32, CW = 26, CH = 18, COLS = 22, ROWS = 10;
   const PHYS = {
     gravity: 900, speed: 165, jump: -470, djump: -420,
     dashSpeed: 560, dashTime: 0.25, dashCd: 0.5,
     wjY: -430, wjX: 190, wjLock: 0.18, slide: 110, maxFall: 700,
     bodyW: 30, bodyH: 39,
   };
-  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba'];
+  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'El Abismo'];
   const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
@@ -50,7 +50,7 @@
   // --- Ramas del ala de entrada ---
   area('tunel', 'Túnel de Calaveras', 3, 6, 5, 1, 1, [['tri', 'tl', 4], ['tri', 'tr', 4], ['pit', 8, 16], ['E', 'bat', 12, 8], ['E', 'bat', 18, 6], ['E', 'gh', 4, 9]]);
   area('bodega', 'Bodega', 3, 1, 6, 1, 1, [['forge', 20, 12], ['tri', 'tr', 5], ['B', 5, 15, 3, 2], ['B', 19, 14, 3, 3], ['E', 'sk', 9, 16], ['E', 'sk', 22, 16], ['E', 'bat', 15, 9]]);
-  area('cripta', 'Cripta Olvidada', 3, 0, 6, 1, 1, [['tri', 'tl', 6], ['pit', 8, 22], ['cry', 2, 16], ['E', 'gh', 20, 9], ['E', 'gh', 4, 8]]);
+  area('cripta', 'Cripta Olvidada', 3, 0, 6, 1, 1, [['tri', 'tl', 6], ['pit', 7, 22], ['P', 3, 14, 4], ['cry', 4, 13], ['E', 'gh', 20, 9], ['E', 'gh', 4, 8]]);
   area('osario', 'Osario', 3, 8, 6, 2, 1, [['tri', 'tl', 7], ['tri', 'tr', 5], ['P', 30, 14, 4], ['P', 35, 11, 4], ['B', 40, 6, 8, 1], ['cry', 43, 5], ['E', 'gh', 15, 10], ['E', 'gh', 32, 6], ['E', 'sk', 10, 16], ['E', 'sk', 25, 16]]);
   area('escal', 'Escalera de los Retratos', 0, 3, 4, 1, 2, [['tri', 'tl', 6], ['tri', 'tr', 6], ['climb', 11, 4, 'norm', true], ['E', 'bat', 6, 10], ['E', 'bat', 20, 20], ['E', 'gh', 8, 28], ['E', 'sk', 20, 34]]);
   area('hidden', 'Sala Oculta', 0, 2, 5, 1, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['cry', 13, 16]]);
@@ -108,6 +108,12 @@
   area('mazC', 'Mazmorra de Nubes', 7, 20, 0, 2, 1, [['pit', 2, 49], ['P', 3, 13, 4], ['P', 10, 11, 3], ['P', 17, 9, 3], ['P', 26, 9, 3], ['P', 36, 11, 3], ['P', 43, 13, 3], ['P', 47, 10, 3], ['cry', 48, 9],
     ['E', 'saw', 14, 10, { ax: 'v', r: 55, w: 1.5 }], ['E', 'saw', 30, 8, { ax: 'h', r: 80, w: 1.3 }], ['E', 'bat', 22, 5], ['E', 'bat', 40, 6], ['E', 'gh', 33, 8]]);
 
+  // --- El Abismo: tras planear sobre los pinchos de la Cripta Olvidada, una caída libre lleva a la Forja de los Elementos y a la Gran Hoguera ---
+  area('caida', 'Caída Libre', 8, 0, 7, 1, 2, [['E', 'saw', 9, 9, { ax: 'h', r: 60, w: 1.3 }], ['E', 'saw', 16, 18, { ax: 'h', r: 70, w: 1.6 }], ['E', 'saw', 10, 27, { ax: 'h', r: 60, w: 1.1 }],
+    ['E', 'bat', 5, 6], ['E', 'bat', 20, 14], ['E', 'bat', 12, 23]]);
+  area('fragua', 'Forja de los Elementos', 8, 1, 8, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['sforge', 30, 15], ['E', 'kn', 12, 16], ['E', 'gh', 22, 9], ['E', 'bat', 40, 7]]);
+  area('gran', 'La Gran Hoguera', 8, 3, 8, 1, 1, [['bigfire', 13, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
   const E = (a, b, size = 3, o = {}) => LINKS.push({ t: 'E', a, b, size, ...o });
@@ -122,7 +128,7 @@
   S('archivo', 'escal'); S('escal', 'salon'); S('obs', 'gbib'); S('pozo', 'cubil'); S('calab', 'pozo');
   E('escalaR', 'fosoC', 3, { gate: 'conde' }); E('fosoC', 'alba1', 3, { gate: 'conde' }); S('pasR', 'escalaR', 16, 4);
   E('alba1', 'albaH', 3); E('albaH', 'albaA', 4); S('albaH', 'albaB', 24, 4);
-  E('albaB', 'cielo1', 3, { gate: 'alba' }); E('cielo1', 'torreC', 3); E('torreC', 'cumbre', 3); E('cumbre', 'jardin', 3); E('jardin', 'mazC', 3); // 'alba' = cae Aurora o Vesper
+  E('albaB', 'cielo1', 3, { gate: 'alba' }); E('cielo1', 'torreC', 3); E('torreC', 'cumbre', 3); E('cumbre', 'jardin', 3); E('jardin', 'mazC', 3); S('cripta', 'caida', 1, 6); E('caida', 'fragua', 3); E('fragua', 'gran', 3); // 'alba' = cae Aurora o Vesper
   S('naveP', 'naveS'); S('abs', 'naveP'); S('clkC', 'torre'); S('mir', 'galeria', 16, 4); S('torre', 'caden');
 
   function climbOps(rw, rh, hx, hw, type) {
@@ -145,7 +151,7 @@
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [] };
+    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [] };
     let uid = 1;
     // 1) interior de cada área
     for (const a of AREAS) {
@@ -215,6 +221,8 @@
           case 'E': if (a.safe) break; world.spawns.push({ id: 'e' + (uid++), area: a.id, type: op[1], x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, opts: op[4] || null, zone: a.z }); break;
           case 'page': world.pages.push({ id: sid('p'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'cry': world.crystals.push({ id: sid('c'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
+          case 'sforge': world.sforges.push({ id: sid('sf'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
+          case 'bigfire': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T, big: true }); break;
           case 'altar': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T }); break;
           case 'boss': world.bosses.push({ id: op[1], area: a.id, x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, ...BOSSES[op[1]] }); a.boss = op[1]; break;
         }

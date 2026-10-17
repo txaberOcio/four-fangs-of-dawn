@@ -8,6 +8,7 @@ const ZONE_PAL = [
   { base: '#7a2f3a', dark: '#4d1a23', light: '#a8505e', mortar: '#28090f', bg: '#2a0f16', bgd: '#1f0a10', glow: '#ff7a7a' },
   { base: '#2f2b3a', dark: '#211e2b', light: '#4a4458', mortar: '#15121c', bg: '#100d17', bgd: '#0c0a12', glow: '#8870a0' }, // roca
   { base: '#a8708a', dark: '#6a3f58', light: '#e0a8b8', mortar: '#3a1e2c', bg: '#2c1626', bgd: '#201019', glow: '#ffd6a0' }, // Torres del Alba
+  { base: '#3a5a6a', dark: '#223644', light: '#5f8ea0', mortar: '#10202a', bg: '#0f1c26', bgd: '#0a141b', glow: '#7ad8ff' }, // El Abismo
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
@@ -149,8 +150,8 @@ function buildArt(scene) {
   const tx = scene.textures;
   if (tx.exists('tiles')) return;
   // Tileset: 6 zonas x 8 tipos
-  const tiles = tx.createCanvas('tiles', 64 * 32, 32); const tctx = tiles.getContext('2d');
-  for (let z = 0; z < 8; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
+  const tiles = tx.createCanvas('tiles', 72 * 32, 32); const tctx = tiles.getContext('2d');
+  for (let z = 0; z < 9; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
   tiles.refresh();
 
   const makeMap = (key, mapName, pal, px) => {

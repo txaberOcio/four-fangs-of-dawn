@@ -14,6 +14,7 @@ const Music = (() => {
     { root: 38, bpm: 76, pad: 'sawtooth', royal: true },    // Sala Real (re)
     { root: 38, bpm: 76, pad: 'sawtooth', royal: true },    // (roca: sin uso)
     { root: 45, bpm: 66, pad: 'triangle', organ: true },    // Torres del Alba (la)
+    { root: 36, bpm: 52, pad: 'sawtooth', drone: true },    // El Abismo (do)
   ];
   const CHORDS = [[0, 3, 7], [-4, 0, 3], [3, 7, 10], [-2, 2, 5]]; // i · VI · III · VII
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
