@@ -122,6 +122,14 @@ const EN = {
   saw: { tex: 'saw', sc: 3, body: [12, 12], hp: 9999, dmg: 2, hb: [34, 34], kind: 'saw', inv: true },
   sentinel: { tex: 'sentinel', sc: 3, body: [12, 15], hp: 9999, dmg: 2, spd: 70, hb: [34, 44], kind: 'walk', inv: true, patrol: true },
 };
+// habilidades de los enemigos con nombre: alcance, aviso previo (tele), duración (act), espera (cd)
+const ELITE_AB = {
+  'Capitán de Armaduras': { kind: 'charge', range: 280, tele: 0.6, act: 0.55, cd: 3.5, spd: 340 },
+  'Bibliotecario Maldito': { kind: 'orbs', range: 380, tele: 0.45, act: 0.1, cd: 3.2 },
+  'Carcelero': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 4.2 },
+  'Espectro Penitente': { kind: 'blink', range: 420, tele: 0.5, act: 0.1, cd: 4.5 },
+  'Relojero Oxidado': { kind: 'haste', range: 260, tele: 0.5, act: 2.6, cd: 5 }
+};
 const PR = {
   orb: { tex: 'orb', sc: 2, hb: [14, 14], dmg: 1 },
   shock: { tex: 'shock', sc: 2, hb: [30, 14], dmg: 1 },
@@ -264,13 +272,17 @@ class CastleScene extends Phaser.Scene {
   markVisited(a) {
     if (this.visited.has(a.id)) return;
     this.visited.add(a.id);
-    const w = this.W, g = this.mapCtx, light = ZONE_PAL[a.z].light;
+    this.paintMapArea(a); this.mapCanvas.refresh();
+  }
+  // los muros agrietados y las salas secretas cerradas se dibujan como pared normal
+  paintMapArea(a) {
+    const g = this.mapCtx, light = ZONE_PAL[a.z].light, D = this.fg.layer.data;
     for (let y = 0; y < a.rh; y++) for (let x = 0; x < a.rw; x++) {
-      const v = w.fg[a.y0 + y][a.x0 + x], k = v < 0 ? -1 : v % 8;
-      g.fillStyle = k === -1 ? '#1b1530' : k === K.ONEWAY ? '#ffffff' : k === K.SPIKES ? '#ff4a4a' : k === K.CRACK ? '#ffcf6a' : light;
-      g.fillRect(a.x0 + x, a.y0 + y, 1, 1);
+      const gx = a.x0 + x, gy = a.y0 + y, v = D[gy][gx] ? D[gy][gx].index : -1, k = v < 0 ? -1 : v % 8;
+      const hid = k === -1 && this.hiddenAt((gx + 0.5) * T, (gy + 0.5) * T);
+      g.fillStyle = hid ? light : k === -1 ? '#1b1530' : k === K.ONEWAY ? '#ffffff' : k === K.SPIKES ? '#ff4a4a' : light;
+      g.fillRect(gx, gy, 1, 1);
     }
-    this.mapCanvas.refresh();
   }
   updateMaps() {
     const p = this.player, tx = p.x / T, ty = p.y / T;
@@ -280,7 +292,7 @@ class CastleScene extends Phaser.Scene {
       W.altars.forEach(a => { if (this.visited.has(a.area)) g.fillStyle(0xffd23b, 1).fillRect(mx(a.x / T) - 2, my(a.y / T) - 3, 4, 4); });
       if (this.objective && ((this.time.now >> 8) & 1)) g.fillStyle(0x6bff8a, 1).fillRect(mx(this.objective.x / T) - 4, my(this.objective.y / T) - 4, 8, 8);
       W.bosses.forEach(b => { if (this.visited.has(b.area) && !this.progress.bosses.includes(b.id)) g.fillStyle(0xff3b3b, 1).fillRect(mx(b.x / T) - 3, my(b.y / T) - 6, 6, 6); });
-      W.crystals.forEach(c => { if (this.visited.has(c.area) && !this.cryGot.has(c.id)) g.fillStyle(0xff7aa0, 1).fillRect(mx(c.x / T) - 1, my(c.y / T) - 1, 3, 3); });
+      W.crystals.forEach(c => { if (this.visited.has(c.area) && !this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y)) g.fillStyle(0xff7aa0, 1).fillRect(mx(c.x / T) - 1, my(c.y / T) - 1, 3, 3); });
       Object.values(this.remotes).forEach(r => g.fillStyle(parseInt(HERO_COLORS[r.color].slice(1), 16), 1).fillRect(mx(r.spr.x / T) - 2, my(r.spr.y / T) - 2, 5, 5));
       if ((this.time.now >> 8) & 1) g.fillStyle(0xffffff, 1).fillRect(mx(tx) - 2, my(ty) - 2, 5, 5);
       return;
@@ -320,7 +332,7 @@ class CastleScene extends Phaser.Scene {
     on('torch', ({ id, on: v }) => this.setTorch(id, v));
     on('hit', h => { if (!this.isHost) return; const e = this.ents.get(h.id); if (e && e.sim) this.damageEnt(e, h.dmg, h.dir, h.from); });
     on('progress', p => this.applyProgress(p, false));
-    on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
+    on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
     on('victory', v => {
       this.centerTxt.setText(`¡EL CONDE HA CAÍDO!\nTiempo: ${Math.floor(v.time / 60)}m ${v.time % 60}s · Jefes: ${v.bosses}\n${v.players.join(', ')}`);
       SFX.pick(); this.won = true;
@@ -413,13 +425,13 @@ class CastleScene extends Phaser.Scene {
     const rt = this.dark, img = this.lightImg, q = this.darkQ;
     rt.clear(); rt.fill(0x04020a, 0.9);
     const lamp = (x, y, r, a = 1) => { const X = x - sx0, Y = y - sy0; if (X < -r || X > SW + r || Y < -r || Y > SH + r) return; img.setScale(r / 64 / q).setAlpha(a); rt.erase(img, X / q, Y / q); };
-    this.torchObjs.forEach(o => { if (o.lit) lamp(o.x, o.y, (o.r || 215) * (1 + 0.03 * Math.sin(time * 0.009 + o.id)), 1); });
+    this.torchObjs.forEach(o => { if (o.lit && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, (o.r || 215) * (1 + 0.03 * Math.sin(time * 0.009 + o.id)), 1); });
     this.altars.forEach(a => { if (a.lit) lamp(a.x, a.y - 40, 160, 0.9); });
     lamp(p.x, p.y, 120 * this.auraMul(), 0.95);
     this.npcObjs.forEach(n => lamp(n.x, n.y - 20, n.def.shop ? 110 : 80, 0.85));
-    this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id)) lamp(f.x, f.y, 70, 0.8); });
+    this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id) && !this.hiddenAt(f.x, f.y)) lamp(f.x, f.y, 70, 0.8); });
     Object.values(this.remotes).forEach(r => lamp(r.spr.x, r.spr.y, 90, 0.8));
-    this.crystals.forEach(c => { if (!this.cryGot.has(c.id)) lamp(c.x, c.y, 60, 0.8); });
+    this.crystals.forEach(c => { if (!this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y)) lamp(c.x, c.y, 60, 0.8); });
     Object.values(this.relics).forEach(r => lamp(r.x, r.y, 110, 1));
     this.ents.forEach(e => { if (e.boss && e.aggro) lamp(e.spr.x, e.spr.y, 150, 0.85); });
     this.projs.forEach(pr => lamp(pr.spr.x, pr.spr.y, 55, 0.9));
@@ -434,7 +446,7 @@ class CastleScene extends Phaser.Scene {
   }
   // objetivo actual: flecha y distancia
   updateObjective(dt) {
-    this.objT -= dt; if (this.objT > 0) return; this.objT = 0.3;
+    this.objT -= dt; if (this.objT > 0) return; this.objT = 0.3; this.hiddenSweep();
     const order = ['garg', 'bishop', 'clock', 'conde'], w = this.W;
     let tgt = null, label = '';
     const relic = Object.values(this.relics)[0];
@@ -523,7 +535,7 @@ class CastleScene extends Phaser.Scene {
     if (e.dead) return;
     if (e.boss && !e.aggro) return;
     e.hp -= dmg; e.flash = 0.12; e.spr.setTintFill(0xffffff);
-    if (!e.boss && e.cfg.kind === 'walk') { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
+    if (!e.boss && !e.elite && e.cfg.kind === 'walk') { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
     if (e.hp <= 0) this.killEnt(e);
   }
   killEnt(e) {
@@ -597,6 +609,45 @@ class CastleScene extends Phaser.Scene {
     }
   }
 
+  // habilidad propia de cada enemigo con nombre (nunca retroceden al ser golpeados)
+  eliteAbility(e, dt, tg) {
+    const ab = ELITE_AB[e.name]; if (!ab) return false;
+    const b = e.spr.body, x = e.spr.x, d = tg ? Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) : 1e9;
+    e.abCd = (e.abCd === undefined ? 2 : e.abCd) - dt;
+    if (e.abPh === 'tele') {
+      e.abT -= dt; e.tele = true; b.setVelocityX(0); if (e.cfg.kind === 'ghost') b.setVelocityY(0);
+      if (e.abT <= 0) { e.tele = false; e.abPh = 'act'; e.abT = ab.act || 0.05; if (tg) this.eliteFire(e, ab, tg); }
+      return true;
+    }
+    if (e.abPh === 'act') {
+      e.abT -= dt;
+      if (ab.kind === 'charge') {
+        const ahead = this.solidAt(x + e.cdir * 22, e.spr.y + (e.cfg.body[1] * e.cfg.sc) / 2 + 6);
+        if (b.blocked.left || b.blocked.right || !ahead) e.abT = 0; else { b.setVelocityX(e.cdir * ab.spd); e.spr.setFlipX(e.cdir < 0); }
+      }
+      if (e.abT <= 0) { e.abPh = null; e.abCd = ab.cd; }
+      return ab.kind === 'charge';
+    }
+    if (e.abCd <= 0 && tg && d < ab.range) { e.abPh = 'tele'; e.abT = ab.tele; e.cdir = Math.sign(tg.x - e.spr.x) || 1; e.spr.setFlipX(e.cdir < 0); }
+    return false;
+  }
+  eliteFire(e, ab, tg) {
+    const x = e.spr.x, y = e.spr.y, an = Math.atan2(tg.y - y, tg.x - x);
+    if (ab.kind === 'orbs') { for (const o of [-0.3, 0, 0.3]) this.spawnProj('orb', x, y - 6, Math.cos(an + o) * 190, Math.sin(an + o) * 190, 3); }
+    else if (ab.kind === 'quake') { this.cameras.main.shake(180, 0.006); for (const s of [-1, 1]) this.spawnProj('shock', x + s * 24, y + 14, s * 230, 0, 1.3); }
+    else if (ab.kind === 'blink') {
+      e.abN = (e.abN || 0) + 1;
+      const lit = this.torchObjs.filter(o => o.lit && Math.hypot(o.x - x, o.y - y) < 380).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
+      if (lit && e.abN % 2 === 1) { // soplido: apaga la antorcha más cercana a distancia
+        for (let i = 0; i < 6; i++) this.poof(x + (lit.x - x) * i / 6, y + (lit.y - y) * i / 6, 1, 0xbbaaff);
+        this.setTorch(lit.id, false); socket.emit('torch', { id: lit.id, on: false }); return;
+      }
+      const nx = tg.x + (Math.random() < 0.5 ? -1 : 1) * 90, ny = tg.y - 10;
+      if (!this.solidAt(nx, ny)) { this.poof(x, y, 5, 0xbbaaff); e.spr.setPosition(nx, ny); this.poof(nx, ny, 5, 0xbbaaff); }
+      this.spawnProj('orb', e.spr.x, e.spr.y, Math.cos(Math.atan2(tg.y - e.spr.y, tg.x - e.spr.x)) * 200, Math.sin(Math.atan2(tg.y - e.spr.y, tg.x - e.spr.x)) * 200, 3);
+    }
+  }
+
   aiUpdate(e, dt) {
     const b = e.spr.body, cfg = e.cfg, tg = this.nearest(e.spr.x, e.spr.y, 420);
     if (cfg.kind === 'saw') { // sierra: va y viene por su raíl, no se puede matar
@@ -605,9 +656,10 @@ class CastleScene extends Phaser.Scene {
       const t = this.simT * o.w + e.ph, nx = e.ox + (o.ax === 'h' ? Math.sin(t) * o.r : 0), ny = e.oy + (o.ax === 'v' ? Math.sin(t) * o.r : 0);
       b.setVelocity((nx - e.spr.x) * 9, (ny - e.spr.y) * 9); return;
     }
+    if (e.elite && this.eliteAbility(e, dt, tg)) return;
     if (cfg.kind === 'walk') {
       if (e.stun > 0) { e.stun -= dt; return; }
-      let dir = e.dir, mul = 1;
+      let dir = e.dir, mul = (e.abPh === 'act' && (ELITE_AB[e.name] || {}).kind === 'haste') ? 1.8 : 1;
       const x = e.spr.x, feet = e.spr.y + (cfg.body[1] * cfg.sc) / 2 + 6;
       if (!cfg.patrol && tg && Math.abs(tg.y - e.spr.y) < 80 && Math.abs(tg.x - x) < 240) { dir = Math.sign(tg.x - x) || dir; mul = 1.7; }
       const ahead = this.solidAt(x + dir * 22, feet);
@@ -905,7 +957,7 @@ class CastleScene extends Phaser.Scene {
     // paredes rompibles
     for (let wy = by - bh / 2; wy <= by + bh / 2; wy += 16) for (let wx = bx - bw / 2; wx <= bx + bw / 2; wx += 16) {
       const t = this.fg.getTileAtWorldXY(wx, wy);
-      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
+      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
     }
   }
   contact() {

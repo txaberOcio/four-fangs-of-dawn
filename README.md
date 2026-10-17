@@ -43,7 +43,8 @@ Cuatro cazadores vampiro irrumpen en el castillo del Conde. Exploras un mapa con
 - **Metroidvania de verdad:** Impulso, Doble salto y Salto de pared abren zonas y atajos nuevos. Cada vampiro conquista sus propios poderes y tiene su propia partida guardada.
 - **Oscuridad y luz como mecánica:** las antorchas se encienden y apagan (`E`) y su estado se comparte. Los fantasmas no ven a quien está bajo la luz, los murciélagos huyen de ella y el Guardián del Reloj es invulnerable mientras haya luz.
 - **Jefes con mecánicas propias**, incluida la pelea final, donde el suelo del trono se derrumba y todos caen a un foso con escombros.
-- **Enemigos invulnerables** (sierras de raíl y centinelas), élites con recompensa fija y enemigos que se endurecen por zona.
+- **Enemigos invulnerables** (sierras de raíl y centinelas), enemigos que se endurecen por zona y **élites con nombre**: no retroceden al ser golpeados, tienen una habilidad propia (carga, orbes, terremoto, teletransporte con soplido que apaga antorchas, furia) y recompensa fija.
+- **Salas secretas de verdad:** lo que hay tras un muro agrietado no se ve (ni en el mapa ni por su brillo) hasta romperlo.
 - **Economía y objetos:** almas, mercaderes cuya mercancía crece según avanzas, mejoras de arma en forjas y objetos consumibles.
 - **Progreso con sentido:** guardado en hogueras (con autoguardado de mejoras permanentes), porcentaje de exploración, bestiario y diarios de historia.
 - **Todo el arte y la música se generan por código:** sprites y tiles en pixel art dibujados a partir de mapas de texto y una banda sonora procedural con WebAudio.

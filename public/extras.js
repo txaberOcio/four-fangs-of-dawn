@@ -394,6 +394,47 @@ Object.assign(CastleScene.prototype, {
     if ((this.shopOpen || this.dlg) && cn && (Math.abs(cn.x - p.x) > 150 || Math.abs(cn.y - p.y) > 150)) this.closeUi();
   },
 
+  // ---- salas secretas: lo que hay tras un muro agrietado no se ve (ni se dibuja ni brilla) hasta romperlo
+  recalcHidden() {
+    const W_ = this.W.Wt, H_ = this.W.Ht, D = this.fg.layer.data, hid = new Uint8Array(W_ * H_), reach = new Uint8Array(W_ * H_);
+    const ix = t => (t ? t.index : -1), isWall = (x, y) => { const i = ix(D[y][x]); return i >= 0 && [K.SOLID, K.FLOOR, K.CRACK].includes(i % 8); };
+    const isCrack = (x, y) => { const i = ix(D[y][x]); return i >= 0 && i % 8 === K.CRACK; };
+    const fill = (sx, sy, mark, cap) => { // inundación por casillas libres; devuelve la lista o null si pasa del tope
+      const st = [[sx, sy]], list = []; mark[sy * W_ + sx] = 1;
+      while (st.length) {
+        const [x, y] = st.pop(); list.push(y * W_ + x); if (cap && list.length > cap) return null;
+        for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+          const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W_ || ny >= H_ || mark[ny * W_ + nx] || isWall(nx, ny)) continue;
+          mark[ny * W_ + nx] = 1; st.push([nx, ny]);
+        }
+      }
+      return list;
+    };
+    const seeds = [...this.W.altars, ...this.W.bosses, ...this.W.npcs, { x: this.player.x, y: this.player.y }];
+    seeds.forEach(s => { const x = Math.floor(s.x / T), y = Math.floor(s.y / T); if (x >= 0 && y >= 0 && x < W_ && y < H_ && !reach[y * W_ + x] && !isWall(x, y)) fill(x, y, reach, 0); });
+    for (let y = 0; y < H_; y++) for (let x = 0; x < W_; x++) {
+      if (!isCrack(x, y)) continue;
+      for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+        const nx = x + dx, ny = y + dy; if (nx < 0 || ny < 0 || nx >= W_ || ny >= H_ || reach[ny * W_ + nx] || hid[ny * W_ + nx] || isWall(nx, ny)) continue;
+        const tmp = new Uint8Array(W_ * H_), list = fill(nx, ny, tmp, 800);
+        if (list) list.forEach(i => { hid[i] = 1; });
+      }
+    }
+    this.hid = hid; return hid;
+  },
+  hiddenAt(wx, wy) {
+    if (!this.hid) this.recalcHidden();
+    const x = Math.floor(wx / T), y = Math.floor(wy / T);
+    return x >= 0 && y >= 0 && x < this.W.Wt && y < this.W.Ht && this.hid[y * this.W.Wt + x] === 1;
+  },
+  wallBroken() { this.hid = null; this.visited && this.visited.forEach(id => { const a = this.W.areas[id]; if (a) this.paintMapArea(a); }); this.mapCanvas && this.mapCanvas.refresh(); },
+  hiddenSweep() { // oculta lo que está dentro de una sala secreta aún cerrada
+    this.crystals.forEach(c => { if (!this.cryGot.has(c.id)) c.spr.setVisible(!this.hiddenAt(c.x, c.y)); });
+    this.pageObjs.forEach(pg => { if (!this.pagesGot.has(pg.id)) { const h = this.hiddenAt(pg.x, pg.y); pg.spr.setVisible(!h); pg.glow.setVisible(!h && !LITE); } });
+    this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id)) { const h = this.hiddenAt(f.x, f.y); f.spr.setVisible(!h); f.glow.setVisible(!h && !LITE); } });
+    this.torchObjs.forEach(o => { const h = this.hiddenAt(o.x, o.y); o.flame.setVisible(o.lit && !h); o.glow.setVisible(o.lit && !h && !LITE); });
+  },
+
   // ---- gancho (vampiro morado): si el salto se queda corto, se engancha al borde y le arrastra
   hookSolid(wx, wy) { const t = this.fg.getTileAtWorldXY(wx, wy); return !!t && t.index >= 0 && [K.SOLID, K.FLOOR, K.CRACK].includes(t.index % 8); },
   hookFind(dir) {
@@ -506,7 +547,7 @@ Object.assign(CastleScene.prototype, {
     });
     for (let wy = cy - bh / 2; wy <= cy + bh / 2; wy += 16) for (let wx = bx - bw / 2; wx <= bx + bw / 2; wx += 16) {
       const t = this.fg.getTileAtWorldXY(wx, wy);
-      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
+      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
     }
   },
   damageEnt(e, dmg, dir, by) {
@@ -516,7 +557,7 @@ Object.assign(CastleScene.prototype, {
     if (e.cfg.inv) return; // invulnerables
     if (e.type === 'clock' && this.lightLevel(e.spr.x, e.spr.y) > 0.18) return; // la luz lo protege
     e.hp -= dmg; e.flash = 0.12; e.spr.setTintFill(0xffffff);
-    if (!e.boss && e.cfg.kind === 'walk') { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
+    if (!e.boss && !e.elite && e.cfg.kind === 'walk') { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
     if (e.hp <= 0) this.killEnt(e, by);
   },
   killEnt(e, by) {
@@ -624,7 +665,7 @@ Object.assign(CastleScene.prototype, {
     for (let wy = y - r; wy <= y + r; wy += 16) for (let wx = x - r; wx <= x + r; wx += 16) {
       if (Math.hypot(wx - x, wy - y) > r) continue;
       const t = this.fg.getTileAtWorldXY(wx, wy);
-      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); }
+      if (t && t.index >= 0 && t.index % 8 === K.CRACK) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); }
     }
     this.ents.forEach(e => {
       if (e.dead || e.cfg.inv) return;

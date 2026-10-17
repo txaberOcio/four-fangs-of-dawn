@@ -133,7 +133,7 @@ function drawTile(ctx, z, k, ox) {
     case 1: bricks(p.base, p.mortar, p.light); r(0, 0, 16, 3, p.light); r(0, 3, 16, 1, p.dark); for (let i = 0; i < 4; i++) r(Math.floor(rnd() * 14), 3, 2, 2, p.dark); break;
     case 2: r(0, 0, 16, 5, p.base); r(0, 0, 16, 1, p.light); r(0, 4, 16, 1, p.dark); r(0, 5, 16, 1, p.mortar); [2, 7, 12].forEach(x => r(x, 2, 1, 1, p.mortar)); break;
     case 3: bricks(p.bg, p.bgd, p.bg); break;
-    case 4: bricks(p.base, p.mortar, p.light); r(0, 0, 16, 16, 'rgba(255,255,255,0.10)'); r(7, 0, 2, 5, p.mortar); r(5, 5, 3, 2, p.mortar); r(8, 7, 3, 2, p.mortar); r(6, 9, 2, 3, p.mortar); r(9, 11, 2, 5, p.mortar); break;
+    case 4: bricks(p.base, p.mortar, p.light); r(7, 6, 1, 2, p.mortar); r(8, 8, 1, 2, p.mortar); break; // grieta apenas visible: hay que fijarse
     case 5: // pinchos
       for (let t = 0; t < 3; t++) { const cx = t * 5 + 2; for (let h = 0; h < 11; h++) { const half = Math.floor((11 - h) / 4); r(cx - half, 15 - h, half * 2 + 1, 1, h > 8 ? '#ffffff' : '#c9ced8'); } }
       r(0, 14, 16, 2, '#6a6f7e'); break;
