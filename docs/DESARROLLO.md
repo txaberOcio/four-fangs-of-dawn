@@ -78,6 +78,7 @@ $env:PORT = 3100; npm start
 ```bash
 npm run check      # revisa la sintaxis de todos los ficheros
 npm run validate   # simula la física y confirma que el castillo se puede completar
+npm run validate:rutas   # comprueba que se puede avanzar solo con las Alas o solo con el Ojo (tarda unos minutos)
 ```
 
 La integración continua de GitHub (`.github/workflows/ci.yml`) ejecuta las mismas dos comprobaciones en cada *push* y *pull request*.
