@@ -48,12 +48,27 @@
   .da { position:absolute; color:rgba(255,255,255,.75); pointer-events:none; line-height:1; text-shadow:0 0 6px #000; }
   .da.on { color:#ffd23b; }
   h1 { font-size:22px; line-height:1.15; text-shadow:0 2px 0 #000; }
+  #opts { position:fixed; inset:0; z-index:60; display:flex; align-items:center; justify-content:center; background:rgba(10,6,20,.78); }
+  #opts .card { width:min(92vw,420px); } #opts label { display:block; margin:12px 0 2px; color:var(--mut); }
+  #opts input[type=range] { padding:0; margin:0; border:0; background:none; } #opts button { margin-top:12px; }
+  #optBtn { position:fixed; right:8px; bottom:8px; z-index:15; width:auto; padding:2px 10px; margin:0; opacity:.7; }
   @media (min-aspect-ratio: 4/3) { #ui { justify-content:flex-end; padding-right:6vw; } }
 </style>
 </head>
 <body>
 <div id="game"></div>
 <div id="rotate">Gira el móvil en horizontal para jugar</div>
+<button id="optBtn" class="sec" title="Opciones (O)">⚙ Opciones</button>
+<div id="opts" class="hidden"><div class="card">
+  <h1>OPCIONES</h1>
+  <label>Volumen de la música: <b id="vMusic"></b></label><input type="range" id="oMusic" min="0" max="100" step="5">
+  <label>Volumen de los efectos: <b id="vSfx"></b></label><input type="range" id="oSfx" min="0" max="100" step="5">
+  <label>Tamaño del texto (se aplica al empezar la partida)</label>
+  <select id="oText" style="width:100%;padding:8px;font:inherit"><option value="1">Normal</option><option value="1.2">Grande</option><option value="1.4">Muy grande</option></select>
+  <label style="color:var(--txt)"><input type="checkbox" id="oCb" style="width:auto;margin:0 8px 0 0;vertical-align:middle">Ayuda visual: los proyectiles enemigos son más grandes y parpadean</label>
+  <div class="hint">Los cambios se guardan en este navegador. Tecla O para abrir o cerrar este panel.</div>
+  <button id="oClose">Cerrar</button>
+</div></div>
 <div id="ui">
   <div class="card">
     <h1>FOUR FANGS OF DAWN</h1>

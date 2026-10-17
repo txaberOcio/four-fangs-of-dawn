@@ -1,4 +1,10 @@
 /* Música procedural gótica (WebAudio, sin archivos). Una pista por zona y una más intensa para los jefes. */
+// Opciones del jugador (se guardan en este navegador): volumen de música y efectos, tamaño de texto, ayuda visual
+const OPT = { music: 1, sfx: 1, text: 1, cb: false };
+try { Object.assign(OPT, JSON.parse(localStorage.getItem('opts') || '{}')); } catch (e) { /* sin almacenamiento */ }
+OPT.music = Math.min(1, Math.max(0, +OPT.music || 0)); OPT.sfx = Math.min(1, Math.max(0, +OPT.sfx || 0)); OPT.text = [1, 1.2, 1.4].includes(+OPT.text) ? +OPT.text : 1; OPT.cb = !!OPT.cb;
+const saveOpts = () => { try { localStorage.setItem('opts', JSON.stringify(OPT)); } catch (e) { /* ok */ } };
+const fsz = s => Math.round(parseFloat(s) * OPT.text) + 'px';
 const Music = (() => {
   let ctx = null, master = null, echoIn = null, noiseBuf = null, timer = null, step = 0, nextT = 0;
   let zone = 0, boss = false, bossPending = null, started = false, muted = false;
@@ -24,7 +30,7 @@ const Music = (() => {
     if (ctx) return true;
     ctx = typeof audioCtx === 'function' ? audioCtx() : null;
     if (!ctx) return false;
-    master = ctx.createGain(); master.gain.value = muted ? 0 : VOL;
+    master = ctx.createGain(); master.gain.value = muted ? 0 : VOL * OPT.music;
     const comp = ctx.createDynamicsCompressor(); master.connect(comp); comp.connect(ctx.destination);
     echoIn = ctx.createGain();
     const delay = ctx.createDelay(1); delay.delayTime.value = 0.34; const fb = ctx.createGain(); fb.gain.value = 0.32;
@@ -97,8 +103,9 @@ const Music = (() => {
     setBoss(b) { if (b !== boss && bossPending !== b) bossPending = b; },
     toggleMute() {
       muted = !muted; try { localStorage.setItem('mute', muted ? '1' : '0'); } catch (e) { /* ok */ }
-      if (master) master.gain.value = muted ? 0 : VOL; return muted;
+      if (master) master.gain.value = muted ? 0 : VOL * OPT.music; return muted;
     },
+    refreshVol() { if (master) master.gain.value = muted ? 0 : VOL * OPT.music; },
     isMuted: () => muted,
   };
 })();

@@ -347,7 +347,7 @@ Object.assign(CastleScene.prototype, {
 
   // ---- HUD
   buildExtraHud() {
-    const f = (s, c = '#fff') => ({ fontSize: s, fontFamily: 'Courier New', color: c, stroke: '#000', strokeThickness: 4 });
+    const f = (s, c = '#fff') => ({ fontSize: fsz(s), fontFamily: 'Courier New', color: c, stroke: '#000', strokeThickness: 4 });
     this.hudSouls = this.add.text(10, 52, '', f('13px', '#d9b3ff')).setScrollFactor(0).setDepth(30);
     this.itemBg = this.add.rectangle(10, 76, 40, 40, 0x000000, 0.55).setOrigin(0).setScrollFactor(0).setDepth(30).setStrokeStyle(2, 0x6a5acd);
     this.itemIcon = this.add.image(30, 96, 'it_pot').setScale(2).setScrollFactor(0).setDepth(31);
@@ -1021,7 +1021,7 @@ Object.assign(CastleScene.prototype, {
   },
   // ---- diálogo
   buildDialogueUi() {
-    const f = (s, c = '#fff') => ({ fontSize: s, fontFamily: 'Courier New', color: c, wordWrap: { width: 720 } });
+    const f = (s, c = '#fff') => ({ fontSize: fsz(s), fontFamily: 'Courier New', color: c, wordWrap: { width: 720 } });
     this.dlgObjs = [];
     const add = o => { o.setScrollFactor(0).setDepth(60); this.dlgObjs.push(o); return o; };
     this.dlgBg = add(this.add.rectangle(SW / 2, SH - 92, 780, 132, 0x140c22, 0.95).setStrokeStyle(3, 0xffb347)).setInteractive();
@@ -1051,7 +1051,7 @@ Object.assign(CastleScene.prototype, {
     return this.shopStock().filter(([, need, color]) => nb >= need || color === this.color).map(([id]) => ITEMS.find(it => it.id === id));
   },
   buildShopUi() {
-    const f = (s, c = '#fff') => ({ fontSize: s, fontFamily: 'Courier New', color: c });
+    const f = (s, c = '#fff') => ({ fontSize: fsz(s), fontFamily: 'Courier New', color: c });
     const cx = SW / 2, cy = SH / 2;
     this.shopObjs = [];
     const add = o => { o.setScrollFactor(0).setDepth(60); this.shopObjs.push(o); return o; };
@@ -1124,7 +1124,7 @@ Object.assign(CastleScene.prototype, {
     return out;
   },
   buildBookUi() {
-    const f = (s, c = '#fff', w) => ({ fontSize: s, fontFamily: 'Courier New', color: c, wordWrap: w ? { width: w } : undefined });
+    const f = (s, c = '#fff', w) => ({ fontSize: fsz(s), fontFamily: 'Courier New', color: c, wordWrap: w ? { width: w } : undefined });
     const cx = SW / 2, cy = SH / 2; this.bookObjs = [];
     const add = o => { o.setScrollFactor(0).setDepth(60); this.bookObjs.push(o); return o; };
     add(this.add.rectangle(cx, cy, 760, 470, 0x140c22, 0.97).setStrokeStyle(4, 0xffb347));
@@ -1181,7 +1181,7 @@ Object.assign(CastleScene.prototype, {
   },
   // ---- menú de imbuir el arma: cada elección con su explicación (a futuro pedirá materiales)
   buildImbueUi() {
-    const f = (s, c = '#fff', w) => ({ fontSize: s, fontFamily: 'Courier New', color: c, wordWrap: w ? { width: w } : undefined });
+    const f = (s, c = '#fff', w) => ({ fontSize: fsz(s), fontFamily: 'Courier New', color: c, wordWrap: w ? { width: w } : undefined });
     const cx = SW / 2, cy = SH / 2; this.imbueObjs = []; this.imbueRows = []; this.imbueList = []; this.imbueSel = 0;
     const add = o => { o.setScrollFactor(0).setDepth(63); this.imbueObjs.push(o); return o; };
     add(this.add.rectangle(cx, cy, 700, 470, 0x140c22, 0.97).setStrokeStyle(4, 0xff9a3b));
@@ -1317,7 +1317,7 @@ Object.assign(CastleScene.prototype, {
     this.toast(nxt ? 'Arma imbuida de ' + ELEMENTS[nxt].name + ': ' + ELEMENTS[nxt].desc : 'Arma sin elemento', 5000); this.autoSave();
   },
   buildTravelUi() {
-    const f = (s, c = '#fff') => ({ fontSize: s, fontFamily: 'Courier New', color: c });
+    const f = (s, c = '#fff') => ({ fontSize: fsz(s), fontFamily: 'Courier New', color: c });
     const cx = SW / 2, cy = SH / 2; this.travelObjs = []; this.travelRows = []; this.travelList = []; this.travelSel = 0;
     const add = o => { o.setScrollFactor(0).setDepth(62); this.travelObjs.push(o); return o; };
     add(this.add.rectangle(cx, cy, 560, 440, 0x140c22, 0.97).setStrokeStyle(4, 0xffb347));
@@ -1363,3 +1363,20 @@ Object.assign(CastleScene.prototype, {
     if (this.dlgObjs) this.dlgObjs.forEach(o => o.setVisible(false));
   },
 });
+
+// ---------- panel de opciones (HTML, funciona en menú y en partida) ----------
+(() => {
+  const $o = id => document.getElementById(id), panel = $o('opts'); if (!panel) return;
+  const sync = () => { $o('oMusic').value = Math.round(OPT.music * 100); $o('oSfx').value = Math.round(OPT.sfx * 100); $o('vMusic').textContent = Math.round(OPT.music * 100) + '%'; $o('vSfx').textContent = Math.round(OPT.sfx * 100) + '%'; $o('oText').value = String(OPT.text); $o('oCb').checked = OPT.cb; };
+  const toggle = on => { const open = on === undefined ? panel.classList.contains('hidden') : on; panel.classList.toggle('hidden', !open); if (open) sync(); };
+  $o('optBtn').onclick = () => toggle(true); $o('oClose').onclick = () => toggle(false);
+  $o('oMusic').oninput = e => { OPT.music = e.target.value / 100; Music.refreshVol(); sync(); saveOpts(); };
+  $o('oSfx').oninput = e => { OPT.sfx = e.target.value / 100; sync(); saveOpts(); };
+  $o('oSfx').onchange = () => { if (typeof beep === 'function') beep(520, 0.1, 'triangle', 0.05); };
+  $o('oText').onchange = e => { OPT.text = +e.target.value; saveOpts(); };
+  $o('oCb').onchange = e => { OPT.cb = e.target.checked; saveOpts(); };
+  document.addEventListener('keydown', ev => {
+    if (ev.target && /^(INPUT|SELECT|TEXTAREA)$/.test(ev.target.tagName) && ev.target.type !== 'range' && ev.target.type !== 'checkbox') return;
+    if (ev.code === 'KeyO' && !ev.repeat) toggle(); else if (ev.code === 'Escape' && !panel.classList.contains('hidden')) toggle(false);
+  });
+})();

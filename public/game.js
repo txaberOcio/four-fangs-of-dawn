@@ -21,13 +21,13 @@ function audioCtx() {
 }
 ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { audioCtx(); if (typeof Music !== 'undefined') Music.play(); }, { passive: true }));
 function beep(freq, dur, type = 'square', vol = 0.035, slide = 0) {
-  if (typeof Music !== 'undefined' && Music.isMuted && Music.isMuted()) return; // el silencio también apaga los efectos
+  if (OPT.sfx <= 0 || (typeof Music !== 'undefined' && Music.isMuted && Music.isMuted())) return; // el silencio también apaga los efectos
   try {
     audioCtx();
     const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
     o.type = type; o.frequency.setValueAtTime(freq, t);
     if (slide) o.frequency.exponentialRampToValueAtTime(Math.max(30, freq + slide), t + dur);
-    g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    g.gain.setValueAtTime(Math.max(0.0002, vol * OPT.sfx), t); g.gain.exponentialRampToValueAtTime(0.0001, t + dur);
     o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + dur);
   } catch (e) { /* sin audio */ }
 }
@@ -229,7 +229,7 @@ class CastleScene extends Phaser.Scene {
 
   // ===================================================== HUD
   buildHud() {
-    const f = (s, c = '#fff') => ({ fontSize: s, fontFamily: 'Courier New', color: c, stroke: '#000', strokeThickness: 4 });
+    const f = (s, c = '#fff') => ({ fontSize: fsz(s), fontFamily: 'Courier New', color: c, stroke: '#000', strokeThickness: 4 });
     this.hearts = [];
     this.abilTxt = this.add.text(10, 34, '', f('12px', '#9fd4ff')).setScrollFactor(0).setDepth(30);
     this.bannerTxt = this.add.text(SW / 2, 70, '', f('22px', '#ffd98a')).setOrigin(0.5).setScrollFactor(0).setDepth(30).setAlpha(0);
@@ -576,7 +576,8 @@ class CastleScene extends Phaser.Scene {
 
   spawnProj(type, x, y, vx, vy, life = 3, grav = 0) {
     const c = PR[type], id = 'p' + (this.nid++);
-    const spr = this.add.sprite(x, y, c.tex).setScale(c.sc).setDepth(7).setTint(c.tint || 0xffffff).setAlpha(c.alpha || 1);
+    const spr = this.add.sprite(x, y, c.tex).setScale(c.sc * (OPT.cb ? 1.3 : 1)).setDepth(7).setTint(c.tint || 0xffffff).setAlpha(c.alpha || 1);
+    if (OPT.cb) { const tw = this.tweens.add({ targets: spr, alpha: { from: 1, to: 0.45 }, duration: 160, yoyo: true, repeat: -1 }); spr.once('destroy', () => tw.remove()); } // ayuda visual: lo peligroso parpadea
     const pr = { id, type, spr, vx, vy, life, grav, tx: x, ty: y }; this.projs.set(id, pr); return pr;
   }
 
