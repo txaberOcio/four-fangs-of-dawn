@@ -437,7 +437,7 @@ Object.assign(CastleScene.prototype, {
     const speed = P.speed * (this.pas.speed || 1) * (this.buffs.spd > 0 ? 1.35 : 1) * (this.crouching ? 0.5 : 1);
     if (!this.crouching) { // caminar / saltar: fotogramas de piernas
       const moving = onFloor && dir !== 0 && this.dashT <= 0 && this.stun <= 0;
-      const key = 'hero_' + this.color + (moving ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : (!onFloor ? '_w2' : ''));
+      const key = 'hero_' + this.color + (moving ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : (!onFloor ? '_w2' : (((time / 550) | 0) % 2 ? '_i' : '')));
       if (this.curTex !== key) { this.curTex = key; p.setTexture(key); }
     }
 

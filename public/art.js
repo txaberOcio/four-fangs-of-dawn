@@ -50,6 +50,14 @@ const MAPS = {
     '.....KKKKKK.....', '....KKKKKKKK....', '....KSSSSSSK....', '....KSRSSRSK....', '....KSSSSSSK....', '...KKKSSSSKKK...', '..KKKKKKKKKKKK..',
     '.KKKCCKKKKCCKKK.', '.KKCCCKKKKCCCKK.', 'KKKCCCCKKCCCCKKK', 'KKKCCCCKKCCCCKKK', 'KKCCCCCKKCCCCCKK', 'KKCCCCCKKCCCCCKK', 'KKCCCCCKKCCCCCKK',
     '.KKCCCCKKCCCCKK.', '..KKK......KKK..'],
+  aurora: [
+    '....HHHHHHHH....', '.....SSSSSS.....', '.....SDSSDS.....', '.....SSSSSS.....', 'WW..GGRRRRGG..WW', 'WWW.GRRRRRRG.WWW', 'WWWWRRGRRGRRWWWW', 'WWWWRRRRRRRRWWWW', '.WWWRRRGGRRRWWW.', '.WWW.RRRRRR.WWW.', '..WW.RRRRRR.WW..', '..W..RRRRRR..W..', '.....RRRRRR.....', '....RRRRRRRR....', '...RRRRRRRRRR...', '...GGGGGGGGGG...'],
+  vesper: [
+    '.....KKKKKK.....', '....KKCCCCKK....', '...KKCCCCCCKK...', '...KKCSSSSCKK...', '...KKCSBSBCKK...', '...KKKSSSSKKK...', '..KKKKKSSKKKKK..', '.KKCCKKKKKKCCKK.', 'KKCCCKKMMKKCCCKK', 'KKCCCKMKKKKCCCKK', 'KKCCCKMKKKKCCCKK', 'KKCCCKKMMKKCCCKK', '.KKCCCKKKKCCCKK.', '.KKKCCCKKCCCKKK.', '..KKKCCCCCCKKK..', '...KKK....KKK...'],
+  archon: [
+    '.......MM.......', '......MMMM......', '.....MMMMMM.....', '....MMMMMMMM....', '.....SSSSSS.....', '.....SDSSDS.....', '.....SSSSSS.....', '....MMMMMMMM....', '...TTTMMMMTTT...', '..TTTTTMMTTTTT..', '..TTWWWWWTTTTT..', '..TTWYYYWTTTTT..', '..TTWWWWWTTTTT..', '...TTTTTTTTTT...', '...TTTTTTTTTT...', '..LLLLLLLLLLLL..'],
+  reina: [
+    '...Y..Y..Y..Y...', '...YYYYYYYYYY...', '....WWWWWWWW....', '....WRRWWRRW....', '....WWWDDWWW....', '.....WWWWWW.....', '..GGGWWWWWWGGG..', '.GGWWGWWWWGWWGG.', '.GWWGGWWWWGGWWG.', '..WW.GWWWWG.WW..', '..WW.GGWWGG.WW..', '..GW..GWWG..WG..', '...W..WWWW..W...', '.....WWWWWW.....', '....WWW..WWW....', '....WWW..WWW....'],
   altar: [
     '......YY......', '.....YYYY.....', '.....YOOY.....', '......YY......', '.....WWWW.....', '.....WWWW.....', '....WWWWWW....', '....WWWWWW....',
     '...WWWWWWWW...', '...WWDDDDWW...', '..WWWWWWWWWW..', '..WWWWWWWWWW..', '.WWWWWWWWWWWW.', '.DDDDDDDDDDDD.'],
@@ -85,10 +93,10 @@ const MAP_PAL = {
   bishop: { M: '#e8e8f4', Y: '#ffd23b', S: '#d9c2a8', D: '#15101c', P: '#6a2f8e' },
   clock: { B: '#b8863a', G: '#ffd98a', R: '#ff3b3b', D: '#5a3f14' },
   conde: { K: '#1a1020', S: '#e8dcdc', R: '#ff2b2b', C: '#a01a2e' },
-  archon: { M: '#cfe8ff', Y: '#7ad8ff', S: '#d9c2a8', D: '#15101c', P: '#2a5a8a' },
-  reina: { W: '#e8e4d4', G: '#cfc6a8', R: '#ff3b3b', D: '#5a5240' },
-  aurora: { M: '#fff2d8', Y: '#ffb36a', S: '#ffe3d0', D: '#3a1a2a', P: '#ff8aa8' },
-  vesper: { K: '#0c0a2a', S: '#cfd8ff', R: '#6ad0ff', C: '#2a3a9a' },
+  archon: { M: '#cfe8ff', Y: '#ffd23b', S: '#d9c2a8', D: '#15101c', T: '#2a5a8a', L: '#7ad8ff', W: '#ffffff' },
+  reina: { W: '#e8e4d4', G: '#cfc6a8', R: '#ff3b3b', D: '#5a5240', Y: '#ffd23b' },
+  aurora: { H: '#ffe3a0', W: '#fff2d8', S: '#ffe3d0', R: '#ff8aa8', D: '#3a1a2a', G: '#ffb36a' },
+  vesper: { K: '#0c0a2a', C: '#2a3a9a', S: '#cfd8ff', B: '#6ad0ff', M: '#e8f0ff' },
   altar: { Y: '#ffd23b', O: '#ff7a1c', W: '#b8bdc9', D: '#6a6f7e' },
   crystal: { C: '#ff5b7a', W: '#ffd0da', D: '#a01a3c' },
   relic: { Y: '#ffd23b', W: '#fffbd0' },
@@ -194,7 +202,12 @@ function buildArt(scene) {
   makeMap('npc_oracle', 'npcMad', madPal('#ffe6b0', '#c9a0ff'), 1);
   makeMap('npc_smith', 'npcMad', madPal('#2a1a10', '#8a4a1a'), 1);
   makeMap('npc_watcher', 'npcMad', madPal('#b8d8ff', '#5a7aa8'), 1);
-  makeMap('archon', 'bishop', MAP_PAL.archon, 1); makeMap('reina', 'garg', MAP_PAL.reina, 1); makeMap('aurora', 'bishop', MAP_PAL.aurora, 1); makeMap('vesper', 'conde', MAP_PAL.vesper, 1);
+  ['archon', 'reina', 'aurora', 'vesper'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // dibujos propios de los jefes nuevos
+  // fotograma de reposo: el torso baja un píxel (respiración)
+  for (const col in HERO_COLORS) {
+    const src = tx.get('hero_' + col).getSourceImage(); const c = tx.createCanvas('hero_' + col + '_i', 12, 14); const g = c.getContext('2d');
+    g.imageSmoothingEnabled = false; g.drawImage(src, 0, 8, 12, 6, 0, 8, 12, 6); g.drawImage(src, 0, 0, 12, 8, 0, 1, 12, 8); c.refresh();
+  }
   [['fang', '#e8e8f0', '#ffffff'], ['talis', '#7ad8ff', '#e0f7ff'], ['pot', '#ff3b5c', '#ffd0da'], ['pot2', '#b43bff', '#ecd0ff'], ['spd', '#3bd9ff', '#d0f6ff'], ['str', '#ff9a3b', '#ffe2c0'], ['lamp', '#ffe066', '#fffbe0'], ['ward', '#c9ced8', '#ffffff'], ['rage', '#d4ff3b', '#f6ffd0'], ['tonic', '#3bff9a', '#d0ffe6'], ['fruit', '#ff3bd9', '#ffd0f4']].forEach(([k, c, l]) => makeMap('it_' + k, 'bottle', { D: '#8a6a4a', C: c, L: l }, 1));
   makeMap('it_amu', 'amulet', MAP_PAL.amulet, 1);
   makeMap('forge', 'hammer', MAP_PAL.hammer, 1);
