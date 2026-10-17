@@ -10,3 +10,6 @@ data/*.tmp
 .env
 .DS_Store
 Thumbs.db
+
+# Ejecutables e instaladores generados
+dist/

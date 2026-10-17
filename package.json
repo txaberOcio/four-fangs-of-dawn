@@ -6,22 +6,45 @@
   "license": "MIT",
   "author": "txaberOcio",
   "type": "commonjs",
-  "keywords": ["metroidvania", "phaser", "socket.io", "multiplayer", "pixel-art", "game"],
+  "keywords": [
+    "metroidvania",
+    "phaser",
+    "socket.io",
+    "multiplayer",
+    "pixel-art",
+    "game"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/txaberOcio/four-fangs-of-dawn.git"
   },
   "homepage": "https://github.com/txaberOcio/four-fangs-of-dawn#readme",
-  "bugs": { "url": "https://github.com/txaberOcio/four-fangs-of-dawn/issues" },
-  "engines": { "node": ">=20" },
+  "bugs": {
+    "url": "https://github.com/txaberOcio/four-fangs-of-dawn/issues"
+  },
+  "engines": {
+    "node": ">=20"
+  },
   "scripts": {
     "start": "node server/index.js",
     "validate": "node scripts/validate.js",
-    "check": "node --check server/index.js && node --check public/game.js && node --check public/extras.js && node --check public/world.js && node --check public/art.js && node --check public/music.js"
+    "check": "node --check server/index.js && node --check public/game.js && node --check public/extras.js && node --check public/world.js && node --check public/art.js && node --check public/music.js",
+    "build:exe": "powershell -ExecutionPolicy Bypass -File installer/build.ps1"
   },
   "dependencies": {
     "express": "^4.22.3",
     "phaser": "^3.80.1",
     "socket.io": "^4.8.4"
+  },
+  "bin": "server/index.js",
+  "pkg": {
+    "assets": [
+      "public/**/*",
+      "node_modules/phaser/dist/phaser.min.js",
+      "node_modules/socket.io/client-dist/socket.io.min.js"
+    ],
+    "targets": [
+      "node24-win-x64"
+    ]
   }
 }

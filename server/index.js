@@ -7,7 +7,8 @@ const { Server } = require('socket.io');
 const World = require('../public/world.js');
 
 const PORT = process.env.PORT || 3000;
-const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, '..', 'data', 'users.json');
+const PACKED = !!process.pkg; // ejecutable instalado (creado con pkg)
+const DATA_FILE = process.env.DATA_FILE || (PACKED ? path.join(process.env.APPDATA || require('os').homedir(), 'FourFangsOfDawn', 'users.json') : path.join(__dirname, '..', 'data', 'users.json'));
 const COLORS = ['red', 'blue', 'green', 'purple'];
 const ABILITIES = ['dash', 'dj', 'wj', 'wings', 'eye'];
 const ABIL_BOSS = { dash: 'garg', dj: 'bishop', wj: 'clock', wings: 'aurora', eye: 'vesper' }; // habilidad -> jefe que la da
@@ -341,9 +342,25 @@ io.on('connection', socket => {
 process.on('uncaughtException', err => console.error('Error no controlado: ' + (err && err.stack || err)));
 process.on('unhandledRejection', err => console.error('Promesa rechazada: ' + (err && err.stack || err)));
 
-server.listen(PORT, '0.0.0.0', () => {
-  const nets = require('os').networkInterfaces();
-  const ips = Object.values(nets).flat().filter(n => n.family === 'IPv4' && !n.internal).map(n => n.address);
-  console.log(`Four Fangs of Dawn en http://localhost:${PORT}`);
-  ips.forEach(ip => console.log(`  En la red local: http://${ip}:${PORT}`));
-});
+// En el ejecutable: si el puerto está ocupado se prueba el siguiente y se abre el navegador solo
+function start(port, tries) {
+  server.once('error', err => {
+    if (err.code === 'EADDRINUSE' && PACKED && tries > 0) return start(port + 1, tries - 1);
+    console.error('No se pudo arrancar el servidor: ' + err.message);
+    if (PACKED) setInterval(() => {}, 1 << 30); // deja la ventana abierta para poder leer el error
+    else process.exit(1);
+  });
+  server.listen(port, '0.0.0.0', () => {
+    const nets = require('os').networkInterfaces();
+    const ips = Object.values(nets).flat().filter(n => n.family === 'IPv4' && !n.internal).map(n => n.address);
+    console.log(`Four Fangs of Dawn en http://localhost:${port}`);
+    ips.forEach(ip => console.log(`  En la red local: http://${ip}:${port}`));
+    if (PACKED) {
+      console.log('\nTus cuentas y partidas se guardan en: ' + path.dirname(DATA_FILE));
+      console.log('No cierres esta ventana mientras juegas (Ctrl+C para salir).');
+      if (!process.env.NO_OPEN) require("child_process").exec(`start "" "http://localhost:${port}"`); // abre el juego en el navegador
+    }
+  });
+}
+if (PACKED) process.title = 'Four Fangs of Dawn - servidor';
+start(Number(PORT), 20);

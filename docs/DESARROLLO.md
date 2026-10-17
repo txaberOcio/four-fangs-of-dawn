@@ -120,7 +120,20 @@ Las cuentas y partidas guardadas se almacenan en `data/users.json`. Se crea solo
 
 El servidor limita los intentos de acceso (5 fallos por minuto) y los mensajes por segundo de cada jugador, y rechaza mensajes de más de 64 KB.
 
-## 11. Problemas frecuentes
+## 11. Ejecutable e instalador (Windows)
+
+```bash
+npm run build:exe
+```
+
+Crea en `dist/` (no se sube a Git):
+
+- `FourFangsOfDawn.exe`: servidor y juego en un solo ejecutable (usa `@yao-pkg/pkg`, descarga Node la primera vez). Al abrirlo arranca el servidor, abre el navegador y guarda cuentas y partidas en `%APPDATA%FourFangsOfDawn`. Si el puerto 3000 está ocupado prueba el siguiente. Variables útiles para pruebas: `PORT` y `NO_OPEN=1` (no abrir el navegador).
+- `FourFangsOfDawn-Setup.exe`: instalador autoextraíble hecho con IExpress (viene con Windows): copia el juego a `%LOCALAPPDATA%ProgramsFour Fangs of Dawn`, crea accesos directos y un desinstalador. Los scripts están en `installer/`.
+
+No está firmado digitalmente, así que Windows SmartScreen puede mostrar un aviso la primera vez.
+
+## 12. Problemas frecuentes
 
 | Síntoma | Solución |
 |---|---|
