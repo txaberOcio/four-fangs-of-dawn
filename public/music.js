@@ -12,6 +12,8 @@ const Music = (() => {
     { root: 37, bpm: 54, pad: 'sawtooth', drone: true },    // Calabozos (do#)
     { root: 42, bpm: 84, pad: 'sawtooth', tick: true },     // Torre del Reloj (fa#)
     { root: 38, bpm: 76, pad: 'sawtooth', royal: true },    // Sala Real (re)
+    { root: 38, bpm: 76, pad: 'sawtooth', royal: true },    // (roca: sin uso)
+    { root: 45, bpm: 66, pad: 'triangle', organ: true },    // Torres del Alba (la)
   ];
   const CHORDS = [[0, 3, 7], [-4, 0, 3], [3, 7, 10], [-2, 2, 5]]; // i · VI · III · VII
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);

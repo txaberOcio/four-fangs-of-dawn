@@ -3,15 +3,15 @@
    (anchas, altas), llevar pasillos rellenos de roca y conectarse con puertas de distinto tamaño. */
 (function (root) {
   'use strict';
-  const T = 32, CW = 26, CH = 18, COLS = 10, ROWS = 7;
+  const T = 32, CW = 26, CH = 18, COLS = 15, ROWS = 7;
   const PHYS = {
     gravity: 900, speed: 165, jump: -470, djump: -420,
     dashSpeed: 560, dashTime: 0.25, dashCd: 0.5,
     wjY: -430, wjX: 190, wjLock: 0.18, slide: 110, maxFall: 700,
     bodyW: 30, bodyH: 39,
   };
-  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real'];
-  const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared' };
+  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba'];
+  const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
   const kind = idx => (idx < 0 ? -1 : idx % 8);
@@ -21,6 +21,9 @@
     bishop: { name: 'Obispo Caído', hp: 15, drop: 'dj' },
     clock: { name: 'Guardián del Reloj', hp: 18, drop: 'wj' },
     conde: { name: 'El Conde', hp: 42, drop: null },
+    // los dos rivales del Alba: al caer uno, el otro lo rescata y huye (solo se puede elegir a uno)
+    aurora: { name: 'Aurora, Dama del Alba', hp: 20, drop: 'wings', rival: 'vesper', reward: 'Alas del Alba: mantén saltar en el aire para planear' },
+    vesper: { name: 'Vesper, Señor del Ocaso', hp: 24, drop: 'eye', rival: 'aurora', reward: 'Ojo de la Noche: ves los secretos tras los muros agrietados y tu luz crece' },
   };
 
   // ---------- Definición de áreas ----------
@@ -81,6 +84,14 @@
   area('throne', 'Sala del Trono', 5, 8, 0, 2, 1, [['tri', 'tl', 10], ['tri', 'tr', 10], ['boss', 'conde', 26, 14]]);
 
   // ---------- Conexiones ----------
+  // --- Torres del Alba (tras el Conde): su huida abre el foso por ambos lados ---
+  area('escalaR', 'Escalera Real', 5, 7, 1, 1, 2, [['climb', 16, 4, 'norm', true], ['E', 'gh', 6, 30], ['E', 'bat', 14, 20], ['E', 'gh', 20, 12]]);
+  area('alba1', 'Torre del Alba', 7, 10, 0, 1, 2, [['P', 3, 32, 5], ['P', 10, 29, 5], ['P', 17, 26, 5], ['P', 9, 23, 5], ['P', 3, 20, 5], ['P', 10, 17, 5], ['P', 17, 17, 8],
+    ['E', 'kn', 14, 34], ['E', 'bat', 12, 10], ['E', 'gh', 18, 22], ['E', 'gh', 6, 14], ['E', 'bat', 20, 28]]);
+  area('albaH', 'Sala de los Rivales', 7, 11, 0, 2, 1, [['npc', 'oracle', 14, 16], ['altar', 4, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+  area('albaA', 'Cámara de Aurora (premio: Alas del Alba)', 7, 13, 0, 2, 1, [['tri', 'tl', 6], ['tri', 'tr', 6], ['boss', 'aurora', 26, 10]]);
+  area('albaB', 'Cámara de Vesper (premio: Ojo de la Noche)', 7, 11, 1, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 24, 4, 'norm', true], ['boss', 'vesper', 40, 16]]);
+
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
   const E = (a, b, size = 3, o = {}) => LINKS.push({ t: 'E', a, b, size, ...o });
@@ -93,6 +104,8 @@
   E('naveS', 'caden'); E('caden', 'calab'); E('calab', 'mazm');
   E('abs', 'mir', 4); E('galeria', 'torre'); E('clkC', 'pasR', 6); E('pasR', 'throne', 5);
   S('archivo', 'escal'); S('escal', 'salon'); S('obs', 'gbib'); S('pozo', 'cubil'); S('calab', 'pozo');
+  E('escalaR', 'fosoC', 3, { gate: 'conde' }); E('fosoC', 'alba1', 3, { gate: 'conde' }); S('pasR', 'escalaR', 16, 4);
+  E('alba1', 'albaH', 3); E('albaH', 'albaA', 4); S('albaH', 'albaB', 24, 4);
   S('naveP', 'naveS'); S('abs', 'naveP'); S('clkC', 'torre'); S('mir', 'galeria', 16, 4); S('torre', 'caden');
 
   function climbOps(rw, rh, hx, hw, type) {
@@ -115,7 +128,7 @@
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES };
+    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [] };
     let uid = 1;
     // 1) interior de cada área
     for (const a of AREAS) {
@@ -146,6 +159,11 @@
           const gy = bottom - 2 - lift - i;
           if (gy < A.y0 + 1 || gy < B.y0 + 1) throw new Error('Puerta fuera de rango ' + l.a + '→' + l.b);
           const gxA = A.x0 + A.rw - 1, gxB = B.x0;
+          if (l.gate) { // puerta cerrada hasta que cae el jefe indicado
+            fg[gy][gxA] = A.z * 8 + K.SOLID; fg[gy][gxB] = B.z * 8 + K.SOLID;
+            let g = world.gates.find(q => q.boss === l.gate); if (!g) world.gates.push(g = { boss: l.gate, tiles: [] });
+            g.tiles.push({ gx: gxA, gy }, { gx: gxB, gy }); continue;
+          }
           fg[gy][gxA] = l.crack ? A.z * 8 + K.CRACK : -1; fg[gy][gxB] = l.crack ? B.z * 8 + K.CRACK : -1;
           if (!l.crack) { A.seal.push({ gx: gxA, gy }); B.seal.push({ gx: gxB, gy }); }
         }

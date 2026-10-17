@@ -43,6 +43,7 @@ Cuatro cazadores vampiro irrumpen en el castillo del Conde. Exploras un mapa con
 - **Metroidvania de verdad:** Impulso, Doble salto y Salto de pared abren zonas y atajos nuevos. Cada vampiro conquista sus propios poderes y tiene su propia partida guardada.
 - **Oscuridad y luz como mecánica:** las antorchas se encienden y apagan (`E`) y su estado se comparte. Los fantasmas no ven a quien está bajo la luz, los murciélagos huyen de ella y el Guardián del Reloj es invulnerable mientras haya luz.
 - **Jefes con mecánicas propias**, incluida la pelea final, donde el suelo del trono se derrumba y todos caen a un foso con escombros.
+- **Las Torres del Alba (tras el Conde):** al caer, el Conde huye y derriba los muros del foso. Arriba esperan dos hermanos rivales, **Aurora** y **Vesper**: solo puedes derrotar a uno, porque al caer el otro lo rescata y huye. Cada uno da una habilidad distinta (**Alas del Alba**: planear, u **Ojo de la Noche**: ver los secretos tras los muros agrietados). Un oráculo explica la elección antes de decidir.
 - **Enemigos invulnerables** (sierras de raíl y centinelas), enemigos que se endurecen por zona y **élites con nombre**: no retroceden al ser golpeados, tienen una habilidad propia (carga, orbes, terremoto, teletransporte con soplido que apaga antorchas, furia) y recompensa fija.
 - **Salas secretas de verdad:** lo que hay tras un muro agrietado no se ve (ni en el mapa ni por su brillo) hasta romperlo.
 - **Economía y objetos:** almas, mercaderes cuya mercancía crece según avanzas, mejoras de arma en forjas y objetos consumibles.
@@ -55,7 +56,7 @@ Cuatro cazadores vampiro irrumpen en el castillo del Conde. Exploras un mapa con
 | Acción | Teclado | Mando | Móvil |
 |---|---|---|---|
 | Mover | Flechas / A D | Cruceta / stick | Cruceta de arrastre |
-| Saltar | ↑ / W / Espacio | ✕ | ▲ de la cruceta |
+| Saltar (mantener en el aire: planear con las Alas del Alba) | ↑ / W / Espacio | ✕ | ▲ de la cruceta |
 | Agacharse / bajar de plataforma | ↓ / S (+ saltar) | Cruceta ↓ | ▼ de la cruceta |
 | Atacar | X / J | ◻ | ⚔ |
 | Impulso | C / K / Shift | ○ | » |

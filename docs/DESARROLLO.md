@@ -95,11 +95,21 @@ La integración continua de GitHub (`.github/workflows/ci.yml`) ejecuta las mism
 
 Si modificas el mapa, ejecuta siempre `npm run validate`. Más detalle en [ARCHITECTURE.md](ARCHITECTURE.md).
 
-## 8. Datos locales
+## 8. Atajo de desarrollador (teletransporte)
+
+Añade `?dev=1` a la dirección del juego, por ejemplo <http://localhost:3000/?dev=1>. Dentro de la partida pulsa **F2** para abrir el mapa completo del castillo:
+
+- **Haz clic en cualquier sala del mapa** para teletransportarte al sitio más cercano donde puedas estar de pie. Al pasar el ratón se muestra el nombre de la sala.
+- **Invulnerable**: botón que activa o desactiva el daño (verde = invulnerable).
+- **Dar habilidades** (Impulso, Doble salto y Salto de pared), **Curar** y **Matar jefes (hasta el Conde)**, que abre los muros del foso y las Torres del Alba.
+
+Sin `?dev=1` el menú no existe, así que los jugadores normales no lo ven. F2 (o el botón Cerrar) lo cierra.
+
+## 9. Datos locales
 
 Las cuentas y partidas guardadas se almacenan en `data/users.json`. Se crea solo al registrar el primer usuario, contiene contraseñas cifradas y **no se sube a Git** (está en `.gitignore`). Para empezar de cero, para el servidor y borra ese fichero.
 
-## 9. Problemas frecuentes
+## 10. Problemas frecuentes
 
 | Síntoma | Solución |
 |---|---|

@@ -2,6 +2,7 @@
    el castillo se puede completar en orden (dash -> doble salto -> salto de pared -> Conde). */
 const World = require('../public/world.js');
 const w = World.build();
+w.gates.forEach(g => g.tiles.forEach(t => { w.fg[t.gy][t.gx] = -1; })); // las puertas del Conde se asumen abiertas
 const { T, PHYS: P, K, kind } = World;
 const HW = P.bodyW / 2, HH = P.bodyH / 2, DT = 1 / 60;
 

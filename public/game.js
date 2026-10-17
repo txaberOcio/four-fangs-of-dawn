@@ -118,6 +118,8 @@ const EN = {
   bishop: { tex: 'bishop', sc: 4, body: [10, 14], hp: 15, dmg: 1, hb: [40, 56], kind: 'boss', fly: true },
   clock: { tex: 'clock', sc: 4, body: [12, 15], hp: 18, dmg: 2, hb: [52, 60], kind: 'boss' },
   conde: { tex: 'conde', sc: 4, body: [10, 15], hp: 42, dmg: 2, hb: [48, 60], kind: 'boss', fly: true },
+  aurora: { tex: 'aurora', sc: 4, body: [10, 14], hp: 20, dmg: 1, hb: [40, 56], kind: 'boss', fly: true },
+  vesper: { tex: 'vesper', sc: 4, body: [10, 15], hp: 24, dmg: 2, hb: [48, 60], kind: 'boss' },
   // enemigos invulnerables: solo se esquivan
   saw: { tex: 'saw', sc: 3, body: [12, 12], hp: 9999, dmg: 2, hb: [34, 34], kind: 'saw', inv: true },
   sentinel: { tex: 'sentinel', sc: 3, body: [12, 15], hp: 9999, dmg: 2, spd: 70, hb: [34, 44], kind: 'walk', inv: true, patrol: true },
@@ -137,7 +139,7 @@ const PR = {
   mark: { tex: 'ring', sc: 3, hb: [0, 0], dmg: 0 },
   pillar: { tex: 'pillar', sc: 3, hb: [28, 150], dmg: 2 },
 };
-const ZONE_SCALE = [1, 1.25, 1.5, 1.35, 1.7, 2]; // vida de los enemigos corrientes según la zona
+const ZONE_SCALE = [1, 1.25, 1.5, 1.35, 1.7, 2, 1, 2.4]; // vida de los enemigos corrientes según la zona
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 
@@ -155,7 +157,7 @@ class CastleScene extends Phaser.Scene {
     this.bgLayer = bgMap.createLayer(0, bgMap.addTilesetImage('tiles', 'tiles', T, T, 0, 0), 0, 0).setDepth(-10);
     this.map = this.make.tilemap({ data: w.fg.map(r => r.slice()), tileWidth: T, tileHeight: T });
     this.fg = this.map.createLayer(0, this.map.addTilesetImage('tiles', 'tiles', T, T, 0, 0), 0, 0).setDepth(-5);
-    const solids = []; for (let z = 0; z < 7; z++) solids.push(z * 8 + K.SOLID, z * 8 + K.FLOOR, z * 8 + K.CRACK);
+    const solids = []; for (let z = 0; z < 8; z++) solids.push(z * 8 + K.SOLID, z * 8 + K.FLOOR, z * 8 + K.CRACK);
     this.fg.setCollision(solids);
     this.fg.forEachTile(t => { if (t.index >= 0 && t.index % 8 === K.ONEWAY) t.setCollision(false, false, true, false); });
     this.map.calculateFacesWithin(0, 0, w.Wt, w.Ht);
@@ -233,7 +235,7 @@ class CastleScene extends Phaser.Scene {
     this.mmImg = this.add.image(0, 0, 'mapcv').setOrigin(0).setScale(3).setScrollFactor(0).setDepth(30);
     this.mmDots = this.add.graphics().setScrollFactor(0).setDepth(31);
     this.bigBg = this.add.rectangle(0, 0, SW, SH, 0x000000, 0.86).setOrigin(0).setScrollFactor(0).setDepth(39).setVisible(false);
-    this.bigImg = this.add.image(26, 90, 'mapcv').setOrigin(0).setScale(3).setScrollFactor(0).setDepth(40).setVisible(false);
+    this.bigImg = this.add.image(26, 90, 'mapcv').setOrigin(0).setScale(2).setScrollFactor(0).setDepth(40).setVisible(false);
     this.bigDots = this.add.graphics().setScrollFactor(0).setDepth(41);
     this.bigTitle = this.add.text(SW / 2, 40, 'MAPA DEL CASTILLO  (M para cerrar)', f('18px', '#ffd98a')).setOrigin(0.5).setScrollFactor(0).setDepth(41).setVisible(false);
     this.objTxt = this.add.text(SW / 2, 18, '', f('13px', '#9fffb0')).setOrigin(0.5).setScrollFactor(0).setDepth(30);
@@ -288,10 +290,10 @@ class CastleScene extends Phaser.Scene {
     const p = this.player, tx = p.x / T, ty = p.y / T;
     if (this.showMap) {
       const g = this.bigDots; g.clear();
-      const W = this.W, mx = x => 26 + x * 3, my = y => 90 + y * 3;
+      const W = this.W, mx = x => 26 + x * 2, my = y => 90 + y * 2;
       W.altars.forEach(a => { if (this.visited.has(a.area)) g.fillStyle(0xffd23b, 1).fillRect(mx(a.x / T) - 2, my(a.y / T) - 3, 4, 4); });
       if (this.objective && ((this.time.now >> 8) & 1)) g.fillStyle(0x6bff8a, 1).fillRect(mx(this.objective.x / T) - 4, my(this.objective.y / T) - 4, 8, 8);
-      W.bosses.forEach(b => { if (this.visited.has(b.area) && !this.progress.bosses.includes(b.id)) g.fillStyle(0xff3b3b, 1).fillRect(mx(b.x / T) - 3, my(b.y / T) - 6, 6, 6); });
+      W.bosses.forEach(b => { if (this.visited.has(b.area) && !this.bossGone(b)) g.fillStyle(0xff3b3b, 1).fillRect(mx(b.x / T) - 3, my(b.y / T) - 6, 6, 6); });
       W.crystals.forEach(c => { if (this.visited.has(c.area) && !this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y)) g.fillStyle(0xff7aa0, 1).fillRect(mx(c.x / T) - 1, my(c.y / T) - 1, 3, 3); });
       Object.values(this.remotes).forEach(r => g.fillStyle(parseInt(HERO_COLORS[r.color].slice(1), 16), 1).fillRect(mx(r.spr.x / T) - 2, my(r.spr.y / T) - 2, 5, 5));
       if ((this.time.now >> 8) & 1) g.fillStyle(0xffffff, 1).fillRect(mx(tx) - 2, my(ty) - 2, 5, 5);
@@ -305,7 +307,7 @@ class CastleScene extends Phaser.Scene {
     const inWin = (x, y) => x >= cx0 && x < cx0 + 70 && y >= cy0 && y < cy0 + 34;
     this.W.altars.forEach(a => { if (this.visited.has(a.area) && inWin(a.x / T, a.y / T)) g.fillStyle(0xffd23b, 1).fillRect(mx(a.x / T) - 1, my(a.y / T) - 2, 3, 3); });
     if (this.objective && inWin(this.objective.x / T, this.objective.y / T) && ((this.time.now >> 8) & 1)) g.fillStyle(0x6bff8a, 1).fillRect(mx(this.objective.x / T) - 2, my(this.objective.y / T) - 2, 5, 5);
-    this.W.bosses.forEach(b => { if (this.visited.has(b.area) && !this.progress.bosses.includes(b.id) && inWin(b.x / T, b.y / T)) g.fillStyle(0xff3b3b, 1).fillRect(mx(b.x / T) - 2, my(b.y / T) - 3, 4, 4); });
+    this.W.bosses.forEach(b => { if (this.visited.has(b.area) && !this.bossGone(b) && inWin(b.x / T, b.y / T)) g.fillStyle(0xff3b3b, 1).fillRect(mx(b.x / T) - 2, my(b.y / T) - 3, 4, 4); });
     Object.values(this.remotes).forEach(r => { const x = r.spr.x / T, y = r.spr.y / T; if (inWin(x, y)) g.fillStyle(parseInt(HERO_COLORS[r.color].slice(1), 16), 1).fillRect(mx(x) - 1, my(y) - 1, 3, 3); });
     if ((this.time.now >> 8) & 1) g.fillStyle(0xffffff, 1).fillRect(mx(tx) - 1, my(ty) - 1, 3, 3);
   }
@@ -334,9 +336,9 @@ class CastleScene extends Phaser.Scene {
     on('progress', p => this.applyProgress(p, false));
     on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
     on('victory', v => { // el Conde cae, pero el castillo continúa: se despide y desaparece
-      this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Necios... esto no ha terminado.\nMi señor me espera más arriba, en las torres del alba.\nYa lo veréis...»\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
+      this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Necios... esto no ha terminado.\nMi señor me espera más arriba,\nen las torres del alba.\nSeguidme... si os atrevéis.»\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
       SFX.pick(); this.won = true; this.cameras.main.shake(500, 0.008);
-      this.time.delayedCall(9000, () => { this.centerTxt.setText(''); this.leaveFoso(); });
+      this.time.delayedCall(8000, () => { this.centerTxt.setText(''); });
     });
     on('room', r => {
       room = r;
@@ -355,12 +357,39 @@ class CastleScene extends Phaser.Scene {
   applyProgress(p, silent) {
     this.progress = p;
     if (false) for (const a in p.abilities) if (p.abilities[a]) { this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Pulsa C/K para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.' })[a], 6000); SFX.pick(); }
-    this.syncRelics();
-    this.abilTxt.setText(['dash', 'dj', 'wj'].map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
+    this.syncRelics(); this.openGates(!silent);
+    this.scenes = this.scenes || new Set();
+    (p.bosses || []).forEach(id => { if (World.BOSSES[id] && World.BOSSES[id].rival && !this.scenes.has(id)) { this.scenes.add(id); if (!silent) this.albaScene(id); } });
+    this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
+  }
+  bossGone(b) { const r = World.BOSSES[b.id] && World.BOSSES[b.id].rival; return this.progress.bosses.includes(b.id) || !!(r && this.progress.bosses.includes(r)); }
+  openGates(show) { // los muros que cierran el foso caen cuando el Conde huye
+    (this.W.gates || []).forEach(gt => {
+      if (gt.open || !this.progress.bosses.includes(gt.boss)) return;
+      gt.open = true; gt.tiles.forEach(t => { this.fg.removeTileAt(t.gx, t.gy); if (show) this.poof((t.gx + 0.5) * T, (t.gy + 0.5) * T, 3, 0xaaaaaa); });
+      this.wallBroken();
+      if (show) { this.cameras.main.shake(900, 0.012); SFX.boss(); this.toast('¡Los muros del foso se derrumban! Se abren dos caminos...', 6000); }
+    });
+  }
+  albaScene(killed) { // al caer uno de los rivales, el otro acude, se lo lleva y huye
+    const B = World.BOSSES, other = B[killed].rival, kb = this.W.bosses.find(b => b.id === killed), ob = this.W.bosses.find(b => b.id === other);
+    const re = this.ents.get(other); if (re) { re.spr.destroy(); this.ents.delete(other); }
+    this.centerTxt.setText(B[killed].name + ' ha caído...\n\n¡' + B[other].name + ' acude,\nlo recoge y huye con él!\nYa no podrás enfrentarte a ' + B[other].name.split(',')[0] + '.');
+    if (kb && ob) {
+      const x = kb.x, y = kb.y - 40;
+      const spr = this.add.image(x + 340, y - 260, EN[other].tex).setScale(4).setDepth(30).setAlpha(0);
+      const body = this.add.image(x, y, EN[killed].tex).setScale(4).setDepth(29).setTint(0x888888).setAlpha(0.8);
+      this.tweens.add({ targets: spr, x, y: y - 10, alpha: 1, duration: 900, ease: 'Sine.out', onComplete: () => {
+        this.poof(x, y, 10, 0xffe0a0);
+        this.tweens.add({ targets: [spr, body], y: y - 700, x: x + 200, alpha: 0, duration: 1600, delay: 500, ease: 'Sine.in', onComplete: () => { spr.destroy(); body.destroy(); } });
+      } });
+    }
+    this.time.delayedCall(8000, () => { if (this.centerTxt.text.indexOf('ha caído') >= 0) this.centerTxt.setText(''); });
   }
   grantAbility(a) {
     this.abil[a] = true; SFX.pick();
-    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Pulsa C/K para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.' })[a], 6000);
+    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Pulsa C/K para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.' })[a], 6000);
+    this.wallBroken();
     this.syncRelics(); this.applyProgress(this.progress, true); this.autoSave();
   }
   syncRelics() {
@@ -450,8 +479,10 @@ class CastleScene extends Phaser.Scene {
     this.objT -= dt; if (this.objT > 0) return; this.objT = 0.3; this.hiddenSweep();
     const order = ['garg', 'bishop', 'clock', 'conde'], w = this.W;
     let tgt = null, label = '';
-    const relic = Object.values(this.relics)[0];
+    const relic = Object.values(this.relics)[0], pb = this.progress.bosses, chosen = pb.includes('aurora') || pb.includes('vesper');
     if (relic) { tgt = { x: relic.x, y: relic.y }; label = 'Recoge la reliquia'; }
+    else if (pb.includes('conde') && !chosen) { const o = w.npcs.find(n => n.type === 'oracle'); if (o) { tgt = { x: o.x, y: o.y }; label = 'Habla con el Oráculo del Alba'; } }
+    else if (pb.includes('conde')) { tgt = null; }
     else { const id = order.find(b => !this.progress.bosses.includes(b)); const b = w.bosses.find(x => x.id === id); if (b) { tgt = { x: b.x, y: b.y }; label = 'Derrota a ' + b.name; } }
     this.objective = tgt;
     if (!tgt) { this.objTxt.setText(''); return; }
@@ -480,17 +511,6 @@ class CastleScene extends Phaser.Scene {
       if (gx % 3 === 0) this.poof((gx + 0.5) * T, (th.y0 + th.rh) * T, 4, 0x9a8a8a);
     }
     this.floorBroken = true; this.floorState = 2; this.cameras.main.shake(700, 0.02); SFX.boss(); this.toast('¡El suelo se derrumba! Caéis al foso del Conde...', 4000);
-  }
-  leaveFoso() { // tras el Conde: se reconstruye el suelo del trono y todos vuelven arriba
-    const th = this.W.areas.throne, fo = this.W.areas.fosoC;
-    if (this.floorBroken) {
-      for (let gx = th.x0 + 2; gx <= th.x0 + th.rw - 3; gx++) for (const gy of [th.y0 + th.rh - 1, fo.y0]) { const v = this.W.fg[gy][gx]; if (v >= 0) this.fg.putTileAt(v, gx, gy); }
-      this.floorBroken = false; this.floorState = 0;
-    }
-    if (this.dead) return;
-    const x = (th.x0 + th.rw / 2) * T, y = (th.y0 + th.rh - 1) * T - 24;
-    this.player.setPosition(x, y); this.player.body.setVelocity(0, 0); this.lastGround = { x, y }; this.invuln = 2;
-    this.toast('El castillo aún guarda secretos... Pronto se abrirán nuevas zonas. ¡Seguid explorando!', 7000); SFX.altar();
   }
   applySeal(key) {
     if (this.curSeal === key) return;
@@ -585,11 +605,11 @@ class CastleScene extends Phaser.Scene {
         this.createEnt(s.id, s.type, s.x, y, true, { room: cellKey(s.x, s.y - 1), home: { x: s.x, y }, opts: s.opts, zone: s.zone });
       });
       this.W.bosses.forEach(b => {
-        if (this.progress.bosses.includes(b.id) || this.ents.has(b.id) || !active.has(cellKey(b.x, b.y - 1))) return;
+        if (this.bossGone(b) || this.ents.has(b.id) || !active.has(cellKey(b.x, b.y - 1))) return;
         const cfg = EN[b.id];
         const arB = this.W.areas[b.area], floorB = (arB.y0 + arB.rh - 1) * T;
         const y = cfg.fly ? floorB - 66 : b.y - (cfg.body[1] * cfg.sc) / 2 - 1;
-        const e = this.createEnt(b.id, b.id, b.x, y, true, { room: b.area, home: { x: b.x, y }, name: b.name, cd: 1.5, act: null, t: 0, emptyT: 0, summonCd: 8 });
+        const e = this.createEnt(b.id, b.id, b.x, y, true, { room: b.area, home: { x: b.x, y }, name: b.name, prize: b.reward, cd: 1.5, act: null, t: 0, emptyT: 0, summonCd: 8 });
         const ar = this.W.areas[b.area];
         e.arena = { x0: ar.x0 * T + T, x1: (ar.x0 + ar.rw) * T - T, y0: ar.y0 * T + T, floor: (ar.y0 + ar.rh) * T - T, ox: ar.x0 * T, oy: ar.y0 * T, ow: ar.rw * T, oh: ar.rh * T, hover: (ar.y0 + ar.rh) * T - T - 66 };
         if (b.id === 'conde' && this.floorBroken) { e.arena = this.fosoArena(); e.home = { x: e.arena.ox + e.arena.ow / 2, y: e.arena.hover }; e.spr.setPosition(e.home.x, e.home.y); }
@@ -756,6 +776,8 @@ class CastleScene extends Phaser.Scene {
         const pick = arr => arr[Math.floor(Math.random() * arr.length)];
         e.t = 0; e.air = false; e.dirT = dirT; e.n = 0;
         if (e.type === 'garg') e.act = pick(['leap', 'charge', 'leap']);
+        if (e.type === 'aurora') { const o = ['fan', 'dive', 'rays', 'sweep'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'vesper') { const o = ['charge', 'ambush', 'pillars', 'leap'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'clock') e.act = (e.relightT <= 0 && this.torchObjs.some(o => o.area === 'clkC' && !o.lit)) ? 'relight' : pick(['charge', 'slam', 'rain']);
         if (e.type === 'bishop') { e.summonCd -= 0; e.act = e.hp < e.max * 0.6 && e.summonCd <= 0 ? 'summon' : pick(['fan', 'tele', 'fan']); }
         if (e.type === 'conde') {
@@ -843,6 +865,11 @@ class CastleScene extends Phaser.Scene {
           if (e.chan >= (rage ? 0.7 : 1.1)) { this.setTorch(tt.id, true); socket.emit('torch', { id: tt.id, on: true }); e.relightT = rage ? 2 : 3.2; e.chan = 0; done(0.5); }
         }
         break; }
+      case 'rays': // lluvia de rayos de luz desde el techo
+        b.setVelocity(0, 0);
+        if (e.t < 0.7) e.tele = true;
+        else { e.tele = false; const tot = rage ? 14 : 9; if (e.t > 0.7 + e.n * 0.22 && e.n < tot) { const rx = e.n % 3 === 0 ? Phaser.Math.Clamp(tg.x, a.x0 + 20, a.x1 - 20) : Phaser.Math.Between(a.x0 + 20, a.x1 - 20); this.spawnProj('orb', rx, a.y0 + 14, 0, 240, 3.5); e.n++; } if (e.n >= tot && e.t > 0.7 + tot * 0.22 + 0.8) done(1.1); }
+        break;
       case 'summon':
         b.setVelocity(0, 0); e.tele = e.t < 0.6;
         if (e.t > 0.6) { summon(e.type === 'conde' ? 3 : 2); e.summonCd = 14; done(1.2); }
@@ -945,7 +972,7 @@ class CastleScene extends Phaser.Scene {
     this.bossBar.clear(); Music.setBoss(!!boss);
     if (boss) {
       this.bossBar.fillStyle(0x000000, 0.7).fillRect(SW / 2 - 202, SH - 56, 404, 14).fillStyle(0xcc2233, 1).fillRect(SW / 2 - 200, SH - 54, 400 * Math.max(0, boss.hp / boss.max), 10);
-      this.bossName.setText(boss.name || '');
+      this.bossName.setText((boss.name || '') + (boss.prize ? '  ·  premio: ' + boss.prize.split(':')[0] : ''));
     } else this.bossName.setText('');
     // cerrar el cliente si la sala termina tras la victoria
     if (this.won && !this.wonT) this.wonT = time;

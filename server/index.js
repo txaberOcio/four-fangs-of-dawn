@@ -8,8 +8,9 @@ const { Server } = require('socket.io');
 const PORT = process.env.PORT || 3000;
 const DATA_FILE = path.join(__dirname, '..', 'data', 'users.json');
 const COLORS = ['red', 'blue', 'green', 'purple'];
-const ABILITIES = ['dash', 'dj', 'wj'];
-const BOSS_IDS = ['garg', 'bishop', 'clock', 'conde'];
+const ABILITIES = ['dash', 'dj', 'wj', 'wings', 'eye'];
+const BOSS_IDS = ['garg', 'bishop', 'clock', 'conde', 'aurora', 'vesper'];
+const RIVAL = { aurora: 'vesper', vesper: 'aurora' }; // solo se puede derrotar a uno de los dos
 const MAX_PLAYERS = 4;
 
 // ---------- Cuentas (JSON, contraseñas con scrypt) ----------
@@ -29,7 +30,7 @@ const strList = (a, max, len = 24) => (Array.isArray(a) ? a.filter(x => typeof x
 function sanitizeMe(m = {}) {
   const inv = {}; ITEM_IDS.forEach(k => { inv[k] = clampInt(m.inv && m.inv[k], 0, 9); });
   return { souls: clampInt(m.souls, 0, 99999), inv, wlv: clampInt(m.wlv, 1, 5), maxHp: clampInt(m.maxHp, 5, 20), cry: strList(m.cry, 20), forge: strList(m.forge, 20),
-    abil: { dash: !!(m.abil && m.abil.dash), dj: !!(m.abil && m.abil.dj), wj: !!(m.abil && m.abil.wj) }, elite: strList(m.elite, 20, 40), pages: strList(m.pages, 20), seen: strList(m.seen, 20), kills: (() => { const o = {}; for (const k of ['sk', 'kn', 'bat', 'gh', 'saw', 'sentinel', 'garg', 'bishop', 'clock', 'conde']) o[k] = clampInt(m.kills && m.kills[k], 0, 99999); return o; })(),
+    abil: { dash: !!(m.abil && m.abil.dash), dj: !!(m.abil && m.abil.dj), wj: !!(m.abil && m.abil.wj), wings: !!(m.abil && m.abil.wings), eye: !!(m.abil && m.abil.eye) }, elite: strList(m.elite, 20, 40), pages: strList(m.pages, 20), seen: strList(m.seen, 20), kills: (() => { const o = {}; for (const k of ['sk', 'kn', 'bat', 'gh', 'saw', 'sentinel', 'garg', 'bishop', 'clock', 'conde', 'aurora', 'vesper']) o[k] = clampInt(m.kills && m.kills[k], 0, 99999); return o; })(),
     altar: typeof m.altar === 'string' ? m.altar.slice(0, 24) : '', lit: strList(m.lit, 20), visited: strList(m.visited, 60) };
 }
 const slotInfo = s => (s ? { at: s.at, bosses: (s.world && s.world.bosses ? s.world.bosses.length : 0) } : null);
@@ -59,7 +60,7 @@ function newCode() {
   do { c = Array.from({ length: 4 }, () => L[crypto.randomInt(L.length)]).join(''); } while (rooms.has(c));
   return c;
 }
-const freshProgress = () => ({ abilities: { dash: false, dj: false, wj: false }, bosses: [], broken: [], torches: {} });
+const freshProgress = () => ({ abilities: { dash: false, dj: false, wj: false, wings: false, eye: false }, bosses: [], broken: [], torches: {} });
 function roomInfo(r) {
   return { code: r.code, host: r.host, started: r.started, players: Object.values(r.players).map(p => ({ id: p.id, name: p.name, animal: p.animal })) };
 }
@@ -207,14 +208,14 @@ io.on('connection', socket => {
     const r = myRoom();
     if (!r || !r.started || !ABILITIES.includes(a)) return;
     // la habilidad solo se puede coger si su jefe ya cayó
-    const need = { dash: 'garg', dj: 'bishop', wj: 'clock' }[a];
+    const need = { dash: 'garg', dj: 'bishop', wj: 'clock', wings: 'aurora', eye: 'vesper' }[a];
     if (!r.progress.bosses.includes(need) || r.progress.abilities[a]) return;
     r.progress.abilities[a] = true;
     io.to(r.code).emit('progress', r.progress);
   });
   socket.on('bossDead', id => {
     const r = myRoom();
-    if (!r || !r.started || r.host !== socket.id || !BOSS_IDS.includes(id) || r.progress.bosses.includes(id)) return;
+    if (!r || !r.started || r.host !== socket.id || !BOSS_IDS.includes(id) || r.progress.bosses.includes(id) || (RIVAL[id] && r.progress.bosses.includes(RIVAL[id]))) return;
     r.progress.bosses.push(id);
     io.to(r.code).emit('progress', r.progress);
     if (id === 'conde') victory(r);

@@ -55,6 +55,8 @@ const BESTIARY = {
   garg: { name: 'Gárgola de Piedra', text: 'Guardiana del primer umbral. Llora piedra y salta sobre quien se atreve a entrar. Su corazón guarda el Impulso.', tip: 'Salta sus ondas y golpéala tras su embestida.' },
   bishop: { name: 'Obispo Caído', text: 'Rezaba por el castillo hasta que la sangre le respondió. Se teletransporta y lanza oraciones en abanico. Guarda el Doble salto.', tip: 'Flota a baja altura: ataca mientras se materializa.' },
   clock: { name: 'Guardián del Reloj', text: 'Engranaje viviente que se protege con la luz. Guarda el Salto de pared.', tip: 'Apaga sus antorchas con E y atácalo a oscuras.' },
+  aurora: { name: 'Aurora, Dama del Alba', text: 'Hermana de Vesper, vuela entre rayos de luz. Si cae, su hermano la rescata y huye. Premio: Alas del Alba.', tip: 'Esquiva la lluvia de rayos y sus picados; golpéala cuando baje.' },
+  vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y huye. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
   conde: { name: 'El Conde', text: 'Señor del castillo. Rompe el suelo de su trono para enterrar a sus cazadores en el foso, y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
 };
 const PAGES = {
@@ -65,7 +67,7 @@ const PAGES = {
   galeria: { title: 'Cuaderno del Relojero', text: 'Los engranajes no descansan. Las sierras recorren su raíl y los centinelas mis pasillos. Construí el reloj para detener el tiempo; él me detuvo a mí.' },
   pasR: { title: 'Última carta del Conde', text: 'Cuatro cazadores vendrán, con mi misma sangre y mi misma sed. Abriré el suelo bajo mi trono y los enterraré con mis hijos. Quizá, al fin, alguien me detenga.' },
 };
-const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200 };
+const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160 };
 const NPC_DEFS = {
   merchant: { name: 'Mercader', tex: 'npc_merchant', shop: true, lines: [['Almas, almas... Las prefiero a las monedas. Mira lo que tengo.']] },
   archivist: { name: 'Archivista Loco', tex: 'npc_archivist', lines: [
@@ -87,6 +89,19 @@ const NPC_DEFS = {
       '¿Tienes almas de sobra? El mercader vende pociones... a mí me vendió una sonrisa.'],
     ['Me quitaron la cama, luego el suelo, luego el techo. Solo queda el ruido.',
       'Si ves un fantasma, no lo mires a los ojos. Mira la luz.'] ] },
+  oracle: { name: 'Oráculo del Alba', tex: 'npc_oracle', pick: (sc, pages, visits) => ((sc.progress.bosses.includes('aurora') || sc.progress.bosses.includes('vesper')) ? pages[2] : (visits === 1 ? pages[0] : pages[1])), lines: [
+    ['Has llegado más alto que nadie... El Conde solo era el portero.',
+      'Aquí viven dos hermanos rivales: AURORA, Dama del Alba, y VESPER, Señor del Ocaso.',
+      'Solo podréis derrotar a UNO. Cuando uno caiga, el otro acudirá, lo recogerá y huirá para siempre.',
+      'AURORA (puerta del este): su premio son las ALAS DEL ALBA. Mantén saltar en el aire y planearás para cruzar grandes abismos.',
+      'VESPER (por el hueco del centro de esta sala): su premio es el OJO DE LA NOCHE. Verás los secretos tras los muros agrietados y tu luz crecerá.',
+      'Elegid bien: la decisión no se puede deshacer. Hay una hoguera aquí por si queréis guardar antes.'],
+    ['Dos hermanos, dos regalos, una sola elección.',
+      'AURORA (puerta del este): ALAS DEL ALBA, mantén saltar en el aire para planear.',
+      'VESPER (hueco del centro): OJO DE LA NOCHE, ves los secretos tras los muros agrietados y tu luz crece.',
+      'Recordad: derrotar a uno hace que el otro se lo lleve y desaparezca.'],
+    ['El rival que sobrevivió se ha llevado a su hermano lejos. Algún día volveréis a verlos... en otras torres.',
+      'Este castillo aún esconde muchos más pisos. Seguid explorando.'] ] },
   monk: { name: 'Monje Trastornado', tex: 'npc_monk', lines: [
     ['¡Hermano, hermano! El Obispo reza al revés... ¡y su dios responde al derecho!',
       'Arriba, en el Ábside, espera. La Nave tiene un hueco enorme: el primer escalón está lejos. Necesitas el Impulso: C en el aire.',
@@ -187,6 +202,7 @@ const _hurt = CastleScene.prototype.hurt, _die = CastleScene.prototype.die, _res
 Object.assign(CastleScene.prototype, {
   // ---- inicio
   initExtras() {
+    if (/[?&]dev=1/.test(location.search)) this.setupDev();
     const w = this.W;
     this.wpn = WEAPONS[this.color] || WEAPONS.red; this.pas = PASSIVES[this.color] || {}; this.wlv = 1;
     this.maxHp = 5 + (this.pas.hp || 0); this.hp = this.maxHp;
@@ -226,7 +242,7 @@ Object.assign(CastleScene.prototype, {
   },
   // Recupera los datos personales de la partida guardada
   loadPersonal(m) {
-    if (m.abil) { ['dash', 'dj', 'wj'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
+    if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0); this.hp = this.maxHp;
     const visited = new Set(m.visited || []);
@@ -251,7 +267,7 @@ Object.assign(CastleScene.prototype, {
     this.rebuildLights();
     this.time.delayedCall(800, () => this.toast('Partida cargada desde tu última hoguera', 4000));
   },
-  auraMul() { return (this.pas.aura || 1) * (this.buffs.lamp > 0 ? 1.7 : 1); },
+  auraMul() { return (this.pas.aura || 1) * (this.buffs.lamp > 0 ? 1.7 : 1) * (this.abil.eye ? 1.4 : 1); },
   wstats() { return this.wpn.lv[Math.min(this.wlv, 5) - 1]; },
   dmgBonus() { return this.buffs.str > 0 ? 1 : 0; },
 
@@ -368,6 +384,11 @@ Object.assign(CastleScene.prototype, {
     }
     if (!held(K_.UP, K_.W, K_.SPACE, K_.Z) && !touch.jump && !pad.jump && b.velocity.y < -200 && this.dashT <= 0 && this.stun <= 0) b.setVelocityY(b.velocity.y * 0.55);
     if (this.abil.wj && wall && !onFloor && b.velocity.y > P.slide && dir === wall) b.setVelocityY(P.slide);
+    // Alas del Alba: manteniendo saltar en el aire se planea
+    if (this.abil.wings && !ui && !onFloor && b.velocity.y > 60 && this.dashT <= 0 && !this.hook && this.stun <= 0 && (held(K_.UP, K_.W, K_.SPACE, K_.Z) || touch.jump || pad.jump)) {
+      b.setVelocityY(60); if (this.wjLock <= 0) b.setVelocityX(dir * speed * 1.25);
+      if (Math.random() < 0.15) this.poof(p.x - this.facing * 10, p.y - 4, 1, 0xffd6a0);
+    }
 
     this.hookStep(dt, onFloor, dir, ui);
 
@@ -423,12 +444,73 @@ Object.assign(CastleScene.prototype, {
     this.hid = hid; return hid;
   },
   hiddenAt(wx, wy) {
+    if (this.abil && this.abil.eye) return false; // el Ojo de la Noche ve tras los muros agrietados
     if (!this.hid) this.recalcHidden();
     const x = Math.floor(wx / T), y = Math.floor(wy / T);
     return x >= 0 && y >= 0 && x < this.W.Wt && y < this.W.Ht && this.hid[y * this.W.Wt + x] === 1;
   },
   wallBroken() { this.hid = null; this.visited && this.visited.forEach(id => { const a = this.W.areas[id]; if (a) this.paintMapArea(a); }); this.mapCanvas && this.mapCanvas.refresh(); },
-  hiddenSweep() { // oculta lo que está dentro de una sala secreta aún cerrada
+  // ---- atajo de desarrollador (solo con ?dev=1 en la dirección): F2 abre el mapa de teletransporte
+  setupDev() {
+    const W = this.W, box = document.createElement('div');
+    box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#0a0612ee;color:#fff;font:13px Courier New,monospace;padding:10px;display:none;overflow:auto';
+    box.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b>MODO DESARROLLO</b>' +
+      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar habilidades</button><button id="devHp">Curar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
+      '<span id="devInfo" style="color:#ffd98a">Haz clic en el mapa para teletransportarte</span></div><canvas id="devMap" style="image-rendering:pixelated;cursor:crosshair;border:2px solid #ffb347"></canvas>';
+    document.body.appendChild(box);
+    box.querySelectorAll('button').forEach(b => { b.style.cssText = 'width:auto;margin:0;padding:4px 10px;font:12px Courier New,monospace;cursor:pointer'; });
+    box.addEventListener('keydown', ev => ev.stopPropagation()); box.addEventListener('keyup', ev => ev.stopPropagation());
+    const cv = box.querySelector('#devMap'), info = box.querySelector('#devInfo'), scale = () => Math.max(1, Math.min(4, (window.innerWidth - 40) / W.Wt));
+    const draw = () => { // mapa completo con el estado actual de los muros
+      const D = this.fg.layer.data; cv.width = W.Wt; cv.height = W.Ht; const g = cv.getContext('2d');
+      for (let y = 0; y < W.Ht; y++) for (let x = 0; x < W.Wt; x++) {
+        const t = D[y][x], k = t && t.index >= 0 ? t.index % 8 : -1, a = W.areaOf(x, y), pal = a ? ZONE_PAL[a.z] : null;
+        g.fillStyle = k === -1 ? (a ? '#241a3a' : '#0a0612') : k === K.ONEWAY ? '#ffffff' : k === K.SPIKES ? '#ff4a4a' : k === K.CRACK ? '#ffcf6a' : (pal ? pal.light : '#444');
+        g.fillRect(x, y, 1, 1);
+      }
+      const s = scale(); cv.style.width = (W.Wt * s) + 'px'; cv.style.height = (W.Ht * s) + 'px';
+    };
+    const at = ev => { const r = cv.getBoundingClientRect(), s = r.width / W.Wt; return [Math.floor((ev.clientX - r.left) / s), Math.floor((ev.clientY - r.top) / s)]; };
+    cv.onmousemove = ev => { const [x, y] = at(ev), a = W.areaOf(x, y); info.textContent = a ? a.name + ' (' + a.id + ')' : 'roca'; };
+    cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
+    box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
+    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.toast('Habilidades básicas concedidas (modo desarrollo)'); };
+    box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
+    box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
+    const orig = this.hurt; this.hurt = (d, x) => { if (this.devGod) return; return orig.call(this, d, x); };
+    const toggle = () => { const open = box.style.display === 'none'; box.style.display = open ? 'block' : 'none'; if (open) draw(); else if (document.activeElement) document.activeElement.blur(); };
+    box.querySelector('#devClose').onclick = toggle;
+    const onKey = ev => { if (ev.key === 'F2') { ev.preventDefault(); toggle(); } };
+    window.addEventListener('keydown', onKey);
+    this.events.once('shutdown', () => { window.removeEventListener('keydown', onKey); box.remove(); });
+    this.toast('Modo desarrollo: F2 abre el mapa de teletransporte', 5000);
+  },
+  devSpot(a, gx, gy) { // casilla donde se puede estar de pie en el área, la más cercana al punto pedido
+    const D = this.fg.layer.data, solid = (x, y) => { const t = D[y] && D[y][x]; return !!t && t.index >= 0 && [K.SOLID, K.FLOOR, K.CRACK].includes(t.index % 8); };
+    let best = null, bd = 1e9;
+    for (let y = a.y0 + 2; y < a.y0 + a.rh - 1; y++) for (let x = a.x0 + 1; x < a.x0 + a.rw - 1; x++) {
+      if (solid(x, y) || solid(x, y - 1) || !(solid(x, y + 1) || (D[y + 1] && D[y + 1][x] && D[y + 1][x].index >= 0 && D[y + 1][x].index % 8 === K.ONEWAY))) continue;
+      const d = Math.hypot(x - gx, (y - gy) * 1.2); if (d < bd) { bd = d; best = [x, y]; }
+    }
+    return best;
+  },
+  devTeleportTo(gx, gy) {
+    const a = this.W.areaOf(gx, gy); if (!a) { this.toast('Eso es roca: elige una sala'); return; }
+    const spot = this.devSpot(a, gx, gy) || [a.x0 + Math.floor(a.rw / 2), a.y0 + a.rh - 2];
+    const p = this.player; p.setPosition((spot[0] + 0.5) * T, (spot[1] + 1) * T - 24); p.body.setVelocity(0, 0); this.lastGround = { x: p.x, y: p.y }; this.invuln = 2;
+    this.toast('Teletransportado a ' + a.name);
+  },
+  devTeleport(id) { const a = this.W.areas[id]; if (a) this.devTeleportTo(a.x0 + Math.floor(a.rw / 2), a.y0 + a.rh - 2); },
+
+  crackGlow() { // con el Ojo de la Noche los muros agrietados cercanos brillan
+    if (!this.abil.eye) { if (this.eyeCr) this.eyeCr.clear(); return; }
+    const g = this.eyeCr || (this.eyeCr = this.add.graphics().setDepth(4)), D = this.fg.layer.data, p = this.player;
+    g.clear().lineStyle(2, 0xffd27a, 0.9);
+    const x0 = Math.floor(p.x / T) - 24, y0 = Math.floor(p.y / T) - 15;
+    for (let gy = Math.max(0, y0); gy < y0 + 30 && gy < this.W.Ht; gy++) for (let gx = Math.max(0, x0); gx < x0 + 48 && gx < this.W.Wt; gx++) { const t = D[gy][gx]; if (t && t.index >= 0 && t.index % 8 === K.CRACK) g.strokeRect(gx * T + 2, gy * T + 2, T - 4, T - 4); }
+  },
+  hiddenSweep() {
+    this.crackGlow(); // oculta lo que está dentro de una sala secreta aún cerrada
     this.crystals.forEach(c => { if (!this.cryGot.has(c.id)) c.spr.setVisible(!this.hiddenAt(c.x, c.y)); });
     this.pageObjs.forEach(pg => { if (!this.pagesGot.has(pg.id)) { const h = this.hiddenAt(pg.x, pg.y); pg.spr.setVisible(!h); pg.glow.setVisible(!h && !LITE); } });
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id)) { const h = this.hiddenAt(f.x, f.y); f.spr.setVisible(!h); f.glow.setVisible(!h && !LITE); } });
@@ -735,7 +817,7 @@ Object.assign(CastleScene.prototype, {
   },
   openDialogue(n) {
     n.visits++;
-    const pages = n.def.lines, page = n.visits === 1 ? pages[0] : pages[1 + Math.floor(Math.random() * (pages.length - 1))];
+    const pages = n.def.lines, page = n.def.pick ? n.def.pick(this, pages, n.visits) : (n.visits === 1 ? pages[0] : pages[1 + Math.floor(Math.random() * (pages.length - 1))]);
     this.dlg = { npc: n, page, i: 0 }; this.dlgObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false);
     this.dlgName.setText(n.def.name); this.dlgText.setText(page[0]); SFX.altar();
   },

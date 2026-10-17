@@ -7,6 +7,7 @@ const ZONE_PAL = [
   { base: '#8a6a2e', dark: '#5a4318', light: '#c29a4a', mortar: '#2f2209', bg: '#2a210f', bgd: '#201909', glow: '#ffe08a' },
   { base: '#7a2f3a', dark: '#4d1a23', light: '#a8505e', mortar: '#28090f', bg: '#2a0f16', bgd: '#1f0a10', glow: '#ff7a7a' },
   { base: '#2f2b3a', dark: '#211e2b', light: '#4a4458', mortar: '#15121c', bg: '#100d17', bgd: '#0c0a12', glow: '#8870a0' }, // roca
+  { base: '#a8708a', dark: '#6a3f58', light: '#e0a8b8', mortar: '#3a1e2c', bg: '#2c1626', bgd: '#201019', glow: '#ffd6a0' }, // Torres del Alba
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
@@ -83,6 +84,8 @@ const MAP_PAL = {
   bishop: { M: '#e8e8f4', Y: '#ffd23b', S: '#d9c2a8', D: '#15101c', P: '#6a2f8e' },
   clock: { B: '#b8863a', G: '#ffd98a', R: '#ff3b3b', D: '#5a3f14' },
   conde: { K: '#1a1020', S: '#e8dcdc', R: '#ff2b2b', C: '#a01a2e' },
+  aurora: { M: '#fff2d8', Y: '#ffb36a', S: '#ffe3d0', D: '#3a1a2a', P: '#ff8aa8' },
+  vesper: { K: '#0c0a2a', S: '#cfd8ff', R: '#6ad0ff', C: '#2a3a9a' },
   altar: { Y: '#ffd23b', O: '#ff7a1c', W: '#b8bdc9', D: '#6a6f7e' },
   crystal: { C: '#ff5b7a', W: '#ffd0da', D: '#a01a3c' },
   relic: { Y: '#ffd23b', W: '#fffbd0' },
@@ -147,7 +150,7 @@ function buildArt(scene) {
   if (tx.exists('tiles')) return;
   // Tileset: 6 zonas x 8 tipos
   const tiles = tx.createCanvas('tiles', 56 * 32, 32); const tctx = tiles.getContext('2d');
-  for (let z = 0; z < 7; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
+  for (let z = 0; z < 8; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
   tiles.refresh();
 
   const makeMap = (key, mapName, pal, px) => {
@@ -174,6 +177,8 @@ function buildArt(scene) {
   makeMap('npc_archivist', 'npcMad', madPal('#d8d4ee', '#6a4a8a'), 1);
   makeMap('npc_prisoner', 'npcMad', madPal('#3a2a1a', '#8a8a96'), 1);
   makeMap('npc_monk', 'npcMad', madPal('#7a5a3a', '#7a5a3a'), 1);
+  makeMap('npc_oracle', 'npcMad', madPal('#ffe6b0', '#c9a0ff'), 1);
+  makeMap('aurora', 'bishop', MAP_PAL.aurora, 1); makeMap('vesper', 'conde', MAP_PAL.vesper, 1);
   [['pot', '#ff3b5c', '#ffd0da'], ['pot2', '#b43bff', '#ecd0ff'], ['spd', '#3bd9ff', '#d0f6ff'], ['str', '#ff9a3b', '#ffe2c0'], ['lamp', '#ffe066', '#fffbe0'], ['ward', '#c9ced8', '#ffffff'], ['rage', '#d4ff3b', '#f6ffd0'], ['tonic', '#3bff9a', '#d0ffe6'], ['fruit', '#ff3bd9', '#ffd0f4']].forEach(([k, c, l]) => makeMap('it_' + k, 'bottle', { D: '#8a6a4a', C: c, L: l }, 1));
   makeMap('it_amu', 'amulet', MAP_PAL.amulet, 1);
   makeMap('forge', 'hammer', MAP_PAL.hammer, 1);
