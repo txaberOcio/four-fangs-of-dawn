@@ -96,12 +96,12 @@
   area('albaB', 'Cámara de Vesper', 7, 11, 1, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 24, 4, 'norm', true], ['boss', 'vesper', 40, 16]]);
 
   // --- Siguiente fase: tras vencer a uno de los rivales se abre la puerta de la cámara de Vesper hacia el cielo ---
-  area('cielo1', 'Antecámara del Cielo', 7, 13, 1, 2, 1, [['altar', 8, 16], ['tri', 'tl', 4], ['tri', 'tr', 4], ['cry', 42, 16],
+  area('cielo1', 'Antecámara del Cielo', 7, 13, 1, 2, 1, [['page', 25, 16], ['altar', 8, 16], ['tri', 'tl', 4], ['tri', 'tr', 4], ['cry', 42, 16],
     // puzle de tiempo: cada escalón aparece un segundo después del anterior y desaparece enseguida
     ['TP', 28, 14, 3, 4, 2.4, 0], ['TP', 33, 11, 3, 4, 2.4, 1], ['TP', 38, 8, 3, 4, 2.4, 2], ['P', 43, 5, 7], ['cry', 46, 4]]);
   area('torreC', 'Escalera al Cielo', 7, 15, 0, 1, 2, [['P', 3, 32, 5], ['P', 10, 29, 5], ['P', 17, 26, 5], ['P', 9, 23, 5], ['P', 3, 20, 5], ['P', 10, 17, 5], ['P', 17, 17, 8],
     ['E', 'kn', 14, 34], ['E', 'bat', 12, 10], ['E', 'gh', 18, 22], ['E', 'gh', 6, 14], ['E', 'bat', 20, 28], ['E', 'saw', 13, 24, { ax: 'h', r: 90, w: 1.3 }]]);
-  area('cumbre', 'Cumbre del Alba', 7, 16, 0, 2, 1, [['npc', 'watcher', 20, 16], ['altar', 6, 16], ['tri', 'tl', 5], ['tri', 'tr', 5],
+  area('cumbre', 'Cumbre del Alba', 7, 16, 0, 2, 1, [['npc', 'watcher', 20, 16], ['npc', 'rivalA', 12, 16], ['npc', 'rivalV', 12, 16], ['page', 26, 16], ['altar', 6, 16], ['tri', 'tl', 5], ['tri', 'tr', 5],
     // escalera al saliente izquierdo y balcón lejano (solo se alcanza planeando con las Alas del Alba)
     ['P', 3, 13, 4], ['P', 1, 10, 3], ['P', 3, 7, 4], ['P', 22, 10, 3], ['cry', 23, 9],
     // alcoba secreta tras un muro agrietado (el Ojo de la Noche la revela): dos cristales de vida
@@ -118,7 +118,7 @@
   // --- El Abismo: tras planear sobre los pinchos de la Cripta Olvidada, una caída libre lleva a la Forja de los Elementos y a la Gran Hoguera ---
   area('caida', 'Caída Libre', 8, 0, 7, 1, 2, [['E', 'saw', 9, 9, { ax: 'h', r: 60, w: 1.3 }], ['E', 'saw', 16, 18, { ax: 'h', r: 70, w: 1.6 }], ['E', 'saw', 10, 27, { ax: 'h', r: 60, w: 1.1 }],
     ['E', 'bat', 5, 6], ['E', 'bat', 20, 14], ['E', 'bat', 12, 23]]);
-  area('fragua', 'Forja de los Elementos', 8, 1, 8, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['npc', 'smith', 26, 16], ['sforge', 30, 15]]);
+  area('fragua', 'Forja de los Elementos', 8, 1, 8, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['npc', 'smith', 26, 16], ['sforge', 30, 15], ['page', 10, 16]]);
   area('gran', 'La Gran Hoguera', 8, 3, 8, 1, 1, [['bigfire', 13, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
 
   // Gemas: la segunda moneda. Se encuentran por el mapa (zonas opcionales y secretos) y las sueltan los jefes y los élites.

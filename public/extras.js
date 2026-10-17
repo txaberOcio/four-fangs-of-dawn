@@ -96,6 +96,9 @@ const PAGES = {
   galeria: { title: 'Cuaderno del Relojero', text: 'Los engranajes no descansan. Las sierras recorren su raíl y los centinelas mis pasillos. Construí el reloj para detener el tiempo; él me detuvo a mí.' },
   pasR: { title: 'Última carta del Conde', text: 'Cuatro cazadores vendrán, con mi misma sangre y mi misma sed. Abriré el suelo bajo mi trono y los enterraré con mis siervos. Si fallo, mis señores del alba, Aurora y Vesper, no me lo perdonarán. Quizá, al fin, alguien me detenga.' },
 };
+PAGES.cielo1 = { title: 'Carta sin firmar', text: 'Hermano: si lees esto es que uno de los dos ha caído. Ni el sol ni la luna aguantan solos mucho tiempo. Te esperaré en la Cumbre, donde el viento aún huele a nosotros.' };
+PAGES.cumbre = { title: 'Diario del Vigía', text: 'Llevo años mirando el horizonte desde aquí. Antes eran dos luces, una al amanecer y otra al ocaso. Ahora solo veo una, y me parece más triste que la oscuridad.' };
+PAGES.fragua = { title: 'Notas del Herrero', text: 'Forjé la espada del Conde y las dagas de los hermanos del Alba. Cada elemento que domino me recuerda que yo solo ardo en esta cueva, lejos de todos. Si alguien me trae mi martillo, volveré a ver la luz.' };
 const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160 };
 const NPC_DEFS = {
   merchant: { name: 'Mercader', tex: 'npc_merchant', shop: true, lines: [['Almas, almas... Las prefiero a las monedas. Mira lo que tengo.']] },
@@ -133,6 +136,14 @@ const NPC_DEFS = {
       'Derrotar a uno hace que el otro se lo lleve. Luego el camino al cielo queda abierto.'],
     ['El rival que sobrevivió se ha llevado a su hermano lejos. Algún día volveréis a verlos... en otras torres.',
       'El camino al cielo está abierto: baja a la cámara de Vesper y cruza su puerta este.'] ] },
+  rivalA: { name: 'Aurora, Dama del Alba', tex: 'aurora', show: sc => sc.progress.bosses.includes('vesper') && !sc.progress.bosses.includes('aurora'), lines: [
+    ['Me has quitado a mi hermano... y aun así sigo aquí. Lo cuido, lo oigo respirar. No vengo a luchar.',
+      'Cuando quieras, sube a la Cumbre de verdad. Yo no volveré a pisar la Antecámara.'],
+    ['Cada amanecer le leo lo que escribimos de niños. No responde, pero a veces sonríe.'] ] },
+  rivalV: { name: 'Vesper, Señor del Ocaso', tex: 'vesper', show: sc => sc.progress.bosses.includes('aurora') && !sc.progress.bosses.includes('vesper'), lines: [
+    ['Tu espada ha tocado a mi hermana. No te lo perdonaré, pero hoy no tengo fuerzas para odiarte.',
+      'El alba y el ocaso no se pueden separar. Eso fue lo que olvidamos.'],
+    ['Me quedo junto a ella hasta que despierte. Déjanos tranquilos.'] ] },
   watcher: { name: 'Vigía del Cielo', tex: 'npc_watcher', lines: [
     ['Habéis subido hasta la Cumbre del Alba. Aquí no hay jefes: es un lugar para explorar con todo lo que habéis aprendido.',
       'Dicen que quien venció a Vesper ve un tesoro tras un muro agrietado, al fondo de esta sala (dos cristales de vida), y que el suelo agrietado de aquí abajo guarda el Santuario de las Sombras.',
