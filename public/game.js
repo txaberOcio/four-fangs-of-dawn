@@ -372,10 +372,11 @@ class CastleScene extends Phaser.Scene {
     this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
   }
   bossGone(b) { const r = World.BOSSES[b.id] && World.BOSSES[b.id].rival; return this.progress.bosses.includes(b.id) || !!(r && this.progress.bosses.includes(r)); }
+  gateOk(gt) { const pb = this.progress.bosses; return gt.boss === 'alba' ? (pb.includes('aurora') || pb.includes('vesper')) : gt.boss === 'sellos' ? (pb.includes('conde') || (pb.includes('archon') && pb.includes('reina'))) : pb.includes(gt.boss); }
   openGates(show) { // los muros que cierran el foso caen cuando el Conde huye
     if (this.payBossGems) this.payBossGems(!show);
     (this.W.gates || []).forEach(gt => {
-      const pb = this.progress.bosses; const ok = gt.boss === 'alba' ? (pb.includes('aurora') || pb.includes('vesper')) : gt.boss === 'sellos' ? (pb.includes('conde') || (pb.includes('archon') && pb.includes('reina'))) : pb.includes(gt.boss);
+      const ok = this.gateOk(gt);
       if (gt.open || !ok) return;
       gt.open = true; gt.tiles.forEach(t => { this.fg.removeTileAt(t.gx, t.gy); if (show) this.poof((t.gx + 0.5) * T, (t.gy + 0.5) * T, 3, 0xaaaaaa); });
       this.wallBroken();

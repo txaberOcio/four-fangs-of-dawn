@@ -320,6 +320,15 @@ io.on('connection', socket => {
     socket.to(r.code).emit('broke', { gx, gy });
   });
 
+  // Al morir en solitario, el mundo vuelve al último punto de control (jefes vivos otra vez, muros y antorchas como estaban)
+  on('revertWorld', data => {
+    const r = myRoom(); if (!r || !r.started || r.host !== socket.id || Object.keys(r.players).length !== 1 || !data || typeof data !== 'object') return;
+    const bosses = Array.isArray(data.bosses) ? data.bosses.filter(b => BOSS_IDS.includes(b)) : [];
+    const broken = (Array.isArray(data.broken) ? data.broken : []).filter(k => { if (typeof k !== 'string') return false; const [gx, gy] = k.split(',').map(Number); const row = world.fg[gy], v = row ? row[gx] : undefined; return Number.isInteger(gx) && Number.isInteger(gy) && v !== undefined && v >= 0 && v % 8 === World.K.CRACK; }).slice(0, 500);
+    const torches = {}; if (data.torches && typeof data.torches === 'object') for (const k of Object.keys(data.torches).slice(0, 2000)) { const id = Number(k); if (Number.isInteger(id) && id >= 0 && id <= 2000) torches[id] = !!data.torches[k]; }
+    r.progress.bosses = bosses; r.progress.broken = broken; r.progress.torches = torches; r.won = bosses.includes('conde');
+    io.to(r.code).emit('progress', r.progress);
+  });
   // El anfitrión reparte almas al jugador que mató al enemigo
   on('loot', data => {
     const { to, amt, item, eid, bonus, kt } = data && typeof data === 'object' ? data : {};

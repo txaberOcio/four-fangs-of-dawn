@@ -976,7 +976,8 @@ Object.assign(CastleScene.prototype, {
   // ---- punto de control: lo conseguido desde el último descanso en una hoguera se pierde al morir
   captureState() {
     return { souls: this.souls, inv: Object.assign({}, this.inv), wlv: this.wlv, maxHp: this.maxHp, abil: Object.assign({}, this.abil), cry: [...this.cryGot], forge: [...this.forgeGot], gem: [...this.gemGot], gems: this.gems,
-      perm: Object.assign({}, this.perm), element: this.element, travel: this.travel, hammer: this.hammerState, met: this.smithMet, elite: [...this.eliteGot], pages: [...this.pagesGot], bg: [...this.bossGemsPaid] };
+      perm: Object.assign({}, this.perm), element: this.element, travel: this.travel, hammer: this.hammerState, met: this.smithMet, elite: [...this.eliteGot], pages: [...this.pagesGot], bg: [...this.bossGemsPaid],
+      world: JSON.parse(JSON.stringify({ bosses: this.progress.bosses || [], broken: this.progress.broken || [], torches: this.progress.torches || {} })) };
   },
   revertToCheckpoint() {
     const s = this.snap; if (!s) return;
@@ -989,13 +990,34 @@ Object.assign(CastleScene.prototype, {
     back(this.pagesGot, s.pages, this.pageObjs, pg => { pg.spr.setVisible(true); pg.glow.setVisible(!LITE); });
     this.eliteGot = new Set(s.elite);
     // las gemas que soltó un jefe ya derrotado no se pierden (el jefe no vuelve): solo vuelven a su sitio las recogidas por el mapa
-    let bossGems = 0; this.bossGemsPaid.forEach(id => { if (!s.bg.includes(id) && GEMS_BOSS[id]) bossGems += GEMS_BOSS[id]; });
+    const solo = this.isHost && !Object.keys(this.remotes).length; // en solitario el mundo entero vuelve al punto de control
+    let bossGems = 0; if (!solo) this.bossGemsPaid.forEach(id => { if (!s.bg.includes(id) && GEMS_BOSS[id]) bossGems += GEMS_BOSS[id]; });
+    if (solo) this.bossGemsPaid = new Set(s.bg);
     this.souls = s.souls; this.inv = Object.assign({}, s.inv); this.wlv = s.wlv; this.maxHp = s.maxHp; this.gems = s.gems + bossGems; this.perm = Object.assign({}, s.perm); this.element = s.element; this.travel = s.travel; this.smithMet = s.met;
     Object.keys(this.abil).forEach(k => { this.abil[k] = !!s.abil[k]; });
-    this.hammerState = s.hammer; if (this.progress.bosses.includes('reina') && this.hammerState === 0) this.hammerState = 1;
+    this.hammerState = s.hammer; if (!solo && this.progress.bosses.includes('reina') && this.hammerState === 0) this.hammerState = 1;
+    if (solo) this.revertWorld(s.world);
     this.syncRelics(); this.applyProgress(this.progress, true); this.syncNpcs(); this.wallBroken();
     const after = JSON.stringify([this.abil, this.cryGot.size, this.forgeGot.size, this.gemGot.size, this.wlv, this.maxHp, this.element, this.perm, this.pagesGot.size, this.eliteGot.size, this.hammerState]);
-    if (before !== after) this.time.delayedCall(600, () => this.toast('Has vuelto a tu último punto de control: lo conseguido desde entonces se pierde. Las reliquias de los jefes siguen en sus salas.', 7000));
+    const worldChanged = solo && JSON.stringify(s.world) !== JSON.stringify({ bosses: this.progress.bosses, broken: this.progress.broken, torches: this.progress.torches });
+    if (before !== after || worldChanged) this.time.delayedCall(600, () => this.toast('Has vuelto a tu último punto de control: lo hecho desde entonces se pierde' + (solo ? ' (los jefes han vuelto a aparecer).' : '. Las reliquias de los jefes siguen en sus salas.') + '', 7000));
+  },
+  revertWorld(sw) { // el mundo vuelve a como estaba al guardar (solo en partidas de un jugador)
+    const cur = this.progress, keepAbil = Object.assign({}, cur.abilities);
+    (cur.broken || []).forEach(k => { if (!sw.broken.includes(k)) { const [gx, gy] = String(k).split(',').map(Number), a = this.W.areaOf(gx, gy); if (a) this.fg.putTileAt(a.z * 8 + K.CRACK, gx, gy); } }); // los muros rotos vuelven
+    this.progress = { abilities: keepAbil, bosses: [...sw.bosses], broken: [...sw.broken], torches: Object.assign({}, sw.torches) };
+    socket.emit('revertWorld', { bosses: this.progress.bosses, broken: this.progress.broken, torches: this.progress.torches });
+    (this.W.gates || []).forEach(gt => { if (gt.open && !this.gateOk(gt)) { gt.open = false; gt.tiles.forEach(t => { const a = this.W.areaOf(t.gx, t.gy); if (a) this.fg.putTileAt(a.z * 8 + K.SOLID, t.gx, t.gy); }); } }); // las puertas se vuelven a cerrar
+    this.torchObjs.forEach(o => { const want = this.progress.torches[o.id] !== undefined ? !!this.progress.torches[o.id] : !!(this.W.torches[o.id] && this.W.torches[o.id].lit); this.setTorch(o.id, want); });
+    if (this.floorBroken && !this.progress.bosses.includes('conde')) { // el suelo del trono se reconstruye
+      const th = this.W.areas.throne, fo = this.W.areas.fosoC;
+      for (let gx = th.x0 + 2; gx <= th.x0 + th.rw - 3; gx++) for (const gy of [th.y0 + th.rh - 1, fo.y0]) { const v = this.W.fg[gy][gx]; if (v >= 0) this.fg.putTileAt(v, gx, gy); }
+      this.floorBroken = false; this.floorState = 0;
+    }
+    this.sealKey = null; this.applySeal(null); this.curSeal = null;
+    this.ents.forEach((en, id) => { if (en.sim && en.boss) { en.spr.destroy(); this.ents.delete(id); } }); // los jefes reaparecen
+    this.projs.forEach(p => p.spr.destroy()); this.projs.clear();
+    this.restReset(); this.wallBroken();
   },
   // ---- diálogo
   buildDialogueUi() {
