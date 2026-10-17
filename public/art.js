@@ -85,6 +85,8 @@ const MAP_PAL = {
   bishop: { M: '#e8e8f4', Y: '#ffd23b', S: '#d9c2a8', D: '#15101c', P: '#6a2f8e' },
   clock: { B: '#b8863a', G: '#ffd98a', R: '#ff3b3b', D: '#5a3f14' },
   conde: { K: '#1a1020', S: '#e8dcdc', R: '#ff2b2b', C: '#a01a2e' },
+  archon: { M: '#cfe8ff', Y: '#7ad8ff', S: '#d9c2a8', D: '#15101c', P: '#2a5a8a' },
+  reina: { W: '#e8e4d4', G: '#cfc6a8', R: '#ff3b3b', D: '#5a5240' },
   aurora: { M: '#fff2d8', Y: '#ffb36a', S: '#ffe3d0', D: '#3a1a2a', P: '#ff8aa8' },
   vesper: { K: '#0c0a2a', S: '#cfd8ff', R: '#6ad0ff', C: '#2a3a9a' },
   altar: { Y: '#ffd23b', O: '#ff7a1c', W: '#b8bdc9', D: '#6a6f7e' },
@@ -180,7 +182,7 @@ function buildArt(scene) {
   makeMap('npc_monk', 'npcMad', madPal('#7a5a3a', '#7a5a3a'), 1);
   makeMap('npc_oracle', 'npcMad', madPal('#ffe6b0', '#c9a0ff'), 1);
   makeMap('npc_watcher', 'npcMad', madPal('#b8d8ff', '#5a7aa8'), 1);
-  makeMap('aurora', 'bishop', MAP_PAL.aurora, 1); makeMap('vesper', 'conde', MAP_PAL.vesper, 1);
+  makeMap('archon', 'bishop', MAP_PAL.archon, 1); makeMap('reina', 'garg', MAP_PAL.reina, 1); makeMap('aurora', 'bishop', MAP_PAL.aurora, 1); makeMap('vesper', 'conde', MAP_PAL.vesper, 1);
   [['fang', '#e8e8f0', '#ffffff'], ['talis', '#7ad8ff', '#e0f7ff'], ['pot', '#ff3b5c', '#ffd0da'], ['pot2', '#b43bff', '#ecd0ff'], ['spd', '#3bd9ff', '#d0f6ff'], ['str', '#ff9a3b', '#ffe2c0'], ['lamp', '#ffe066', '#fffbe0'], ['ward', '#c9ced8', '#ffffff'], ['rage', '#d4ff3b', '#f6ffd0'], ['tonic', '#3bff9a', '#d0ffe6'], ['fruit', '#ff3bd9', '#ffd0f4']].forEach(([k, c, l]) => makeMap('it_' + k, 'bottle', { D: '#8a6a4a', C: c, L: l }, 1));
   makeMap('it_amu', 'amulet', MAP_PAL.amulet, 1);
   makeMap('forge', 'hammer', MAP_PAL.hammer, 1);

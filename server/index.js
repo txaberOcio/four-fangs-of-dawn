@@ -11,7 +11,7 @@ const DATA_FILE = process.env.DATA_FILE || path.join(__dirname, '..', 'data', 'u
 const COLORS = ['red', 'blue', 'green', 'purple'];
 const ABILITIES = ['dash', 'dj', 'wj', 'wings', 'eye'];
 const ABIL_BOSS = { dash: 'garg', dj: 'bishop', wj: 'clock', wings: 'aurora', eye: 'vesper' }; // habilidad -> jefe que la da
-const BOSS_IDS = ['garg', 'bishop', 'clock', 'conde', 'aurora', 'vesper'];
+const BOSS_IDS = ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde', 'aurora', 'vesper'];
 const RIVAL = { aurora: 'vesper', vesper: 'aurora' }; // solo se puede derrotar a uno de los dos
 const MAX_PLAYERS = 4;
 const MAX_ACCOUNTS = Number(process.env.MAX_ACCOUNTS) || 2000;
@@ -45,7 +45,7 @@ function sanitizeMe(m) {
   m = m && typeof m === 'object' ? m : {};
   const inv = {}; ITEM_IDS.forEach(k => { inv[k] = clampInt(m.inv && m.inv[k], 0, 9); });
   return { souls: clampInt(m.souls, 0, 99999), inv, wlv: clampInt(m.wlv, 1, 5), maxHp: clampInt(m.maxHp, 5, 40), cry: strList(m.cry, 40), forge: strList(m.forge, 20),
-    abil: { dash: !!(m.abil && m.abil.dash), dj: !!(m.abil && m.abil.dj), wj: !!(m.abil && m.abil.wj), wings: !!(m.abil && m.abil.wings), eye: !!(m.abil && m.abil.eye) }, elite: strList(m.elite, 20, 40), pages: strList(m.pages, 20), seen: strList(m.seen, 20), kills: (() => { const o = {}; for (const k of ['sk', 'kn', 'bat', 'gh', 'saw', 'sentinel', 'garg', 'bishop', 'clock', 'conde', 'aurora', 'vesper']) o[k] = clampInt(m.kills && m.kills[k], 0, 99999); return o; })(),
+    abil: { dash: !!(m.abil && m.abil.dash), dj: !!(m.abil && m.abil.dj), wj: !!(m.abil && m.abil.wj), wings: !!(m.abil && m.abil.wings), eye: !!(m.abil && m.abil.eye) }, elite: strList(m.elite, 20, 40), pages: strList(m.pages, 20), seen: strList(m.seen, 20), kills: (() => { const o = {}; for (const k of ['sk', 'kn', 'bat', 'gh', 'saw', 'sentinel', 'garg', 'bishop', 'clock', 'archon', 'reina', 'conde', 'aurora', 'vesper']) o[k] = clampInt(m.kills && m.kills[k], 0, 99999); return o; })(),
     travel: !!m.travel, el: ELEMS.includes(m.el) ? m.el : '',
     gems: clampInt(m.gems, 0, 999), gemGot: strList(m.gemGot, 60), bg: strList(m.bg, 12), perm: { dmg: clampInt(m.perm && m.perm.dmg, 0, 3), souls: clampInt(m.perm && m.perm.souls, 0, 2) },
     altar: typeof m.altar === 'string' ? m.altar.slice(0, 24) : '', lit: strList(m.lit, 30), visited: strList(m.visited, 80) };

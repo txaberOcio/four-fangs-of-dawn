@@ -21,6 +21,7 @@ function audioCtx() {
 }
 ['pointerdown', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { audioCtx(); if (typeof Music !== 'undefined') Music.play(); }, { passive: true }));
 function beep(freq, dur, type = 'square', vol = 0.035, slide = 0) {
+  if (typeof Music !== 'undefined' && Music.isMuted && Music.isMuted()) return; // el silencio también apaga los efectos
   try {
     audioCtx();
     const o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
@@ -118,6 +119,8 @@ const EN = {
   bishop: { tex: 'bishop', sc: 4, body: [10, 14], hp: 15, dmg: 1, hb: [40, 56], kind: 'boss', fly: true },
   clock: { tex: 'clock', sc: 4, body: [12, 15], hp: 18, dmg: 2, hb: [52, 60], kind: 'boss' },
   conde: { tex: 'conde', sc: 4, body: [10, 15], hp: 42, dmg: 2, hb: [48, 60], kind: 'boss', fly: true },
+  archon: { tex: 'archon', sc: 4, body: [10, 14], hp: 26, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
+  reina: { tex: 'reina', sc: 4, body: [12, 14], hp: 30, dmg: 2, hb: [50, 56], kind: 'boss' },
   aurora: { tex: 'aurora', sc: 4, body: [10, 14], hp: 24, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   vesper: { tex: 'vesper', sc: 4, body: [10, 15], hp: 24, dmg: 2, hb: [48, 60], kind: 'boss' },
   // enemigos invulnerables: solo se esquivan
@@ -218,6 +221,7 @@ class CastleScene extends Phaser.Scene {
     this.applyProgress(this.progress, true);
     this.initExtras();
     this.toast(IS_TOUCH ? 'Botones táctiles: mover, saltar, atacar, impulso, objeto, E' : 'Flechas/AD mover · ↑/W/Espacio saltar · ↓+saltar bajar · X/J atacar · M mapa', 6000);
+    this.time.delayedCall(15000, () => this.toast('Pulsa H en cualquier momento para ver los controles', 5000));
     this.time.delayedCall(6500, () => this.toast('{act}: encender/apagar antorchas. Los fantasmas no te ven en la luz; los murciélagos le temen.', 7000));
   }
 
@@ -369,10 +373,11 @@ class CastleScene extends Phaser.Scene {
   openGates(show) { // los muros que cierran el foso caen cuando el Conde huye
     if (this.payBossGems) this.payBossGems(!show);
     (this.W.gates || []).forEach(gt => {
-      const pb = this.progress.bosses; if (gt.open || !(gt.boss === 'alba' ? (pb.includes('aurora') || pb.includes('vesper')) : pb.includes(gt.boss))) return;
+      const pb = this.progress.bosses; const ok = gt.boss === 'alba' ? (pb.includes('aurora') || pb.includes('vesper')) : gt.boss === 'sellos' ? (pb.includes('conde') || (pb.includes('archon') && pb.includes('reina'))) : pb.includes(gt.boss);
+      if (gt.open || !ok) return;
       gt.open = true; gt.tiles.forEach(t => { this.fg.removeTileAt(t.gx, t.gy); if (show) this.poof((t.gx + 0.5) * T, (t.gy + 0.5) * T, 3, 0xaaaaaa); });
       this.wallBroken();
-      if (show) { this.cameras.main.shake(900, 0.012); SFX.boss(); this.toast(gt.boss === 'alba' ? '¡Se abre el camino hacia el cielo! La puerta este de la cámara de Vesper ya está libre.' : '¡Los muros del foso se derrumban! Se abren dos caminos...', 7000); }
+      if (show) { this.cameras.main.shake(900, 0.012); SFX.boss(); this.toast(gt.boss === 'alba' ? '¡Se abre el camino hacia el cielo! La puerta este de la cámara de Vesper ya está libre.' : (gt.boss === 'sellos' ? '¡Los dos sellos están rotos! La puerta de la Sala del Trono se abre.' : '¡Los muros del foso se derrumban! Se abren dos caminos...'), 7000); }
     });
   }
   albaScene(killed) { // al caer uno de los rivales, el otro acude, se lo lleva y huye
@@ -484,7 +489,7 @@ class CastleScene extends Phaser.Scene {
   // objetivo actual: flecha y distancia
   updateObjective(dt) {
     this.objT -= dt; if (this.objT > 0) return; this.objT = 0.3; this.hiddenSweep();
-    const order = ['garg', 'bishop', 'clock', 'conde'], w = this.W;
+    const order = ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde'], w = this.W;
     let tgt = null, label = '';
     const relic = Object.values(this.relics)[0], pb = this.progress.bosses, chosen = pb.includes('aurora') || pb.includes('vesper');
     if (relic) { tgt = { x: relic.x, y: relic.y }; label = 'Recoge la reliquia'; }
@@ -780,7 +785,7 @@ class CastleScene extends Phaser.Scene {
       mk(230, 1.4); mk(-230, 1.4); if (rage && n > 1) { mk(340, 1.2); mk(-340, 1.2); } this.cameras.main.shake(180, 0.006); };
     const fan = (cnt) => { const base = Math.atan2(tg.y - y, tg.x - x); for (let i = -cnt; i <= cnt; i++) { const an = base + i * 0.24; this.spawnProj('orb', x, y, Math.cos(an) * 200, Math.sin(an) * 200, 4); } };
     const gear = () => this.spawnProj('gear', Phaser.Math.Between(a.x0 + 20, a.x1 - 20), a.y0 + 12, 0, 240, 3.5, 0);
-    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
+    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'reina' ? 'sk' : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
 
     if (!e.act) {
       e.cd -= dt;
@@ -792,6 +797,8 @@ class CastleScene extends Phaser.Scene {
         const pick = arr => arr[Math.floor(Math.random() * arr.length)];
         e.t = 0; e.air = false; e.dirT = dirT; e.n = 0; e.marked = e.erupted = e.moved = e.fired = e.diving = false; e.chan = 0;
         if (e.type === 'garg') e.act = pick(['leap', 'charge', 'leap']);
+        if (e.type === 'archon') { const o = ['fan', 'tele', 'rays', 'fan'].filter(x => x !== e.last); if (e.hp < e.max * 0.6 && e.summonCd <= 0) e.act = 'summon'; else e.act = pick(o); e.last = e.act; }
+        if (e.type === 'reina') { const o = ['leap', 'charge', 'pillars', 'leap'].filter(x => x !== e.last); if (e.hp < e.max * 0.7 && e.summonCd <= 0) e.act = 'summon'; else e.act = pick(o); e.last = e.act; }
         if (e.type === 'aurora') { const o = ['fan', 'dive', 'rays', 'sweep'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'vesper') { const o = ['charge', 'ambush', 'pillars', 'leap'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'clock') e.act = (e.relightT <= 0 && this.torchObjs.some(o => o.area === 'clkC' && !o.lit)) ? 'relight' : pick(['charge', 'slam', 'rain']);
@@ -950,7 +957,9 @@ class CastleScene extends Phaser.Scene {
 
     // ---- zona actual y mapa
     const ar = this.W.areaOf(Math.floor(p.x / T), Math.floor(p.y / T));
-    if (ar && ar.id !== this.myArea) { this.myArea = ar.id; this.markVisited(ar); this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.z); }
+    if (ar && ar.id !== this.myArea) { this.myArea = ar.id; this.markVisited(ar); this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.z);
+      const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
+      if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche y el Santuario de las Sombras.', 9000); }
     this.mmT -= dt;
     if (this.mmT <= 0 || this.showMap) { this.mmT = 0.2; this.updateMaps(); }
     if (inp.mapPress) {

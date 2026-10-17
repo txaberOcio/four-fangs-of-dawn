@@ -38,7 +38,7 @@ const ITEMS = [
   { id: 'talis', name: 'Talismán de almas', price: 0, gems: 3, perm: 'souls', max: 2, desc: '+20% de almas de los enemigos para siempre (hasta 2 veces).' },
 ];
 // Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
-const GEMS_BOSS = { garg: 2, bishop: 3, clock: 4, conde: 5, aurora: 6, vesper: 6 }; // gemas que suelta cada jefe la primera vez
+const GEMS_BOSS = { garg: 2, bishop: 3, clock: 4, archon: 4, reina: 4, conde: 5, aurora: 6, vesper: 6 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
 // [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
 // Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
@@ -81,9 +81,13 @@ const BESTIARY = {
   clock: { name: 'Guardián del Reloj', text: 'Engranaje viviente que se protege con la luz. Guarda el Salto de pared.', tip: 'Apaga sus antorchas con {act} y atácalo a oscuras.' },
   aurora: { name: 'Aurora, Dama del Alba', text: 'Hermana de Vesper y señora del Conde, vuela entre rayos de luz. Si cae, su hermano la rescata y huye. Premio: Alas del Alba.', tip: 'Esquiva la lluvia de rayos y sus picados; golpéala cuando baje.' },
   vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora y señor del Conde, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y huye. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
+  archon: { name: 'Archimago Silente', text: 'Guardián del sello de tinta. Entre sus libros flotan tormentas de luz y fantasmas que acuden a su llamada.', tip: 'Esquiva sus abanicos de orbes y la lluvia de rayos; cuando invoque ayuda, golpéalo sin parar.' },
+  reina: { name: 'Reina de Huesos', text: 'Guardiana del sello de hueso. Salta con todo su peso, embiste y llama a los esqueletos de la cripta.', tip: 'Vigila los pilares marcados en el suelo y no te quedes bajo sus saltos.' },
   conde: { name: 'El Conde', text: 'Siervo de los hermanos del Alba y portero de su castillo. Rompe el suelo de su trono para enterrar a sus cazadores en el foso, y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
 };
 const PAGES = {
+  arch1: { title: 'Nota del Archimago', text: 'Los hermanos del Alba me pidieron guardar un sello de tinta. Lo escondí tras mil páginas y me quedé a vigilarlo. Los libros ya no responden; solo susurran mi nombre.' },
+  cat1: { title: 'Lamento de la Reina', text: 'Mi sello es de hueso porque los huesos no mienten. Me encerraron bajo la Mazmorra para guardarlo, y los muertos me hacen compañía. El Conde nunca bajó a verme.' },
   corr: { title: 'Diario del Capitán', text: 'Cuando el Conde cerró las puertas ordené sellar el pasillo bajo la galería. Mis hombres se quedaron de pie, vacíos, esperando una orden que nunca llegó. Yo sigo vigilando.' },
   lect: { title: 'Notas del Archivista', text: 'Los libros pidieron sangre y se la dimos. Ahora susurran. Escribí todo lo que dicen hasta que mis ojos se quedaron entre las páginas.' },
   caden: { title: 'Carta del Carcelero', text: 'Las cadenas ya no sujetan a nadie: el Conde soltó a los presos y nos encadenó a nosotros. Si subes a la Torre del Reloj, aprende el compás de las sierras: no se detienen jamás.' },
@@ -99,6 +103,7 @@ const NPC_DEFS = {
       'Las paredes agrietadas... ¡golpéalas, golpéalas! Detrás siempre hay algo que brilla.',
       'Bajo la Escalera de los Retratos hay una sala que no existe. Búscala a la izquierda, abajo del todo.',
       'Y hay un túnel tan bajo que solo lo cruza quien se arrodilla. ¡Abajo, abajo, usa {down}!',
+      'Dicen que dos sellos cierran la Sala del Trono: uno de tinta, sobre el Observatorio, y otro de hueso, bajo la Mazmorra de Hierro. ¡Sin ambos, el Conde no abre!',
       'Ah, y el Guardián del Reloj: la luz lo protege como una armadura. ¡Apaga sus antorchas con {act} y atácalo a oscuras!'],
     ['¿Me has visto los ojos? Los dejé entre los libros.',
       'Las antorchas... ¡enciéndelas con {act}! Los fantasmas no ven en la luz. ¡Y los murciélagos la odian!'],
@@ -107,7 +112,7 @@ const NPC_DEFS = {
   prisoner: { name: 'Prisionero Enloquecido', tex: 'npc_prisoner', lines: [
     ['¡¡Llevo cien años mirando la misma pared!! ¿Tú también la oyes? Dice... dice cosas.',
       'La Gárgola ya no ríe, ahora llora piedra. Si la vences te dará el Impulso: usa {dash} y cruzarás abismos.',
-      'En la Mazmorra de Hierro hay un cristal más alto de lo que se salta. Hace falta un segundo aire.',
+      'En la Mazmorra de Hierro hay un cristal más alto de lo que se salta. Hace falta un segundo aire. Y hay un hueco en el suelo que baja a las Catacumbas... donde reina la Reina de Huesos.',
       'Aquí las antorchas están apagadas... ¡enciéndelas con {act}! La oscuridad tiene dientes.'],
     ['Ellos dicen que estoy loco. ¡Yo digo que estoy aquí! ¿Dónde? Aquí. Eso creo.',
       '¿Tienes almas de sobra? El mercader vende pociones... a mí me vendió una sonrisa.'],
@@ -234,7 +239,7 @@ Object.assign(CastleScene.prototype, {
   // ---- inicio
   initExtras() {
     this.element = ''; this.travel = false; this.travelOpen = false;
-    this.buildAlbaDecor();
+    this.buildAlbaDecor(); this.buildHelp();
     if (/[?&]dev=1/.test(location.search)) this.setupDev();
     const w = this.W;
     this.wpn = WEAPONS[this.color] || WEAPONS.red; this.pas = PASSIVES[this.color] || {}; this.wlv = 1;
@@ -545,7 +550,7 @@ Object.assign(CastleScene.prototype, {
     box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.toast('Habilidades básicas concedidas (modo desarrollo)'); };
     box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
-    box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
+    box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
     const orig = this.hurt; this.hurt = (d, x) => { if (this.devGod) return; return orig.call(this, d, x); };
     const toggle = () => { const open = box.style.display === 'none'; box.style.display = open ? 'block' : 'none'; if (open) draw(); else if (document.activeElement) document.activeElement.blur(); };
     box.querySelector('#devClose').onclick = toggle;
@@ -572,6 +577,19 @@ Object.assign(CastleScene.prototype, {
   },
   devTeleport(id) { const a = this.W.areas[id]; if (a) this.devTeleportTo(a.x0 + Math.floor(a.rw / 2), a.y0 + a.rh - 2); },
 
+  // ---- ayuda: controles según el dispositivo (tecla H)
+  buildHelp() {
+    const box = document.createElement('div');
+    box.style.cssText = 'position:fixed;inset:0;z-index:98;background:#0a0612f2;color:#fff;font:15px Courier New,monospace;padding:20px;display:none;overflow:auto;white-space:pre-wrap;line-height:1.5';
+    document.body.appendChild(box);
+    const text = () => { const m = inputMode(); return m === 'touch' ? 'CONTROLES (táctil)\n\n· Cruceta (izquierda): arrastra para moverte; ▲ salta (mantén en el aire para planear) y ▼ te agacha.\n· » Impulso · ⚔ Atacar · E Interactuar · 🧪 Usar objeto · ⟳ Cambiar objeto\n· 🗺 Mapa · 📖 Bestiario y diarios · ♪ Silenciar\n\nToca esta pantalla para cerrar.' : m === 'pad' ? 'CONTROLES (mando)\n\n· Mover: cruceta o stick · Saltar: ✕ (mantén en el aire para planear) · Agacharse: cruceta ↓\n· Atacar: ◻ · Impulso: ○ · Interactuar: △ · Usar objeto: R1 · Cambiar objeto: L1\n· Mapa: Options · Bestiario: R3\n\nPulsa H o toca la pantalla para cerrar.' : 'CONTROLES (teclado)\n\n· Mover: flechas o A/D · Saltar: ↑/W/Espacio (mantén en el aire para planear con las Alas del Alba)\n· Agacharse: ↓ (con saltar, bajas de una plataforma) · Atacar: X/J · Impulso: C/K/Shift\n· Interactuar (hogueras, antorchas, personajes, forjas): E · Usar objeto: Q · Cambiar objeto: R\n· Mapa: M · Bestiario y diarios: B · Silenciar: N · Ayuda: H\n\nPulsa H o Esc para cerrar.'; };
+    const toggle = () => { const open = box.style.display === 'none'; if (open) box.textContent = text(); box.style.display = open ? 'block' : 'none'; };
+    box.onclick = () => { box.style.display = 'none'; };
+    const onKey = ev => { if (ev.target && /input|textarea/i.test(ev.target.tagName)) return; if (ev.key === 'h' || ev.key === 'H' || (ev.key === 'Escape' && box.style.display !== 'none')) toggle(); };
+    window.addEventListener('keydown', onKey);
+    const bye = () => { window.removeEventListener('keydown', onKey); box.remove(); };
+    this.events.once('shutdown', bye); this.events.once('destroy', bye);
+  },
   // ---- los rivales del Alba: emblema compartido (luna y sol), carteles y chispas que los unen
   buildAlbaDecor() {
     const W = this.W, h = W.areas.albaH, A = W.areas.albaA, B = W.areas.albaB; if (!h || !A || !B) return;
@@ -586,6 +604,8 @@ Object.assign(CastleScene.prototype, {
       for (let i = -3; i <= 3; i++) { const an = i * 0.38; g.lineStyle(3, 0xffd27a, 0.7).lineBetween(x + Math.cos(an) * (r + 6), y + Math.sin(an) * (r + 6), x + Math.cos(an) * (r + 20), y + Math.sin(an) * (r + 20)); }
     };
     emblem((h.x0 + 26) * T, (h.y0 + 5) * T, 46); emblem((A.x0 + 26) * T, (A.y0 + 6) * T, 64); emblem((B.x0 + 26) * T, (B.y0 + 6) * T, 64);
+    const pr = W.areas.pasR; // contador de sellos junto a la puerta del trono
+    this.sealLabel = this.add.text((pr.x0 + 22.5) * T, (pr.y0 + 12) * T, '', { fontSize: '14px', fontFamily: 'Courier New', color: '#ffd27a', stroke: '#000', strokeThickness: 4, align: 'center' }).setOrigin(0.5).setDepth(-3);
     const lab = (x, y, txt, col) => this.add.text(x, y, txt, { fontSize: '15px', fontFamily: 'Courier New', color: col, stroke: '#000', strokeThickness: 4, align: 'center' }).setOrigin(0.5).setDepth(-3);
     lab((h.x0 + 46) * T, (h.y0 + 11) * T, 'AURORA  ►\nsiguiendo recto\nAlas del Alba', '#ffd27a');
     lab((h.x0 + 26) * T, (h.y0 + 12.4) * T, 'VESPER\n▼ bajando por aquí ▼\nOjo de la Noche', '#9fb8ff');
@@ -605,6 +625,7 @@ Object.assign(CastleScene.prototype, {
     for (let gy = Math.max(0, y0); gy < y0 + 30 && gy < this.W.Ht; gy++) for (let gx = Math.max(0, x0); gx < x0 + 48 && gx < this.W.Wt; gx++) { const t = D[gy][gx]; if (t && t.index >= 0 && t.index % 8 === K.CRACK) g.strokeRect(gx * T + 2, gy * T + 2, T - 4, T - 4); }
   },
   hiddenSweep() {
+    if (this.sealLabel) { const pb = this.progress.bosses, n = (pb.includes('archon') ? 1 : 0) + (pb.includes('reina') ? 1 : 0), open = pb.includes('conde') || n === 2; this.sealLabel.setText(open ? 'La puerta del trono\nestá abierta' : 'Sellos del trono: ' + n + '/2\n(Archimago y Reina de Huesos)'); }
     this.crackGlow(); // oculta lo que está dentro de una sala secreta aún cerrada
     this.crystals.forEach(c => { if (!this.cryGot.has(c.id)) c.spr.setVisible(!this.hiddenAt(c.x, c.y)); });
     this.pageObjs.forEach(pg => { if (!this.pagesGot.has(pg.id)) { const h = this.hiddenAt(pg.x, pg.y); pg.spr.setVisible(!h); pg.glow.setVisible(!h && !LITE); } });

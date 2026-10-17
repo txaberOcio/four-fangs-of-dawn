@@ -109,7 +109,18 @@ Sin `?dev=1` el menú no existe, así que los jugadores normales no lo ven. F2 (
 
 Las cuentas y partidas guardadas se almacenan en `data/users.json`. Se crea solo al registrar el primer usuario, contiene contraseñas cifradas y **no se sube a Git** (está en `.gitignore`). Para empezar de cero, para el servidor y borra ese fichero.
 
-## 10. Problemas frecuentes
+## 10. Variables de entorno del servidor
+
+| Variable | Para qué sirve |
+|---|---|
+| `PORT` | Puerto del servidor (por defecto 3000) |
+| `DATA_FILE` | Ruta del fichero de cuentas y partidas (por defecto `data/users.json`). Se guarda una copia `.bak` cada 5 minutos y el servidor **no arranca** si el fichero existe pero no se puede leer, para no borrar datos |
+| `MAX_ACCOUNTS` | Máximo de cuentas (por defecto 2000) |
+| `TRUST_PROXY` | Si hay un proxy delante (hosting en la nube), poner cualquier valor para usar la IP real |
+
+El servidor limita los intentos de acceso (5 fallos por minuto) y los mensajes por segundo de cada jugador, y rechaza mensajes de más de 64 KB.
+
+## 11. Problemas frecuentes
 
 | Síntoma | Solución |
 |---|---|

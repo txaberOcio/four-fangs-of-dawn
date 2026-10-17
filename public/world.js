@@ -20,6 +20,9 @@
     garg: { name: 'Gárgola de Piedra', hp: 12, drop: 'dash' },
     bishop: { name: 'Obispo Caído', hp: 15, drop: 'dj' },
     clock: { name: 'Guardián del Reloj', hp: 18, drop: 'wj' },
+    // guardianes de los dos sellos que cierran la Sala del Trono (hay que vencer a ambos para llegar al Conde)
+    archon: { name: 'Archimago Silente', hp: 26, drop: null },
+    reina: { name: 'Reina de Huesos', hp: 30, drop: null },
     conde: { name: 'El Conde', hp: 42, drop: null },
     // los dos rivales del Alba: al caer uno, el otro lo rescata y huye (solo se puede elegir a uno)
     aurora: { name: 'Aurora, Dama del Alba', hp: 24, drop: 'wings', rival: 'vesper', reward: 'Alas del Alba: mantén saltar en el aire para planear' },
@@ -118,9 +121,22 @@
   // Gemas: la segunda moneda. Se encuentran por el mapa (zonas opcionales y secretos) y las sueltan los jefes y los élites.
   // [sala, x, y] en coordenadas locales; cada gema reposa sobre una plataforma o el suelo
   const GEMS = [['hidden', 8, 16], ['salon', 30, 11], ['foso', 13, 12], ['lect', 6, 10], ['gbib', 26, 10], ['osario', 36, 10], ['mazm', 36, 10], ['galeria', 8, 8], ['mir', 7, 13],
-    ['cielo1', 30, 16], ['santuario', 20, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['mazC', 28, 8], ['fragua', 6, 16]];
+    ['arch1', 22, 9], ['cat1', 14, 11], ['cielo1', 30, 16], ['santuario', 20, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['mazC', 28, 8], ['fragua', 6, 16]];
 
   area('santuario', 'Santuario de las Sombras', 7, 16, 1, 2, 1, [['sshrine', 26, 16], ['cry', 36, 16], ['K', 30, 0, 3, 1], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+
+  // --- Acto II antes del Conde: dos segmentos con jefe; sus sellos abren la Sala del Trono ---
+  // Segmento A: el Archivo Prohibido (sobre el Observatorio)
+  area('arch1', 'Salón de los Atriles', 1, 1, 2, 2, 1, [['page', 4, 16], ['tri', 'tl', 6], ['tri', 'tr', 6], ['P', 10, 13, 5], ['P', 20, 10, 5], ['P', 30, 13, 5], ['B', 16, 15, 3, 2], ['B', 38, 14, 3, 3],
+    ['E', 'sk', 8, 16], ['E', 'kn', 24, 16], ['E', 'gh', 34, 9], ['E', 'bat', 44, 6], ['E', 'sk', 46, 16]]);
+  area('arch2', 'Pasaje de Tinta', 1, 3, 2, 1, 1, [['altar', 6, 16], ['climb', 11, 4, 'norm', true]]);
+  area('arch3', 'Escalera de Pergaminos', 1, 3, 0, 1, 2, [['P', 3, 32, 5], ['P', 10, 29, 5], ['P', 17, 26, 5], ['P', 9, 23, 5], ['P', 3, 20, 5], ['P', 1, 17, 6],
+    ['E', 'bat', 12, 10], ['E', 'gh', 18, 22], ['E', 'gh', 6, 14], ['E', 'bat', 20, 28], ['E', 'saw', 13, 24, { ax: 'h', r: 80, w: 1.3 }]]);
+  area('scrip', 'Scriptorium', 1, 1, 0, 2, 1, [['tri', 'tl', 6], ['tri', 'tr', 6], ['boss', 'archon', 26, 10]]);
+  // Segmento B: las Catacumbas Reales (bajo la Mazmorra de Hierro)
+  area('cat1', 'Galería de Huesos', 3, 8, 4, 2, 1, [['page', 6, 16], ['climb', 20, 4, 'norm', true], ['tri', 'tl', 5], ['tri', 'tr', 5], ['B', 28, 14, 3, 3], ['P', 12, 12, 5], ['P', 44, 12, 4],
+    ['E', 'kn', 14, 16], ['E', 'sk', 26, 16], ['E', 'gh', 34, 8], ['E', 'sk', 46, 16], ['E', 'bat', 40, 6]]);
+  area('cat2', 'Cripta de la Reina', 3, 8, 5, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 38, 4, 'norm', true], ['boss', 'reina', 20, 16]]);
 
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
@@ -132,11 +148,13 @@
   E('hidden', 'escal', 3, { crack: true });
   E('gbib', 'lect', 4); E('lect', 'archivo'); E('archivo', 'naveS', 3, { crack: true });
   E('naveS', 'caden'); E('caden', 'calab'); E('calab', 'mazm');
-  E('abs', 'mir', 4); E('galeria', 'torre'); E('clkC', 'pasR', 6); E('pasR', 'throne', 5);
+  E('abs', 'mir', 4); E('galeria', 'torre'); E('clkC', 'pasR', 6); E('pasR', 'throne', 5, { gate: 'sellos' }); // la puerta del trono se abre con los dos sellos
   S('archivo', 'escal'); S('escal', 'salon'); S('obs', 'gbib'); S('pozo', 'cubil'); S('calab', 'pozo');
   E('escalaR', 'fosoC', 3, { gate: 'conde' }); E('fosoC', 'alba1', 3, { gate: 'conde' }); S('pasR', 'escalaR', 16, 4);
   E('alba1', 'albaH', 3); E('albaH', 'albaA', 4); S('albaH', 'albaB', 24, 4);
   E('albaB', 'cielo1', 3, { gate: 'alba' }); E('cielo1', 'torreC', 3); E('torreC', 'cumbre', 3); E('cumbre', 'jardin', 3); E('jardin', 'mazC', 3); S('cripta', 'caida', 1, 6); E('caida', 'fragua', 3); E('fragua', 'gran', 3); // 'alba' = cae Aurora o Vesper
+  E('obs', 'arch1', 3); E('arch1', 'arch2'); S('arch3', 'arch2', 11, 4); E('scrip', 'arch3', 3); // Archivo Prohibido
+  S('mazm', 'cat1', 20, 4); S('cat1', 'cat2', 38, 4); // Catacumbas Reales
   S('naveP', 'naveS'); S('abs', 'naveP'); S('clkC', 'torre'); S('mir', 'galeria', 16, 4); S('torre', 'caden');
 
   function climbOps(rw, rh, hx, hw, type) {

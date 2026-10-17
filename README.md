@@ -47,7 +47,9 @@ Cuatro cazadores vampiro irrumpen en el castillo del Conde. Exploras un mapa con
 - **El Abismo (secreto de las Alas del Alba):** al final de los pinchos largos de la Cripta Olvidada hay un hueco que da paso a una caída libre con sierras y murciélagos. Abajo esperan la **Forja de los Elementos** (da al arma un poder elemental, cambia el color del ataque y se cambia pulsando E: Fuego, Hielo, Rayo o Veneno) y la **Gran Hoguera**, que al encenderla desbloquea el **viaje rápido**: al descansar en cualquier hoguera encendida eliges a cuál viajar.
 - **Enemigos invulnerables** (sierras de raíl y centinelas), enemigos que se endurecen por zona y **élites con nombre**: no retroceden al ser golpeados, tienen una habilidad propia (carga, orbes, terremoto, teletransporte con soplido que apaga antorchas, furia) y recompensa fija.
 - **Salas secretas de verdad:** lo que hay tras un muro agrietado no se ve (ni en el mapa ni por su brillo) hasta romperlo.
-- **Economía y objetos:** almas, mercaderes cuya mercancía crece según avanzas, mejoras de arma en forjas y objetos consumibles.
+- **Dos monedas:** las **almas** (◆) se ganan matando enemigos y compran objetos corrientes; las **gemas** (✦) se encuentran por el mapa y las sueltan jefes y élites, y compran mejoras permanentes (Colmillo de acero, Talismán de almas), el Fruto de sangre y el Amuleto. Los mercaderes amplían su mercancía según avanzas.
+- **Acto II antes del Conde:** dos segmentos con jefe, el **Archivo Prohibido** (Archimago Silente) y las **Catacumbas Reales** (Reina de Huesos). Sus sellos abren la puerta de la Sala del Trono.
+- **Viaje rápido temprano:** la Gran Hoguera de la Capilla lo desbloquea; al descansar en cualquier hoguera encendida eliges a cuál viajar.
 - **Progreso con sentido:** guardado en hogueras (con autoguardado de mejoras permanentes), porcentaje de exploración, bestiario y diarios de historia.
 - **Todo el arte y la música se generan por código:** sprites y tiles en pixel art dibujados a partir de mapas de texto y una banda sonora procedural con WebAudio.
 - **Pensado para cualquier pantalla:** teclado, **mando de PlayStation/estándar**, **controles táctiles** con cruceta de arrastre y un **modo ligero** para televisores y dispositivos lentos.
@@ -116,9 +118,9 @@ Guía para preparar el entorno (Node, Git, VS Code) en [`docs/DESARROLLO.md`](do
 ## Hoja de ruta
 
 - Subir de nivel en las hogueras (vitalidad, fuerza, velocidad).
-- Viaje rápido entre hogueras tras un futuro jefe.
 - Nueva partida+ con enemigos más duros y aspectos nuevos.
-- Más zonas, jefes y atajos.
+- Más zonas, jefes y atajos (el castillo seguirá creciendo hacia el cielo).
+- Panel de opciones (volumen, tamaño de texto, daltonismo, reasignar teclas).
 
 ## Créditos y licencia
 
