@@ -768,6 +768,7 @@ Object.assign(CastleScene.prototype, {
     this.arrows = this.arrows.filter(a => {
       a.life -= dt; a.spr.x += a.vx * dt; a.spr.y += a.vy * dt;
       let dead = a.life <= 0;
+      if (a.el === 'fire') this.fireTouch(a.spr.x, a.spr.y, 16, 10);
       if (!dead) {
         const t = this.fg.getTileAtWorldXY(a.spr.x, a.spr.y);
         if (t && t.index >= 0) {
@@ -799,6 +800,16 @@ Object.assign(CastleScene.prototype, {
       if (t && t.index >= 0 && t.index % 8 === K.CRACK && this.W.roots.has(t.y * this.W.Wt + t.x)) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 8, 0x8fd35a); }
     }
   },
+  shroomBurst(x, y) { // solo visual: el hongo estalla en esporas y trozos de sombrero al ser golpeado
+    const n = LITE ? 4 : 14;
+    for (let i = 0; i < n; i++) {
+      const an = Math.random() * Math.PI * 2, d = Phaser.Math.Between(25, 70), chunk = i % 3 === 0;
+      const s = chunk
+        ? this.add.rectangle(x, y, 5, 5, Math.random() < 0.5 ? 0xb48aff : 0xe8d8ff).setDepth(21)
+        : this.add.image(x, y, 'puff').setScale(Phaser.Math.FloatBetween(0.6, 1.1)).setTint(Math.random() < 0.5 ? 0xb48aff : 0x8dffc8).setBlendMode(Phaser.BlendModes.ADD).setDepth(21);
+      this.tweens.add({ targets: s, x: x + Math.cos(an) * d, y: y + Math.sin(an) * d + (chunk ? 25 : -10), alpha: 0, angle: chunk ? 200 : 0, duration: Phaser.Math.Between(400, 750), ease: 'Quad.out', onComplete: () => s.destroy() });
+    }
+  },
   hitEnemy(e, f, dmg, el) {
     const p = this.player, [ex, ey] = this.entBox(e);
     if (e.cfg.inv) { if (!e.invMsg || Date.now() - e.invMsg > 900) { e.invMsg = Date.now(); this.floatText(ex, ey - 36, '¡Invulnerable!', '#9fd4ff'); } this.poof(ex, ey, 2, 0x9fd4ff); SFX.hurt(); return; }
@@ -810,11 +821,21 @@ Object.assign(CastleScene.prototype, {
     if (!this.dead && this.hp < this.maxHp && Math.random() < chance) { this.hp = Math.min(this.maxHp, this.hp + (e.boss ? 0.25 : 0.5)); this.poof(p.x, p.y - 10, 3, 0xff3b5c); }
     if (this.isHost) this.damageEnt(e, dmg, f, socket.id, el); else socket.emit('hit', { id: e.id, dmg, dir: f, el });
     e.flash = 0.1; e.spr.setTintFill(0xffffff); this.poof(ex, ey, 3, 0xffe9a0);
+    if (e.type === 'shroom') this.shroomBurst(ex, ey);
+  },
+  fireTouch(x, y, w, h) { // un ataque de fuego toca un veneno inflamable: arde (el anfitrión lo simula)
+    [...this.projs.values()].forEach(pr => {
+      if (!POISON.includes(pr.type) || !this.projs.has(pr.id)) return;
+      const c = PR[pr.type];
+      if (!rectsOverlap(x, y, w, h, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1])) return;
+      if (this.isHost) this.igniteProj(pr); else socket.emit('ignite', { id: pr.id });
+    });
   },
   doAttack() {
     if (this.wpn.kind === 'ranged') return;
     const p = this.player, f = this.facing, w = this.wstats(), wp = this.wpn;
     const cy = p.y - 2 + (this.crouching ? 7 : 0), bx = p.x + f * wp.off, bw = w.w, bh = wp.h;
+    if (this.element === 'fire') this.fireTouch(bx, cy, bw, bh);
     this.ents.forEach(e => {
       if (e.dead || this.swingHit.has(e.id)) return;
       const [ex, ey, ew, eh] = this.entBox(e);
@@ -831,9 +852,11 @@ Object.assign(CastleScene.prototype, {
     if (e.phase === 'intro') return;
     if (e.cfg.inv) return; // invulnerables
     if (e.down > 0) { if (el === 'pound') { e.down = 0; e.rez = true; e.hp = 0; this.killEnt(e, by); } return; } // el prisionero caído solo muere aplastado
+    if (e.melt) return; // la Madre Moho diluida es intocable
     if (e.type === 'alcaide' && e.shield) return; // hundido bajo el suelo
     if (e.type === 'madre' && e.armor > 0) { // armadura de raíces
-      if (el === 'pound' || (e.hitsAcc = (e.hitsAcc || 0) + 1) >= 15) { e.hitsAcc = 0; e.armor--; e.flash = 0.2; this.poof(e.spr.x, e.spr.y - 20, 10, 0x8fd35a); this.cameras.main.shake(200, 0.008); this.floatText(e.spr.x, e.spr.y - 70, e.armor > 0 ? '¡Armadura dañada!' : '¡Armadura rota!', '#8fd35a'); if (e.armor <= 0) { e.windowT = e.hp < e.max * 0.25 ? 5 : (e.hp < e.max * 0.5 ? 6 : 7); e.stunT = 1; e.act = null; e.tele = false; } }
+      if (el !== 'pound' && (!e.armorMsg || Date.now() - e.armorMsg > 2500)) { e.armorMsg = Date.now(); this.floatText(e.spr.x, e.spr.y - 70, '¡Armadura de raíces! Rómpela con el Pisotón (en el aire, mantén ↓)', '#8fd35a'); }
+      if (el === 'pound' || (e.hitsAcc = (e.hitsAcc || 0) + 1) >= 8) { e.hitsAcc = 0; e.armor--; e.flash = 0.2; this.poof(e.spr.x, e.spr.y - 20, 10, 0x8fd35a); this.cameras.main.shake(200, 0.008); this.floatText(e.spr.x, e.spr.y - 70, e.armor > 0 ? '¡Armadura dañada!' : '¡Armadura rota!', '#8fd35a'); if (e.armor <= 0) { e.windowT = e.hp < e.max * 0.25 ? 5 : (e.hp < e.max * 0.5 ? 6 : 7); e.stunT = 1; e.act = null; e.tele = false; } }
       return;
     }
     if (e.markT > 0) dmg = Math.ceil(dmg * 1.3); // marcado por Marchitar
@@ -893,7 +916,7 @@ Object.assign(CastleScene.prototype, {
   contact() {
     const p = this.player, pw = 26, ph = this.crouching ? 22 : 36, cy = p.y + (this.crouching ? 7 : 0);
     this.ents.forEach(e => {
-      if (e.dead || (e.boss && !e.aggro) || (e.cfg.rez && e.shield)) return;
+      if (e.dead || e.melt || (e.boss && !e.aggro) || (e.cfg.rez && e.shield)) return;
       const [ex, ey, ew, eh] = this.entBox(e);
       if (rectsOverlap(p.x, cy, pw, ph, ex, ey, ew, eh)) this.hurt(e.cfg.dmg + (e.dmgBonus || 0), ex);
     });
@@ -1195,7 +1218,7 @@ Object.assign(CastleScene.prototype, {
       const y = cy - 186 + i * 25;
       const row = add(this.add.rectangle(cx - 268, y, 220, 23, 0x2a1d4d, 1)).setInteractive();
       const txt = add(this.add.text(cx - 372, y, '', f('12px')).setOrigin(0, 0.5));
-      row.on('pointerdown', () => { this.bookSel = i; this.refreshBook(); });
+      row.on('pointerdown', () => { this.bookSel = (this.bookOff || 0) + i; this.refreshBook(); });
       return { row, txt };
     });
     this.bookTitle = add(this.add.text(cx - 130, cy - 186, '', f('16px', '#ffd98a', 480)));
@@ -1215,12 +1238,12 @@ Object.assign(CastleScene.prototype, {
     if (J.ESC) this.closeBook();
   },
   refreshBook() {
-    const list = this.bookEntries();
+    const list = this.bookEntries(), off = this.bookOff = Phaser.Math.Clamp(this.bookSel - 8, 0, Math.max(0, list.length - 16)); // la lista se desplaza: hay más de 16 registros
     this.bookRows.forEach((r, i) => {
-      const en = list[i]; r.row.setVisible(!!en && this.bookOpen); r.txt.setVisible(!!en && this.bookOpen); if (!en) return;
+      const en = list[off + i]; r.row.setVisible(!!en && this.bookOpen); r.txt.setVisible(!!en && this.bookOpen); if (!en) return;
       const name = en.kind === 'b' ? BESTIARY[en.id].name : PAGES[en.id].title;
       r.txt.setText((en.kind === 'b' ? '☠ ' : '✉ ') + (en.known ? name : '???')).setColor(en.known ? '#ffffff' : '#7a6f9a');
-      r.row.setFillStyle(i === this.bookSel ? 0x5a3a9a : 0x2a1d4d, 1);
+      r.row.setFillStyle(off + i === this.bookSel ? 0x5a3a9a : 0x2a1d4d, 1);
     });
     const en = list[this.bookSel];
     if (!en) return;

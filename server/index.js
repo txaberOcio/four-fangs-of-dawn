@@ -295,6 +295,13 @@ io.on('connection', socket => {
     if (r.host === socket.id) return;
     io.to(r.host).emit('hit', { id, dmg: Math.min(8, Math.max(1, +dmg || 1)), dir: dir < 0 ? -1 : 1, from: socket.id, el: ELEMS.includes(el) ? el : undefined });
   });
+  // Un jugador con arma de fuego toca un veneno -> anfitrión
+  on('ignite', data => {
+    const { id } = data && typeof data === 'object' ? data : {};
+    const r = myRoom();
+    if (!r || !r.started || typeof id !== 'string' || id.length > 24 || r.host === socket.id) return;
+    io.to(r.host).emit('ignite', { id });
+  });
   on('ability', a => {
     const r = myRoom();
     if (!r || !r.started || !ABILITIES.includes(a)) return;
