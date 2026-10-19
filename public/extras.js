@@ -314,7 +314,7 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor();
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors();
     this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
@@ -1509,6 +1509,30 @@ Object.assign(CastleScene.prototype, {
     }
   },
   // ---- atmósfera de los Calabozos Profundos (zona 9): cortinas de musgo, raíces, hongos luminosos (farolas) y goteras
+  // ---- suelos que se rompen con el Pisotón (golpe hacia abajo con potencia): losa de raíces con flechas ▼ brillantes que parpadean
+  buildStompFloors() {
+    const W = this.W, T32 = T; this.stompTiles = [];
+    W.roots.forEach(idx => {
+      const gx = idx % W.Wt, gy = (idx / W.Wt) | 0, x = gx * T32, y = gy * T32;
+      const base = this.add.graphics().setPosition(x, y).setDepth(-4.5);
+      base.fillStyle(0x3b2a18, 1).fillRect(0, 0, T32, T32);                         // losa de tierra oscura
+      base.fillStyle(0x5a4128, 1).fillRect(1, 1, T32 - 2, T32 - 2);
+      base.fillStyle(0x3f7a3a, 1).fillRect(0, 0, T32, 4).fillRect(0, T32 - 3, 10, 3).fillRect(T32 - 12, T32 - 3, 12, 3); // musgo en los bordes
+      base.lineStyle(3, 0x8a6a3a, 1).beginPath().moveTo(0, 6).lineTo(10, 14).lineTo(8, 26).lineTo(T32, 30).strokePath(); // raíces que cruzan la losa
+      base.lineStyle(2, 0x6a4a28, 1).beginPath().moveTo(T32, 4).lineTo(22, 12).lineTo(26, T32).strokePath();
+      base.lineStyle(2, 0x1a120a, 1).strokeRect(0.5, 0.5, T32 - 1, T32 - 1);
+      const chev = this.add.graphics().setPosition(x, y).setDepth(-4.4);
+      chev.lineStyle(4, 0xd8ff8a, 1);
+      [6, 17].forEach(oy => chev.beginPath().moveTo(7, oy).lineTo(16, oy + 8).lineTo(25, oy).strokePath());   // dos flechas ▼ apiladas
+      this.tweens.add({ targets: chev, alpha: 0.25, yoyo: true, repeat: -1, duration: 650, delay: (gx % 4) * 120, ease: 'Sine.inOut' });
+      const glow = this.add.image(x + T32 / 2, y + T32 / 2, 'glow').setScale(1.1).setTint(0x8fd35a).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setDepth(-4.3).setVisible(!LITE);
+      this.tweens.add({ targets: glow, alpha: 0.08, yoyo: true, repeat: -1, duration: 650, delay: (gx % 4) * 120 });
+      this.stompTiles.push({ gx, gy, parts: [base, chev, glow] });
+    });
+    if (this.stompTiles.length) this.time.addEvent({ delay: 250, loop: true, callback: () => { // al romperse la losa desaparece su dibujo
+      this.stompTiles = this.stompTiles.filter(o => { const t = this.fg.getTileAt(o.gx, o.gy); if (t && t.index >= 0) return true; o.parts.forEach(p => p.destroy()); return false; });
+    } });
+  },
   buildMossDecor() {
     const W = this.W; this.caveLamps = this.caveLamps || []; this.mossDrips = [];
     const g = this.add.graphics().setDepth(-6);
