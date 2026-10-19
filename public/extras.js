@@ -925,11 +925,12 @@ Object.assign(CastleScene.prototype, {
   hitEnemy(e, f, dmg, el) {
     const p = this.player, [ex, ey] = this.entBox(e);
     if (e.cfg.inv) { if (!e.invMsg || Date.now() - e.invMsg > 900) { e.invMsg = Date.now(); this.floatText(ex, ey - 36, '¡Invulnerable!', '#9fd4ff'); } this.poof(ex, ey, 2, 0x9fd4ff); SFX.hurt(); return; }
+    if (e.cfg.shielded && e.shield && !e.elite && el !== 'pound') { if (!e.shieldMsg || Date.now() - e.shieldMsg > 900) { e.shieldMsg = Date.now(); this.floatText(ex, ey - 36, '¡Bloqueado!', '#8fc8ff'); } this.poof(ex, ey, 2, 0x8fc8ff); SFX.hurt(); return; }
     if (e.type === 'clock' && e.shield) { if (!e.shieldMsg || Date.now() - e.shieldMsg > 1200) { e.shieldMsg = Date.now(); this.floatText(ex, ey - 40, '¡La luz lo protege!', '#8fc8ff'); } SFX.hurt(); return; }
     if (el === 'eclipse' && Math.random() < 0.25) { dmg *= 2; this.floatText(ex, ey - 40, '¡Eclipse!', '#f4f0ff'); }
     if (el === 'shadow' && !this.dead && this.hp < this.maxHp && Math.random() < 0.5) { this.hp = Math.min(this.maxHp, this.hp + 0.5); this.poof(p.x, p.y - 10, 3, 0xb06aff); }
     SFX.hit();
-    const chance = e.boss ? Math.min(this.pas.life || 0.25, 0.25) : (this.pas.life || 0.25);
+    const lifeP = this.pas.life !== undefined ? this.pas.life : 0.25, chance = e.boss ? Math.min(lifeP, 0.25) : lifeP; // la Esmeralda no se cura al golpear
     if (!this.dead && this.hp < this.maxHp && Math.random() < chance) { this.hp = Math.min(this.maxHp, this.hp + (e.boss ? 0.25 : 0.5)); this.poof(p.x, p.y - 10, 3, 0xff3b5c); }
     if (this.isHost) this.damageEnt(e, dmg, f, socket.id, el); else socket.emit('hit', { id: e.id, dmg, dir: f, el });
     e.flash = 0.1; e.spr.setTintFill(0xffffff); this.poof(ex, ey, 3, 0xffe9a0);
@@ -958,6 +959,7 @@ Object.assign(CastleScene.prototype, {
       if (t && t.index >= 0 && t.index % 8 === K.CRACK && !this.W.roots.has(t.y * this.W.Wt + t.x)) { this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); SFX.hit(); }
     }
   },
+  noKnockBy(by) { const pl = typeof room !== 'undefined' && room && room.players.find(p => p.id === by); return !!pl && pl.animal === 'green'; }, // los golpes de la Esmeralda no empujan ni aturden a los enemigos
   damageEnt(e, dmg, dir, by, el, quiet) {
     if (e.dead) return;
     if (e.boss && !e.aggro) return;
@@ -965,16 +967,17 @@ Object.assign(CastleScene.prototype, {
     if (e.cfg.inv) return; // invulnerables
     if (e.down > 0) { if (el === 'pound') { e.down = 0; e.rez = true; e.hp = 0; this.killEnt(e, by); } return; } // el prisionero caído solo muere aplastado
     if (e.melt) return; // la Madre Moho diluida es intocable
+    if (el === 'pound' && e.cfg.shielded && !e.boss) { e.shield = false; e.shT = 2.2; } // el Pisotón rompe el escudo azul un rato
     if (e.type === 'alcaide' && e.shield) return; // hundido bajo el suelo
     if (e.type === 'madre' && e.armor > 0) { // armadura de raíces
       if (el !== 'pound' && (!e.armorMsg || Date.now() - e.armorMsg > 2500)) { e.armorMsg = Date.now(); this.floatText(e.spr.x, e.spr.y - 70, '¡Armadura de raíces! Rómpela con el Pisotón (en el aire, mantén ↓)', '#8fd35a'); }
-      if (el === 'pound' || (e.hitsAcc = (e.hitsAcc || 0) + 1) >= 8) { e.hitsAcc = 0; e.armor--; e.flash = 0.2; this.poof(e.spr.x, e.spr.y - 20, 10, 0x8fd35a); this.cameras.main.shake(200, 0.008); this.floatText(e.spr.x, e.spr.y - 70, e.armor > 0 ? '¡Armadura dañada!' : '¡Armadura rota!', '#8fd35a'); if (e.armor <= 0) { e.windowT = e.hp < e.max * 0.25 ? 5 : (e.hp < e.max * 0.5 ? 6 : 7); e.stunT = 1; e.act = null; e.tele = false; } }
+      if (el === 'pound' || (e.hitsAcc = (e.hitsAcc || 0) + 1) >= 8) { e.hitsAcc = 0; e.armor--; e.flash = 0.2; this.poof(e.spr.x, e.spr.y - 20, 10, 0x8fd35a); this.cameras.main.shake(200, 0.008); this.floatText(e.spr.x, e.spr.y - 70, e.armor > 0 ? '¡Armadura dañada!' : '¡PUNTO DÉBIL! Armadura rota', e.armor > 0 ? '#8fd35a' : '#ffc83d'); if (e.armor <= 0) { e.windowT = e.hp < e.max * 0.25 ? 5 : (e.hp < e.max * 0.5 ? 6 : 7); e.stunT = 1; e.act = null; e.tele = false; } }
       return;
     }
     if (e.markT > 0) dmg = Math.ceil(dmg * 1.3); // marcado por Marchitar
     if (e.type === 'clock' && this.lightLevel(e.spr.x, e.spr.y) > 0.18) return; // la luz lo protege
     e.hp -= dmg; if (!quiet) { e.flash = 0.12; e.spr.setTintFill(0xffffff); }
-    if (!quiet && !e.boss && !e.elite && e.cfg.kind === 'walk') { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
+    if (!quiet && !e.boss && !e.elite && e.cfg.kind === 'walk' && !this.noKnockBy(by)) { e.stun = 0.18; e.spr.body.setVelocityX(dir * 170); }
     if (e.hp <= 0 && e.cfg.rez && !e.rez && !(e.dotT > 0) && el !== 'pound') { e.rez = true; e.down = 2.5; e.hp = Math.ceil(e.max / 2); e.shield = true; e.spr.setAngle(90); e.spr.body.setVelocityX(0); this.poof(e.spr.x, e.spr.y, 8, 0x8fd35a); return; } // primera muerte: cae y se levanta
     if (e.hp > 0 && el && !quiet) this.applyElement(e, el, dmg, dir, by);
     if (e.hp <= 0) this.killEnt(e, by);

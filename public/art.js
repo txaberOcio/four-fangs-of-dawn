@@ -16,9 +16,9 @@ const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple:
 const HERO_NAMES = { red: 'Vampiro carmesí', blue: 'Vampiro azul', green: 'Vampira esmeralda', purple: 'Vampira violeta' };
 
 const HERO_INFO = {
-  red: { weapon: 'Espada', passive: 'Sed de sangre', desc: 'Espada equilibrada. Pasiva: 40% de curarse al golpear (los demás, 25%).' },
+  red: { weapon: 'Espada', passive: 'Sed de sangre', desc: 'Espada equilibrada. Pasiva: 40% de curarse al golpear (Azul y Violeta, 25%; la Esmeralda no se cura).' },
   blue: { weapon: 'Lanza', passive: 'Visión nocturna', desc: 'Lanza de gran alcance. Pasiva: ve mucho más lejos en la oscuridad. Desventajas: recibe más daño de los ataques a distancia y se mueve un poco más lento.' },
-  green: { weapon: 'Arco', passive: 'Cazadora de almas', desc: 'Dispara flechas a distancia. Pasiva: +50% de almas al matar. Desventaja: recibe +50% de daño y no rompe muros (necesita Bombas de la tienda).' },
+  green: { weapon: 'Arco', passive: 'Cazadora de almas', desc: 'Dispara flechas a distancia. Pasiva: +50% de almas al matar. Sus flechas no empujan a los enemigos y no la curan. Desventaja: recibe +50% de daño y no rompe muros (necesita Bombas de la tienda).' },
   purple: { weapon: 'Guadaña', passive: 'Piel de sombra', desc: 'Guadaña lenta y muy dañina. Pasiva: +2 corazones de vida máxima. Desventaja: se mueve más lento (compensa con un gancho automático: si el salto se queda corto, se engancha al borde y sube).' },
 };
 const MAPS = {
