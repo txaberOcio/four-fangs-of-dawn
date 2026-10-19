@@ -148,9 +148,14 @@ function drawMapCtx(ctx, map, pal, px, ox, oy) {
 function heroPal(color) { return { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b', F: '#ffffff', C: color, A: '#2a2540', D: '#120c18', W: '#c9c4e0' }; }
 
 // Dibuja un héroe en un canvas DOM (para el lobby)
-function drawHeroCanvas(canvas, color) {
-  canvas.width = 12; canvas.height = 14;
-  drawMapCtx(canvas.getContext('2d'), MAPS.hero, heroPal(HERO_COLORS[color]), 1, 0, 0);
+// Usa los sprites nuevos (public/sprites): fotograma de reposo recortado alrededor del personaje
+let SPR_META = null; const SPR_IMG = {};
+if (typeof fetch === 'function') fetch('/sprites/sprites.json').then(r => r.json()).then(m => { SPR_META = m; document.dispatchEvent(new Event('sprmeta')); }).catch(() => {});
+function drawHeroCanvas(canvas, color, sex = 'm') {
+  const key = color + '_' + sex; canvas.width = 70; canvas.height = 64;
+  if (!SPR_IMG[key]) { const im = new Image(); im.src = '/sprites/' + key + '.png'; SPR_IMG[key] = im; }
+  const draw = () => { const m = SPR_META, im = SPR_IMG[key]; if (!m || !im.complete || !im.naturalWidth) return; const [cw, ch] = m.cell, g = canvas.getContext('2d'); g.imageSmoothingEnabled = false; g.clearRect(0, 0, 70, 64); g.drawImage(im, (cw / 2 - 35) | 0, ch - 66, 70, 64, 0, 0, 70, 64); };
+  SPR_IMG[key].addEventListener('load', draw, { once: true }); document.addEventListener('sprmeta', draw, { once: true }); draw();
 }
 
 function rndSeeded(seed) { let s = seed >>> 0; return () => (s = (s * 1664525 + 1013904223) >>> 0) / 4294967296; }

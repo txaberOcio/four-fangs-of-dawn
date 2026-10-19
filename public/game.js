@@ -72,16 +72,30 @@ function updateContRow() {
     $('cont').style.display = isHost ? '' : 'none';
   }
 }
-$('bDelSave').onclick = () => { if (selColor && confirm('¿Borrar la partida guardada de ' + HERO_NAMES[selColor] + '?')) socket.emit('deleteSave', selColor, () => { delete saves[selColor]; updateContRow(); }); };
+$('bDelSave').onclick = () => { if (selColor && confirm('¿Borrar la partida guardada de ' + HERO_NAMES[selColor] + '? También podrás elegir otra vez el aspecto (hombre/mujer).')) socket.emit('deleteSave', selColor, () => { delete saves[selColor]; updateContRow(); renderLobby(); }); };
 socket.on('saved', ({ color, info }) => { saves[color] = info; });
 function enterRoom(r) { room = r; if (!r.started) { renderLobby(); show('lobby'); } }
+// elección de aspecto (hombre / mujer): fija mientras exista la partida guardada de ese personaje
+function renderSexBox(mine) {
+  const box = $('sexBox'); box.innerHTML = ''; if (!mine || !selColor) return;
+  const locked = saves[selColor] && saves[selColor].sex;
+  const title = document.createElement('div'); title.className = 'hint'; box.appendChild(title);
+  const row = document.createElement('div'); row.className = 'sexes'; box.appendChild(row);
+  [['m', 'Hombre'], ['f', 'Mujer']].forEach(([sx, label]) => {
+    if (locked && locked !== sx) return;
+    const b = document.createElement('button'); b.className = mine.sex === sx ? 'sel' : ''; b.disabled = !!locked;
+    const c = document.createElement('canvas'); c.style.cssText = 'height:96px;width:auto;image-rendering:pixelated;display:block;margin:0 auto'; drawHeroCanvas(c, selColor, sx); b.appendChild(c); b.append(label);
+    b.onclick = () => socket.emit('setSex', sx); row.appendChild(b);
+  });
+  title.textContent = locked ? 'Este personaje se juega siempre como ' + (locked === 'f' ? 'mujer' : 'hombre') + ' hasta que borres su partida guardada.' : (mine.sex ? 'Aspecto elegido. Queda fijo al guardar la partida (hasta que la borres).' : 'Elige el aspecto de este personaje: no podrás cambiarlo mientras exista su partida guardada.');
+}
 function renderLobby() {
   if (!room) return;
   $('rcode').textContent = room.code;
   const list = $('plist'); list.innerHTML = '';
   room.players.forEach(p => {
     const d = document.createElement('div'); d.className = 'pl';
-    const c = document.createElement('canvas'); drawHeroCanvas(c, p.animal); d.appendChild(c);
+    const c = document.createElement('canvas'); drawHeroCanvas(c, p.animal, p.sex || 'm'); d.appendChild(c);
     d.append(`${p.name}${p.id === room.host ? ' ★' : ''}${p.name === me ? ' (tú)' : ''}`);
     list.appendChild(d);
   });
@@ -90,11 +104,13 @@ function renderLobby() {
   COLOR_LIST.forEach(a => {
     const taken = room.players.some(p => p.animal === a && p.name !== me);
     const b = document.createElement('button'); b.className = a === selColor ? 'sel' : ''; b.disabled = taken; b.title = HERO_NAMES[a];
-    const c = document.createElement('canvas'); c.style.cssText = 'width:36px;height:42px;image-rendering:pixelated'; drawHeroCanvas(c, a);
+    const c = document.createElement('canvas'); c.style.cssText = 'height:56px;width:auto;image-rendering:pixelated'; drawHeroCanvas(c, a, (saves[a] && saves[a].sex) || (a === selColor && mine && mine.sex) || 'm');
     b.appendChild(c); b.onclick = () => socket.emit('setAnimal', a); box.appendChild(b);
   });
   $('abil').textContent = selColor ? HERO_NAMES[selColor] + '\n' + HERO_INFO[selColor].weapon + ' · ' + HERO_INFO[selColor].passive + '\n' + HERO_INFO[selColor].desc : '';
   $('bStart').classList.toggle('hidden', room.host !== socket.id);
+  const falta = room.players.some(p => !p.sex); $('bStart').disabled = falta; $('bStart').title = falta ? 'Todos los jugadores deben elegir su aspecto' : '';
+  renderSexBox(mine);
   updateContRow();
 }
 socket.on('room', r => { room = r; if (!game) { renderLobby(); show('lobby'); } });
@@ -174,9 +190,14 @@ const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * 
 
 class CastleScene extends Phaser.Scene {
   // ===================================================== creación
+  preload() {
+    this.load.json('sprmeta', 'sprites/sprites.json');
+    ['red', 'blue', 'green', 'purple'].forEach(c => ['m', 'f'].forEach(s => this.load.image('spr_' + c + '_' + s, 'sprites/' + c + '_' + s + '.png')));
+  }
   create() {
     const w = this.W = World.build();
     buildArt(this);
+    this.setupHeroSheets();
     this.progress = progress || { abilities: {}, bosses: [], broken: [] };
     this.abil = { dash: false, dj: false, wj: false }; // las habilidades son de cada vampiro
     (this.progress.broken || []).forEach(k => { const [gx, gy] = String(k).split(',').map(Number); if (w.fg[gy] && w.fg[gy][gx] !== undefined) w.fg[gy][gx] = -1; });
@@ -217,8 +238,10 @@ class CastleScene extends Phaser.Scene {
     this.color = mine ? mine.animal : 'red';
     const sp = w.spawnPoint;
     this.lastAltar = { x: sp.x + (room.players.indexOf(mine) - 1) * 24, y: sp.y };
-    this.player = this.physics.add.sprite(this.lastAltar.x, this.lastAltar.y - 21, 'hero_' + this.color).setScale(3).setDepth(8);
-    this.player.setSize(10, 13);
+    this.sex = (mine && mine.sex) || 'm'; this.heroKey = this.color + '_' + this.sex;
+    const [SCW, SCH] = this.sprMeta.cell;
+    this.player = this.physics.add.sprite(this.lastAltar.x, this.lastAltar.y - 21, 'spr_' + this.heroKey, 0).setDepth(8).setOrigin(0.5, (SCH - 21.5) / SCH);
+    this.player.setSize(30, 39, false); this.player.body.setOffset(SCW / 2 - 15, SCH - 41); // los pies quedan a 2 px del borde inferior de la celda
     this.player.body.setMaxVelocityY(P.maxFall);
     this.dropT = 0;
     this.physics.add.collider(this.player, this.fg, null, (pl, tile) => !(this.dropT > 0 && tile.index >= 0 && tile.index % 8 === K.ONEWAY), this);
@@ -351,10 +374,12 @@ class CastleScene extends Phaser.Scene {
       let r = this.remotes[s.id];
       if (!r) {
         const pl = room.players.find(p => p.id === s.id); if (!pl) return;
-        r = this.remotes[s.id] = { color: pl.animal, name: pl.name, spr: this.add.sprite(s.x, s.y, 'hero_' + pl.animal).setScale(3).setDepth(7),
+        const rk = pl.animal + '_' + (pl.sex || 'm'), RCH = this.sprMeta.cell[1];
+        r = this.remotes[s.id] = { color: pl.animal, heroKey: rk, name: pl.name, spr: this.add.sprite(s.x, s.y, 'spr_' + rk, 0).setOrigin(0.5, (RCH - 21.5) / RCH).setDepth(7),
           tag: this.add.text(0, 0, pl.name, { fontSize: '12px', fontFamily: 'Courier New', color: '#bde', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(9), tx: s.x, ty: s.y };
       }
       r.moving = Math.abs(s.x - r.tx) > 0.5; r.moveT = r.moving ? 0.2 : (r.moveT || 0);
+      if (Math.abs(s.y - r.ty) > 1.2) { r.airT = 0.15; r.up = s.y < r.ty; } if (s.a) r.atkAnim = 0.3; r.dash = !!s.d;
       r.tx = s.x; r.ty = s.y; r.spr.setFlipX(!!s.f); r.dead = !!s.dead; r.hp = s.hp; r.crouch = !!s.c;
       r.spr.setAlpha(s.dead ? 0.2 : (s.d ? 0.5 : 1)); 
       if (s.a && !r.a) this.slashFx(r.spr.x, r.spr.y, s.f ? -1 : 1, r.color);
@@ -1109,7 +1134,7 @@ class CastleScene extends Phaser.Scene {
     if (this.hp <= 0) this.die();
   }
   die() {
-    this.dead = true; this.deadT = 2.8; this.hp = 0; this.player.setAlpha(0.2); this.player.body.setVelocity(0, 0); this.player.body.setAllowGravity(false);
+    this.dead = true; this.deadT = 2.8; this.hp = 0; this.player.setAlpha(0.9); this.player.body.setVelocity(0, 0); this.player.body.setAllowGravity(false);
     this.poof(this.player.x, this.player.y, 12, 0xff4444); this.centerTxt.setText('Has caído...');
   }
   respawn() {
@@ -1124,7 +1149,7 @@ class CastleScene extends Phaser.Scene {
 
     // ---- jugador
     this.playerStep(dt, time, inp);
-    this.tag.setPosition(p.x, p.y - 34);
+    this.tag.setPosition(p.x, p.y - 44);
 
     // ---- zona actual y mapa
     const ar = this.W.areaOf(Math.floor(p.x / T), Math.floor(p.y / T));
@@ -1150,10 +1175,12 @@ class CastleScene extends Phaser.Scene {
 
     // ---- remotos (interpolación)
     Object.values(this.remotes).forEach(r => {
-      r.spr.x += (r.tx - r.spr.x) * 0.35; r.spr.y += (r.ty - r.spr.y) * 0.35; r.tag.setPosition(r.spr.x, r.spr.y - 34);
+      r.spr.x += (r.tx - r.spr.x) * 0.35; r.spr.y += (r.ty - r.spr.y) * 0.35; r.tag.setPosition(r.spr.x, r.spr.y - 44);
       r.moveT = Math.max(0, (r.moveT || 0) - dt);
-      const key = 'hero_' + r.color + (r.crouch ? '_crouch' : (r.moveT > 0 ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : ''));
-      if (r.curTex !== key) { r.curTex = key; r.spr.setTexture(key); }
+      r.atkAnim = Math.max(0, (r.atkAnim || 0) - dt); r.airT = Math.max(0, (r.airT || 0) - dt); r.deadT = r.dead ? (r.deadT || 0) + dt : 0;
+      const st = r.dead ? 'death' : r.atkAnim > 0 ? 'attack' : r.dash ? 'dash' : r.crouch ? 'crouch' : r.airT > 0 ? 'air' : r.moveT > 0 ? 'walk' : 'idle';
+      const fi = heroFrameIdx(this.sprMeta.sheets[r.heroKey], st, time, { vy: r.up ? -1 : 1, prog: st === 'attack' ? 1 - r.atkAnim / 0.3 : r.deadT / 0.9 });
+      if (r.curTex !== fi) { r.curTex = fi; r.spr.setFrame(fi); }
     });
 
     // ---- entidades

@@ -59,7 +59,7 @@ function meFor(r, me) {
   for (const a of ABILITIES) if (out.abil[a] && !r.progress.bosses.includes(ABIL_BOSS[a])) out.abil[a] = false;
   return out;
 }
-const slotInfo = s => (s ? { at: s.at, bosses: (s.world && s.world.bosses ? s.world.bosses.length : 0) } : null);
+const slotInfo = s => (s ? { at: s.at, bosses: (s.world && s.world.bosses ? s.world.bosses.length : 0), sex: s.sex === 'f' ? 'f' : s.sex === 'm' ? 'm' : null } : null);
 const savesInfo = u => { const o = {}; for (const c of ['red', 'blue', 'green', 'purple']) if (u && u.saves && u.saves[c]) o[c] = slotInfo(u.saves[c]); return o; };
 let lastBak = 0;
 function saveUsers() {
@@ -109,8 +109,11 @@ function newCode() {
 }
 const freshProgress = () => ({ abilities: { dash: false, dj: false, wj: false, wings: false, eye: false, pound: false }, bosses: [], broken: [], torches: {} });
 function roomInfo(r) {
-  return { code: r.code, host: r.host, started: r.started, players: Object.values(r.players).map(p => ({ id: p.id, name: p.name, animal: p.animal })) };
+  return { code: r.code, host: r.host, started: r.started, players: Object.values(r.players).map(p => ({ id: p.id, name: p.name, animal: p.animal, sex: p.sex || null })) };
 }
+// aspecto (hombre 'm' / mujer 'f') fijado por la partida guardada de ese color; null si no hay partida o es antigua (aún sin elegir)
+const savedSexOf = (name, color) => { const u = users[name], s = u && u.saves && u.saves[color]; return s && (s.sex === 'f' || s.sex === 'm') ? s.sex : null; };
+function newPlayer(socket, r) { const animal = freeColor(r); return { id: socket.id, name: socket.user, animal, sex: savedSexOf(socket.user, animal) }; }
 function freeColor(r) {
   const used = new Set(Object.values(r.players).map(p => p.animal));
   return COLORS.find(a => !used.has(a)) || COLORS[0];
@@ -208,7 +211,7 @@ io.on('connection', socket => {
     const code = newCode();
     const r = { code, host: socket.id, started: false, finished: false, players: {}, progress: freshProgress(), startedAt: 0 };
     rooms.set(code, r);
-    r.players[socket.id] = { id: socket.id, name: socket.user, animal: freeColor(r) };
+    r.players[socket.id] = newPlayer(socket, r);
     socket.join(code); socket.roomCode = code;
     cb({ ok: true, room: roomInfo(r) });
   }, 0);
@@ -220,11 +223,12 @@ io.on('connection', socket => {
     if (Object.keys(r.players).length >= MAX_PLAYERS) return cb({ ok: false, error: 'Sala llena (máx. 4)' });
     if (Object.values(r.players).some(p => p.name === socket.user)) return cb({ ok: false, error: 'Ya estás en esa sala' });
     leave(socket);
-    r.players[socket.id] = { id: socket.id, name: socket.user, animal: freeColor(r) };
+    r.players[socket.id] = newPlayer(socket, r);
     socket.join(r.code); socket.roomCode = r.code;
     io.to(r.code).emit('room', roomInfo(r));
     cb({ ok: true, room: roomInfo(r) });
     if (r.started && !r.finished) {
+      r.players[socket.id].sex = r.players[socket.id].sex || 'm'; // al entrar en una partida empezada no se puede elegir: hombre por defecto
       const sl = r.cont && users[socket.user] && users[socket.user].saves && users[socket.user].saves[r.players[socket.id].animal];
       socket.emit('started', { room: roomInfo(r), progress: r.progress, late: true, me: sl ? meFor(r, sl.me) : null });
     }
@@ -235,6 +239,16 @@ io.on('connection', socket => {
     if (!r || r.started || !COLORS.includes(color)) return;
     if (Object.values(r.players).some(p => p.id !== socket.id && p.animal === color)) return;
     r.players[socket.id].animal = color;
+    r.players[socket.id].sex = savedSexOf(socket.user, color); // cada personaje tiene su aspecto: si ya tiene partida queda fijo, si no hay que elegirlo
+    io.to(r.code).emit('room', roomInfo(r));
+  });
+
+  // Elegir aspecto (hombre/mujer) del personaje: solo en la sala y mientras no exista una partida guardada de ese color con aspecto fijado
+  on('setSex', sx => {
+    const r = myRoom();
+    if (!r || r.started || (sx !== 'm' && sx !== 'f')) return;
+    const pl = r.players[socket.id]; if (!pl || savedSexOf(socket.user, pl.animal)) return;
+    pl.sex = sx;
     io.to(r.code).emit('room', roomInfo(r));
   });
 
@@ -248,6 +262,7 @@ io.on('connection', socket => {
     r.progress = r.cont ? JSON.parse(JSON.stringify(hslot.world)) : freshProgress();
     r.progress.torches = r.progress.torches || {}; r.progress.broken = Array.isArray(r.progress.broken) ? r.progress.broken : [];
     r.progress.bosses = Array.isArray(r.progress.bosses) ? r.progress.bosses.filter(b => BOSS_IDS.includes(b)) : [];
+    for (const p of Object.values(r.players)) p.sex = savedSexOf(p.name, p.animal) || p.sex || 'm';
     for (const p of Object.values(r.players)) {
       const s = io.sockets.sockets.get(p.id), u = users[p.name], slot = u && u.saves && u.saves[p.animal];
       if (s) s.emit('started', { room: roomInfo(r), progress: r.progress, me: r.cont && slot ? meFor(r, slot.me) : null });
@@ -261,7 +276,7 @@ io.on('connection', socket => {
     const prev = u.saves[pl.animal];
     if (prev && !r.cont && !socket.savedOnce) { u.prev = u.prev || {}; u.prev[pl.animal] = prev; } // al empezar de nuevo se conserva la partida anterior como copia
     socket.savedOnce = true;
-    u.saves[pl.animal] = { me: sanitizeMe(payload), world: JSON.parse(JSON.stringify(r.progress)), at: new Date().toISOString() };
+    u.saves[pl.animal] = { me: sanitizeMe(payload), world: JSON.parse(JSON.stringify(r.progress)), at: new Date().toISOString(), sex: pl.sex === 'f' ? 'f' : 'm' };
     saveUsers();
     socket.emit('saved', { color: pl.animal, info: slotInfo(u.saves[pl.animal]) });
   });

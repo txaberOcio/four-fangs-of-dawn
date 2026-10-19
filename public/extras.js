@@ -411,11 +411,30 @@ Object.assign(CastleScene.prototype, {
     this.tweens.add({ targets: t, y: y - 36, alpha: 0, duration: 900, onComplete: () => t.destroy() });
   },
 
+  // ---- sprites de los protagonistas (hojas en public/sprites, una por personaje y aspecto)
+  setupHeroSheets() {
+    const m = this.sprMeta = this.cache.json.get('sprmeta'), [cw, ch] = m.cell;
+    for (const n in m.sheets) { const t = this.textures.get('spr_' + n); for (let i = 0; i < m.sheets[n].frames; i++) t.add(i, 0, (i % m.cols) * cw, ((i / m.cols) | 0) * ch, cw, ch); }
+  },
+  heroAnim(time, dt, onFloor, dir) {
+    const p = this.player, meta = this.sprMeta.sheets[this.heroKey];
+    if (this.atkT > 0 && !(this.atkAnim > 0)) this.atkAnim = 0.3; this.atkAnim = Math.max(0, (this.atkAnim || 0) - dt);
+    let st = 'idle', prog = 0;
+    if (this.dead) { st = 'death'; prog = (2.8 - this.deadT) / 0.9; }
+    else if (this.atkAnim > 0) { st = 'attack'; prog = 1 - this.atkAnim / 0.3; }
+    else if (this.dashT > 0) st = 'dash';
+    else if (this.stun > 0) st = 'hurt';
+    else if (this.crouching) st = 'crouch';
+    else if (!onFloor) st = 'air';
+    else if (dir !== 0) st = 'walk';
+    const fi = heroFrameIdx(meta, st, time, { vy: p.body.velocity.y, prog });
+    if (this.curTex !== fi) { this.curTex = fi; p.setFrame(fi); }
+  },
   // ---- agacharse
   setCrouch(on) {
-    if (this.crouching === on) return; this.crouching = on; const b = this.player.body;
-    if (on) { b.setSize(10, 8, false); b.setOffset(1, 5.5); this.player.setTexture('hero_' + this.color + '_crouch'); }
-    else { b.setSize(10, 13, false); b.setOffset(1, 0.5); this.player.setTexture('hero_' + this.color); }
+    if (this.crouching === on) return; this.crouching = on; const b = this.player.body, [cw, ch] = this.sprMeta.cell;
+    if (on) { b.setSize(30, 24, false); b.setOffset(cw / 2 - 15, ch - 26); }
+    else { b.setSize(30, 39, false); b.setOffset(cw / 2 - 15, ch - 41); }
     this.curTex = null;
   },
   canStand() {
@@ -449,7 +468,7 @@ Object.assign(CastleScene.prototype, {
     if (inp.J.N) this.muteTxt.setAlpha(Music.toggleMute() ? 0.3 : 1);
     if (this.shopOpen) this.shopKeys(inp.J);
     else if (this.dlg && (inp.ePress || inp.J.ENTER || inp.J.SPACE || inp.attackPress)) this.dlgAdvance();
-    if (this.dead) { this.deadT -= dt; if (this.deadT <= 0) this.respawn(); return; }
+    if (this.dead) { this.deadT -= dt; this.heroAnim(time, dt, true, 0); if (this.deadT <= 0) this.respawn(); return; }
     this.invuln = Math.max(0, this.invuln - dt); this.atkCd -= dt; this.dashCd -= dt; this.stun -= dt;
     p.setAlpha(this.invuln > 0 && ((time >> 6) & 1) && this.dashT <= 0 ? 0.35 : (this.dashT > 0 ? 0.5 : 1));
     const onFloor = b.blocked.down || b.touching.down;
@@ -466,11 +485,7 @@ Object.assign(CastleScene.prototype, {
     if (wantCrouch && !this.crouching) this.setCrouch(true); else if (!wantCrouch && this.crouching && this.canStand()) this.setCrouch(false);
     const wall = b.blocked.left ? -1 : b.blocked.right ? 1 : 0;
     const speed = P.speed * (this.slowT > 0 ? 0.5 : 1) * (this.pas.speed || 1) * (this.buffs.spd > 0 ? 1.35 : 1) * (this.crouching ? 0.5 : 1);
-    if (!this.crouching) { // caminar / saltar: fotogramas de piernas
-      const moving = onFloor && dir !== 0 && this.dashT <= 0 && this.stun <= 0;
-      const key = 'hero_' + this.color + (moving ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : (!onFloor ? '_w2' : (((time / 550) | 0) % 2 ? '_i' : '')));
-      if (this.curTex !== key) { this.curTex = key; p.setTexture(key); }
-    }
+    this.heroAnim(time, dt, onFloor, dir);
 
     if (this.dashT > 0) { this.dashT -= dt; b.setVelocity(this.dashDir * P.dashSpeed, 0); b.setAllowGravity(false); if (this.dashT <= 0) { b.setAllowGravity(true); b.setVelocityX(this.dashDir * P.speed); } }
     else if (this.stun > 0 || this.wjLock > 0) { this.wjLock -= dt; }
@@ -1552,3 +1567,17 @@ Object.assign(CastleScene.prototype, {
     }
   });
 })();
+
+// fotograma de la hoja de sprites según el estado (reposo, caminar, aire, ataque, agachado, impulso, daño, muerte)
+function heroFrameIdx(meta, st, t, o = {}) {
+  const a = meta.anims[st] || meta.anims.idle, n = a[1] - a[0] + 1;
+  switch (st) {
+    case 'idle': return a[0] + (((t / 260) | 0) % n);
+    case 'walk': return a[0] + (((t / 95) | 0) % n);
+    case 'air': return o.vy < 0 ? a[0] : a[Math.min(1, n - 1)];
+    case 'attack': case 'death': return a[0] + Math.max(0, Math.min(n - 1, ((o.prog || 0) * n) | 0));
+    case 'dash': return a[0] + (((t / 70) | 0) % n);
+    case 'hurt': return a[0] + (((t / 140) | 0) % n);
+    default: return a[0];
+  }
+}

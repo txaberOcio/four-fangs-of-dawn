@@ -62,7 +62,7 @@
   area('hidden', 'Sala Oculta', 0, 2, 5, 1, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['cry', 13, 16]]);
   // --- Ala de la Biblioteca (rama larga y opcional) ---
   area('archivo', 'Archivo', 1, 3, 3, 1, 1, [['npc', 'archivist', 17, 16], ['altar', 7, 16], ['tri', 'tr', 6], ['E', 'sk', 7, 16], ['E', 'sk', 21, 16], ['E', 'bat', 18, 8]]);
-  area('lect', 'Sala de Lectura', 1, 2, 3, 1, 1, [['page', 12, 16], ['forge', 21, 10], ['tri', 'tl', 5], ['B', 8, 14, 2, 3], ['B', 17, 15, 3, 2], ['P', 4, 11, 4], ['P', 20, 11, 4], ['E', 'sk', 6, 16], ['E', 'kn', 22, 16], ['E', 'bat', 12, 8]]);
+  area('lect', 'Sala de Lectura', 1, 2, 3, 1, 1, [['page', 12, 16], ['tri', 'tl', 5], ['B', 8, 14, 2, 3], ['B', 17, 15, 3, 2], ['P', 4, 11, 4], ['P', 20, 11, 4], ['E', 'sk', 6, 16], ['E', 'kn', 22, 16], ['E', 'bat', 12, 8]]);
   area('gbib', 'Gran Biblioteca', 1, 0, 3, 2, 1, [['forge', 42, 11], ['tri', 'tl', 8], ['tri', 'tr', 8], ['climb', 11, 4, 'norm', true], ['B', 20, 14, 2, 3], ['B', 30, 15, 3, 2], ['P', 24, 11, 5], ['P', 40, 12, 5],
     ['E', 'kn', 17, 16, { elite: true, name: 'Bibliotecario Maldito', reward: { souls: 50, item: 'bomb' } }], ['E', 'kn', 36, 16], ['E', 'gh', 26, 7], ['E', 'gh', 44, 8], ['E', 'bat', 10, 6]]);
   area('obs', 'Observatorio', 1, 0, 1, 1, 2, [['tri', 'tl', 7], ['tri', 'tr', 7], ['climb', 11, 4, 'dash', false], ['cry', 13, 2], ['E', 'gh', 6, 24], ['E', 'gh', 20, 14], ['E', 'bat', 12, 30]]);
