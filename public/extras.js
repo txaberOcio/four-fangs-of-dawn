@@ -18,7 +18,7 @@ const WEAPONS = {
 const PASSIVES = {
   red: { name: 'Sed de sangre', life: 0.40 },
   blue: { name: 'Visión nocturna', aura: 1.8, projPlus: 1, speed: 0.94 }, // desventajas: +1 daño de proyectiles y algo más lento
-  green: { name: 'Cazadora de almas', souls: 1.5, dmgTaken: 1.5 },    // desventaja: +50% daño recibido y sin romper muros
+  green: { name: 'Cazadora de almas', souls: 1.5, dmgTaken: 1.5, life: 0, noKnock: true },    // desventaja: +50% daño recibido y sin romper muros
   purple: { name: 'Piel de sombra', hp: 2, speed: 0.82 },             // desventaja: más lento
 };
 // catálogo de objetos; qué vende cada mercader y cuándo se define en SHOP_STOCK
@@ -38,7 +38,7 @@ const ITEMS = [
   { id: 'talis', name: 'Talismán de almas', price: 0, gems: 3, perm: 'souls', max: 2, desc: '+20% de almas de los enemigos para siempre (hasta 2 veces).' },
 ];
 // Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
-const GEMS_BOSS = { garg: 2, bishop: 3, clock: 4, archon: 4, reina: 4, conde: 5, aurora: 6, vesper: 6, alcaide: 5, madre: 7 }; // gemas que suelta cada jefe la primera vez
+const GEMS_BOSS = { garg: 2, bishop: 3, clock: 4, archon: 6, reina: 4, conde: 5, aurora: 6, vesper: 6, alcaide: 5, madre: 7 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
 // [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
 // Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
@@ -413,6 +413,116 @@ Object.assign(CastleScene.prototype, {
     this.tweens.add({ targets: t, y: y - 36, alpha: 0, duration: 900, onComplete: () => t.destroy() });
   },
 
+  // ---- escena: se rompe un sello de la Sala del Trono (al caer el Archimago o la Reina de Huesos)
+  sealBreakScene(id) {
+    const pb = this.progress.bosses, n = (pb.includes('archon') ? 1 : 0) + (pb.includes('reina') ? 1 : 0), both = n >= 2 || pb.includes('conde');
+    const isA = id === 'archon', col = isA ? 0xb48aff : 0xe8e0c8, col2 = isA ? 0x6a3fd0 : 0xb0a070, cx = SW / 2, cy = SH / 2 - 40, objs = [];
+    const add = o => { o.setScrollFactor(0).setDepth(70); objs.push(o); return o; };
+    const dim = add(this.add.rectangle(cx, SH / 2, SW, SH, 0x000000, 1)).setAlpha(0); this.tweens.add({ targets: dim, alpha: 0.6, duration: 400 });
+    // el sello: aro doble, estrella de seis puntas y runas
+    const seal = add(this.add.graphics()).setPosition(cx, cy).setAlpha(0).setScale(0.5);
+    seal.lineStyle(5, col, 1).strokeCircle(0, 0, 80); seal.lineStyle(2, col2, 1).strokeCircle(0, 0, 66);
+    for (let t = 0; t < 2; t++) { seal.lineStyle(3, col, 1).beginPath(); for (let i = 0; i < 3; i++) { const a = -Math.PI / 2 + t * Math.PI / 3 + i * 2 * Math.PI / 3, x = Math.cos(a) * 66, y = Math.sin(a) * 66; if (i === 0) seal.moveTo(x, y); else seal.lineTo(x, y); } seal.closePath().strokePath(); }
+    for (let i = 0; i < 24; i++) { const a = i * Math.PI / 12, r0 = i % 2 ? 70 : 68, r1 = 78; seal.lineStyle(2, col2, 1).lineBetween(Math.cos(a) * r0, Math.sin(a) * r0, Math.cos(a) * r1, Math.sin(a) * r1); }
+    seal.fillStyle(col, 0.9).fillCircle(0, 0, 9); seal.fillStyle(col2, 0.35).fillCircle(0, 0, 30);
+    const glow = add(this.add.image(cx, cy, 'glow').setScale(3.2).setTint(col).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0));
+    this.tweens.add({ targets: seal, alpha: 1, scale: 1, duration: 600, ease: 'Back.out' }); this.tweens.add({ targets: glow, alpha: 0.6, duration: 600 });
+    SFX.altar();
+    // grietas que se extienden
+    const cr = add(this.add.graphics()).setPosition(cx, cy);
+    const crack = (a0, len) => { let x = 0, y = 0, a = a0; cr.lineStyle(3, 0xffffff, 1).beginPath().moveTo(0, 0); for (let s = 0; s < 6; s++) { a += (Math.random() - 0.5) * 0.9; x += Math.cos(a) * len / 6; y += Math.sin(a) * len / 6; cr.lineTo(x, y); } cr.strokePath(); };
+    this.time.delayedCall(900, () => { for (let i = 0; i < 3; i++) crack(Math.random() * 6.28, 70); beep(180, 0.15, 'square', 0.04, -80); this.cameras.main.shake(180, 0.004); });
+    this.time.delayedCall(1300, () => { for (let i = 0; i < 4; i++) crack(Math.random() * 6.28, 85); beep(140, 0.2, 'square', 0.05, -80); this.cameras.main.shake(220, 0.006); });
+    // el sello estalla en fragmentos
+    this.time.delayedCall(1800, () => {
+      seal.destroy(); cr.destroy(); this.cameras.main.flash(260, 255, 255, 255); this.cameras.main.shake(500, 0.012); SFX.boss();
+      for (let i = 0; i < 34; i++) {
+        const a = Math.random() * 6.28, d = 110 + Math.random() * 170, sz = 5 + Math.random() * 11;
+        const sh = add(this.add.rectangle(cx, cy, sz, sz * (0.5 + Math.random()), Math.random() < 0.5 ? col : col2, 1)).setAngle(Math.random() * 360);
+        this.tweens.add({ targets: sh, x: cx + Math.cos(a) * d, y: cy + Math.sin(a) * d + 40, angle: sh.angle + 300 * (Math.random() < 0.5 ? -1 : 1), alpha: 0, duration: 1100 + Math.random() * 600, ease: 'Quad.out' });
+      }
+      this.tweens.add({ targets: glow, alpha: 0, scale: 7, duration: 700 });
+      const f = (s, c) => ({ fontSize: fsz(s), fontFamily: 'Courier New', color: c, stroke: '#000', strokeThickness: 5, align: 'center', wordWrap: { width: Math.min(SW - 40, 640) } });
+      const t1 = add(this.add.text(cx, cy + 118, 'SELLO ROTO  ' + Math.min(n, 2) + '/2', f('28px', '#ffd98a'))).setOrigin(0.5).setAlpha(0);
+      const t2 = add(this.add.text(cx, cy + 156, isA ? 'El sello de tinta del Archimago Silente se ha roto.' : 'El sello de hueso de la Reina de Huesos se ha roto.', f('15px', '#ffffff'))).setOrigin(0.5).setAlpha(0);
+      const t3 = add(this.add.text(cx, cy + 186, both ? '¡Los dos sellos están rotos! La puerta de la Sala del Trono se abre.' : 'Falta el sello ' + (isA ? 'de la Reina de Huesos (Catacumbas Reales).' : 'del Archimago Silente (Archivo Prohibido).'), f('15px', '#9fffb0'))).setOrigin(0.5).setAlpha(0);
+      this.tweens.add({ targets: [t1, t2, t3], alpha: 1, duration: 500 });
+    });
+    this.time.delayedCall(6200, () => { this.tweens.add({ targets: objs, alpha: 0, duration: 600, onComplete: () => objs.forEach(o => { try { o.destroy(); } catch (e) { /* ya destruido */ } }) }); });
+  },
+  // ---- jefes especialmente fuertes (cfg.fearsome): al empezar el combate su imagen se duplica y tiembla; el eco queda durante la pelea
+  fearsomeFx(e, time) {
+    if (!e.aggro || e.dead || !e.spr.active) { if (e.twin) { e.twin.destroy(); e.twin = null; } return; }
+    if (!e.twin) {
+      e.twin = this.add.sprite(e.spr.x, e.spr.y, e.spr.texture.key).setDepth(e.spr.depth - 0.1).setAlpha(0.5).setTint(0xff4a4a); e.twinStart = time;
+      this.twins = this.twins || new Set(); this.twins.add(e);
+      this.cameras.main.shake(900, 0.01); this.cameras.main.flash(250, 255, 60, 60); SFX.boss();
+      this.floatText(e.spr.x, e.spr.y - 100, '¡JEFE TEMIBLE!', '#ff6a6a');
+    }
+    const intro = time - e.twinStart < 2200, amp = intro ? 9 : 3.5, side = intro ? 20 : 14;
+    e.twin.setTexture(e.spr.texture.key).setFlipX(e.spr.flipX).setScale(e.spr.scaleX, e.spr.scaleY).setAlpha(0.45 + 0.15 * Math.sin(time / 70))
+      .setPosition(e.spr.x + side * Math.sin(time / 130) + (Math.random() - 0.5) * amp, e.spr.y + (Math.random() - 0.5) * amp).setAngle((Math.random() - 0.5) * amp);
+    e.spr.setAngle((Math.random() - 0.5) * (intro ? 5 : 1.6)); // el propio jefe también tiembla (solo se ve: la caja de golpes no gira)
+  },
+  // liana: se dibuja la cuerda de la que cuelga (oscila) y el bicho se balancea; se pone roja cuando va a disparar
+  vineFx(e, time) {
+    if (e.dead || !e.spr.active) return;
+    if (!e.rope) { this.trackFx(e); e.rope = this.add.graphics().setDepth(e.spr.depth - 0.1); }
+    const g = e.rope, x = e.spr.x, y1 = e.spr.y - 20, y0 = e.ay - 6, sway = Math.sin(time / 650 + x * 0.05) * 7; g.clear();
+    const pts = []; for (let i = 0; i <= 8; i++) { const t = i / 8; pts.push([x + Math.sin(Math.PI * t) * sway, y0 + (y1 - y0) * t]); }
+    g.lineStyle(5, 0x24471f, 1).beginPath().moveTo(pts[0][0], pts[0][1]); pts.forEach(p => g.lineTo(p[0], p[1])); g.strokePath();
+    g.lineStyle(2, 0x5a9a3a, 1).beginPath().moveTo(pts[0][0] - 1, pts[0][1]); pts.forEach(p => g.lineTo(p[0] - 1, p[1])); g.strokePath();
+    pts.forEach((p, i) => { if (i % 2 === 1 && i < 8) g.fillStyle(0x8fd35a, 1).fillEllipse(p[0] + (i % 4 === 1 ? 5 : -5), p[1], 6, 3); }); // hojitas
+    e.spr.setAngle(Math.sin(time / 650 + x * 0.05) * 5);
+    if (e.tele) { e.spr.setTint(0xff7777); e.teleTint = true; } else if (e.teleTint) { e.spr.clearTint(); e.teleTint = false; }
+  },
+  trackFx(e) { this.twins = this.twins || new Set(); this.twins.add(e); },
+  sweepTwins() { // quita los ecos y marcas de enemigos que ya no existen
+    if (!this.twins) return;
+    this.twins.forEach(e => { if (!this.ents.has(e.id) || e.dead || !e.spr.active) { ['twin', 'aura', 'wmText', 'goldG', 'rope'].forEach(k => { if (e[k]) { e[k].destroy(); e[k] = null; } }); this.twins.delete(e); } });
+  },
+  // ---- escena de aprendizaje: al empezar el combate con la Madre Moho (azul, con armadura) el personaje dice que va a romperle el escudo con el Pisotón y se lanza solo
+  tutPending(id) { try { return !!this.abil.pound && !localStorage.getItem('ffd_tut_' + id); } catch (err) { return !!this.abil.pound; } },
+  startMadreCut(e) {
+    if (this.cut || this.dead || !this.tutPending('madre')) return;
+    const p = this.player;
+    const bubble = this.add.text(p.x, p.y - 60, '¡Voy a romperle el escudo\ncon el Pisotón que acabo de aprender!', { fontSize: fsz('15px'), fontFamily: 'Courier New', color: '#ffffff', backgroundColor: '#1b1230', padding: { x: 10, y: 7 }, align: 'center' }).setOrigin(0.5, 1).setDepth(40);
+    this.cut = { id: 'madre', boss: e, phase: 'say', t: 0, vx: 0, bubble };
+  },
+  cutStep(dt, time) {
+    const c = this.cut; if (!c) return;
+    const p = this.player, b = p.body, e = c.boss;
+    c.t += dt; this.invuln = Math.max(this.invuln, 0.3);
+    if (c.bubble) c.bubble.setPosition(p.x, p.y - 60);
+    if (!e || e.dead || !e.spr.active) { this.endCut(); return; }
+    this.facing = Math.sign(e.spr.x - p.x) || this.facing;
+    if (c.phase === 'say') { b.setVelocityX(0); if (c.t > 2.4) { c.phase = 'jump'; c.t = 0; c.vx = Phaser.Math.Clamp((e.spr.x - Math.sign(e.spr.x - p.x) * 70 - p.x) / 0.7, -380, 380); b.setVelocityY(-720); if (c.bubble) { c.bubble.destroy(); c.bubble = null; } SFX.jump(); } }
+    else if (c.phase === 'jump') { if (b.velocity.y >= -40 || c.t > 0.8) { c.phase = 'dive'; c.t = 0; } }
+    else if (c.t > 2.5) this.endCut(); // seguridad: el Pisotón termina la escena al aterrizar (poundLand)
+  },
+  endCut() { const c = this.cut; if (!c) return; this.invuln = Math.max(this.invuln, 1.2); if (c.bubble) c.bubble.destroy(); try { localStorage.setItem('ffd_tut_' + c.id, '1'); } catch (err) { /* sin almacenamiento */ } this.cut = null; },
+  // Lenguaje de color: AZUL = escudo o invulnerable (no le haces daño); DORADO = punto débil (aquí sí).
+  markFx(e, time) {
+    const alive = !e.dead && e.spr.active, p = 0.5 + 0.5 * Math.sin(time / 160);
+    if (e.type === 'madre') { if (e.aggro && !e.seenAggro) { e.seenAggro = true; this.startMadreCut(e); } else if (!e.aggro) e.seenAggro = false; }
+    if (alive && (e.shield || e.cfg.inv) && !e.melt) {
+      if (!e.aura) { this.trackFx(e); e.aura = this.add.graphics().setDepth(e.spr.depth + 0.2); }
+      const w = e.cfg.hb[0] + 14, h = e.cfg.hb[1] + 14; e.aura.clear();
+      e.aura.fillStyle(0x4aa8ff, 0.14 + 0.1 * p).fillEllipse(e.spr.x, e.spr.y, w, h).lineStyle(3, 0x9fd8ff, 0.55 + 0.35 * p).strokeEllipse(e.spr.x, e.spr.y, w, h);
+    } else if (e.aura) { e.aura.destroy(); e.aura = null; }
+    if (e.type === 'vine') this.vineFx(e, time);
+    if (e.type !== 'madre') return;
+    // Madre Moho con armadura: flecha dorada ▼ ("golpéala desde arriba"), solo si ya tienes el Pisotón; sin armadura: brillo dorado
+    if (alive && e.aggro && e.shield && !e.melt && this.abil.pound) {
+      if (!e.wmText) { this.trackFx(e); e.wmText = this.add.text(0, 0, '▼', { fontSize: fsz('34px'), fontFamily: 'Courier New', color: '#ffc83d', stroke: '#000', strokeThickness: 5 }).setOrigin(0.5).setDepth(30); }
+      e.wmText.setPosition(e.spr.x, e.spr.y - 78 + Math.sin(time / 150) * 6).setAlpha(0.6 + 0.4 * Math.sin(time / 120));
+    } else if (e.wmText) { e.wmText.destroy(); e.wmText = null; }
+    if (alive && e.aggro && !e.shield && !e.melt) {
+      if (!e.goldG) { this.trackFx(e); e.goldG = this.add.graphics().setDepth(e.spr.depth + 0.2); }
+      const w = e.cfg.hb[0] + 24, h = e.cfg.hb[1] + 24; e.goldG.clear();
+      e.goldG.fillStyle(0xffc83d, 0.16 + 0.12 * p).fillEllipse(e.spr.x, e.spr.y, w, h).lineStyle(3, 0xffe28a, 0.6 + 0.3 * p).strokeEllipse(e.spr.x, e.spr.y, w, h);
+    } else if (e.goldG) { e.goldG.destroy(); e.goldG = null; }
+  },
   // ---- agacharse
   setCrouch(on) {
     if (this.crouching === on) return; this.crouching = on; const b = this.player.body;

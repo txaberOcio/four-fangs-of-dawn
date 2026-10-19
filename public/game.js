@@ -119,21 +119,23 @@ function endGame() { if (game) { game.destroy(true); game = null; } setupTouch(f
 // ---------- Configuración de entidades ----------
 const EN = {
   sk: { tex: 'sk', sc: 3, body: [10, 13], hp: 2, dmg: 1, spd: 55, hb: [26, 36], kind: 'walk' },
-  kn: { tex: 'kn', sc: 3, body: [12, 15], hp: 5, dmg: 2, spd: 38, hb: [34, 44], kind: 'walk' },
+  kn: { tex: 'kn', sc: 3, body: [12, 15], hp: 5, dmg: 2, spd: 38, hb: [34, 44], kind: 'walk', shielded: true }, // shielded: levanta y baja el escudo (azul) por turnos
   bat: { tex: 'bat1', sc: 3, body: [10, 6], hp: 1, dmg: 1, spd: 90, hb: [28, 18], kind: 'bat' },
   gh: { tex: 'gh', sc: 3, body: [8, 10], hp: 3, dmg: 1, spd: 45, hb: [24, 32], kind: 'ghost' },
   garg: { tex: 'garg', sc: 4, body: [12, 14], hp: 12, dmg: 2, hb: [50, 56], kind: 'boss' },
-  bishop: { tex: 'bishop', sc: 4, body: [10, 14], hp: 15, dmg: 1, hb: [40, 56], kind: 'boss', fly: true },
-  clock: { tex: 'clock', sc: 4, body: [12, 15], hp: 18, dmg: 2, hb: [52, 60], kind: 'boss' },
+  bishop: { tex: 'bishop', sc: 4, body: [10, 14], hp: 22, dmg: 1, hb: [40, 56], kind: 'boss', fly: true },
+  clock: { tex: 'clock', sc: 4, body: [12, 15], hp: 32, dmg: 2, hb: [52, 60], kind: 'boss' },
   conde: { tex: 'conde', sc: 4, body: [10, 15], hp: 42, dmg: 2, hb: [48, 60], kind: 'boss', fly: true },
-  archon: { tex: 'archon', sc: 4, body: [10, 14], hp: 26, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
-  reina: { tex: 'reina', sc: 4, body: [12, 14], hp: 30, dmg: 2, hb: [50, 56], kind: 'boss' },
-  aurora: { tex: 'aurora', sc: 4, body: [10, 14], hp: 24, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
-  vesper: { tex: 'vesper', sc: 4, body: [10, 15], hp: 24, dmg: 2, hb: [48, 60], kind: 'boss' },
+  archon: { tex: 'archon', sc: 4, body: [10, 14], hp: 64, dmg: 2, hb: [40, 56], kind: 'boss', fly: true, fearsome: true }, // fearsome: jefe especialmente fuerte (su imagen se duplica y tiembla al empezar el combate)
+  reina: { tex: 'reina', sc: 4, body: [12, 14], hp: 28, dmg: 2, hb: [50, 56], kind: 'boss' },
+  aurora: { tex: 'aurora', sc: 4, body: [10, 14], hp: 36, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
+  vesper: { tex: 'vesper', sc: 4, body: [10, 15], hp: 36, dmg: 2, hb: [48, 60], kind: 'boss' },
   // Calabozos Profundos
   slug: { tex: 'limo', sc: 3, body: [14, 10], hp: 3, dmg: 1, spd: 28, hb: [40, 26], kind: 'walk', slime: true },
   shroom: { tex: 'hongo', sc: 3, body: [14, 14], hp: 4, dmg: 1, spd: 0, hb: [40, 40], kind: 'turret' },
   vine: { tex: 'raiz', sc: 3, body: [12, 14], hp: 5, dmg: 1, spd: 0, hb: [40, 44], kind: 'ceil', fly: true },
+  moth: { tex: 'esporas', sc: 3, body: [14, 12], hp: 3, dmg: 1, spd: 60, hb: [44, 38], kind: 'moth', fly: true }, // polilla de esporas: revolotea y suelta esporas
+  magma: { tex: 'magma', sc: 3, body: [14, 10], hp: 4, dmg: 1, spd: 30, hb: [42, 30], kind: 'walk', ember: true }, // babosa de magma: deja brasas
   pris: { tex: 'preso', sc: 3, body: [12, 15], hp: 6, dmg: 2, spd: 42, hb: [34, 44], kind: 'walk', rez: true, throws: true },
   alcaide: { tex: 'carcelero', sc: 4, body: [12, 15], hp: 32, dmg: 2, hb: [54, 62], kind: 'boss' },
   madre: { tex: 'driade', sc: 5, body: [14, 15], hp: 44, dmg: 2, hb: [64, 74], kind: 'boss' },
@@ -1178,11 +1180,11 @@ class CastleScene extends Phaser.Scene {
       this.projs.forEach(pr => { pr.spr.x += (pr.tx - pr.spr.x) * 0.5; pr.spr.y += (pr.ty - pr.spr.y) * 0.5; });
     }
     this.ents.forEach(e => { if (e.type === 'saw') e.spr.angle += 520 * dt; });
-    let boss = null;
-    this.ents.forEach(e => { if (e.boss && e.aggro) boss = e; if (e.boss) { if (e.tele) e.spr.setTint(0xff7777); else if (e.shield) e.spr.setTint(0x8fc8ff); else if (e.flash <= 0) e.spr.clearTint(); } });
+    let boss = null; this.sweepTwins();
+    this.ents.forEach(e => { this.markFx(e, time); if (e.cfg.fearsome) this.fearsomeFx(e, time); if (e.boss && e.aggro) boss = e; if (e.boss) { if (e.tele) e.spr.setTint(0xff7777); else if (e.shield) e.spr.setTint(0x8fc8ff); else if (e.flash <= 0) e.spr.clearTint(); } });
     this.bossBar.clear(); Music.setBossKind(boss ? (['aurora', 'archon', 'clock'].includes(boss.type) ? 1 : ['vesper', 'reina', 'conde'].includes(boss.type) ? 2 : 0) : 0); Music.setBoss(!!boss);
     if (boss) {
-      this.bossBar.fillStyle(0x000000, 0.7).fillRect(SW / 2 - 202, SH - 56, 404, 14).fillStyle(boss.type === 'madre' && boss.melt ? 0x6a6a7a : boss.type === 'madre' && boss.shield ? 0x4a8fd0 : 0xcc2233, 1).fillRect(SW / 2 - 200, SH - 54, 400 * Math.max(0, boss.hp / boss.max), 10);
+      this.bossBar.fillStyle(0x000000, 0.7).fillRect(SW / 2 - 202, SH - 56, 404, 14).fillStyle(boss.type === 'madre' && boss.melt ? 0x6a6a7a : boss.type === 'madre' && boss.shield ? 0x4a8fd0 : boss.type === 'madre' ? 0xffc83d : 0xcc2233, 1).fillRect(SW / 2 - 200, SH - 54, 400 * Math.max(0, boss.hp / boss.max), 10);
       if (boss.type === 'madre' && (boss.shield || boss.melt)) this.bossBar.lineStyle(2, 0x8fc8ff, 1).strokeRect(SW / 2 - 203, SH - 57, 406, 16); // marco azul: armadura de raíces
       this.bossName.setText((boss.name || '') + (boss.prize ? '  ·  premio: ' + boss.prize.split(':')[0] : '') + (boss.type === 'madre' ? (boss.melt ? '  ·  DILUIDA: intocable' : boss.shield ? '  ·  ARMADURA: rómpela con el Pisotón (en el aire, mantén ↓)' : '  ·  ¡SIN ARMADURA! ¡atácala!') : ''));
     } else this.bossName.setText('');
