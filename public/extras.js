@@ -552,7 +552,7 @@ Object.assign(CastleScene.prototype, {
   playerStep(dt, time, inp) {
     const K_ = this.keys, p = this.player, b = p.body, held = inp.held;
     if (inp.bookPress && !this.shopOpen && !this.dlg) this.toggleBook();
-    const ui = this.shopOpen || !!this.dlg || this.bookOpen || this.travelOpen || this.imbueOpen;
+    const ui = this.shopOpen || !!this.dlg || this.bookOpen || this.travelOpen || this.imbueOpen || (!!this.cut && this.cut.phase !== 'dive'); // en la escena de aprendizaje el jugador no controla
     if (this.bookOpen) this.bookKeys(inp.J);
     if (this.imbueOpen) this.imbueKeys(inp.J);
     if (this.travelOpen) this.travelKeys(inp.J);
@@ -561,7 +561,8 @@ Object.assign(CastleScene.prototype, {
     if (inp.J.N) this.muteTxt.setAlpha(Music.toggleMute() ? 0.3 : 1);
     if (this.shopOpen) this.shopKeys(inp.J);
     else if (this.dlg && (inp.ePress || inp.J.ENTER || inp.J.SPACE || inp.attackPress)) this.dlgAdvance();
-    if (this.dead) { this.deadT -= dt; if (this.deadT <= 0) this.respawn(); return; }
+    if (this.dead) { if (this.cut) this.endCut(); this.deadT -= dt; if (this.deadT <= 0) this.respawn(); return; }
+    this.cutStep(dt, time);
     this.invuln = Math.max(0, this.invuln - dt); this.atkCd -= dt; this.dashCd -= dt; this.stun -= dt;
     p.setAlpha(this.invuln > 0 && ((time >> 6) & 1) && this.dashT <= 0 ? 0.35 : (this.dashT > 0 ? 0.5 : 1));
     const onFloor = b.blocked.down || b.touching.down;
@@ -570,7 +571,7 @@ Object.assign(CastleScene.prototype, {
     this.wasFloor = onFloor; this.lastVy = b.velocity.y;
     if (onFloor) { this.coyote = 0.1; this.jumpsUsed = 0; this.dashAvail = true; if (!this.nearSpikes()) { this.lastGround.x = p.x; this.lastGround.y = p.y; } } else this.coyote -= dt;
     const left = !ui && (held(K_.LEFT, K_.A) || touch.left || pad.left), right = !ui && (held(K_.RIGHT, K_.D) || touch.right || pad.right);
-    const crouchHeld = !ui && (held(K_.DOWN, K_.S) || touch.down || pad.down);
+    const crouchHeld = (!ui && (held(K_.DOWN, K_.S) || touch.down || pad.down)) || (!!this.cut && this.cut.phase === 'dive');
     const dir = (right ? 1 : 0) - (left ? 1 : 0);
     if (dir) this.facing = dir;
     p.setFlipX(this.facing < 0);
@@ -586,14 +587,17 @@ Object.assign(CastleScene.prototype, {
 
     if (this.dashT > 0) { this.dashT -= dt; b.setVelocity(this.dashDir * P.dashSpeed, 0); b.setAllowGravity(false); if (this.dashT <= 0) { b.setAllowGravity(true); b.setVelocityX(this.dashDir * P.speed); } }
     else if (this.stun > 0 || this.wjLock > 0) { this.wjLock -= dt; }
-    else b.setVelocityX(dir * speed);
+    else b.setVelocityX(this.cut && (this.cut.phase === 'jump' || this.cut.phase === 'dive') ? this.cut.vx : dir * speed);
 
     // salto, caída por plataformas
     this.dropT -= dt;
     let dropped = false;
     if (!ui && inp.jumpPress && crouchHeld && onFloor && this.stun <= 0) {
       const under = this.fg.getTileAtWorldXY(p.x, p.y + 23);
-      if (under && under.index >= 0 && under.index % 8 === K.ONEWAY) { this.dropT = 0.4; b.setVelocityY(140); this.coyote = 0; this.jumpBuf = 0; dropped = true; if (this.crouching && this.canStand()) this.setCrouch(false); }
+      if (under && under.index >= 0 && under.index % 8 === K.CRACK && !this.W.roots.has(under.y * this.W.Wt + under.x)) { // ↓ + saltar sobre un suelo agrietado lo rompe (y las capas agrietadas de debajo)
+        for (let dy = 0; dy < 3; dy++) { const t = this.fg.getTileAt(under.x, under.y + dy); if (!t || t.index < 0 || t.index % 8 !== K.CRACK || this.W.roots.has(t.y * this.W.Wt + t.x)) break; this.fg.removeTileAt(t.x, t.y); this.wallBroken(t.x, t.y); socket.emit('broke', { gx: t.x, gy: t.y }); this.poof((t.x + 0.5) * T, (t.y + 0.5) * T, 6, 0xaaaaaa); }
+        SFX.hit(); this.jumpBuf = 0; dropped = true; this.coyote = 0;
+      } else if (under && under.index >= 0 && under.index % 8 === K.ONEWAY) { this.dropT = 0.4; b.setVelocityY(140); this.coyote = 0; this.jumpBuf = 0; dropped = true; if (this.crouching && this.canStand()) this.setCrouch(false); }
     }
     if (!ui && inp.jumpPress && !dropped) this.jumpBuf = 0.1; else if (!dropped) this.jumpBuf -= dt;
     if (this.jumpBuf > 0 && this.stun <= 0 && this.dashT <= 0 && !ui) {

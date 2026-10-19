@@ -805,26 +805,46 @@ class CastleScene extends Phaser.Scene {
     }
     if (cfg.kind === 'ceil') { // liana: cuelga del techo y cae sobre quien pasa debajo
       b.setVelocity(0, 0); const dx = tg ? Math.abs(tg.x - e.spr.x) : 999, below = tg && tg.y > e.spr.y && tg.y < e.spr.y + 260;
+      e.shCd = (e.shCd === undefined ? 1.2 : e.shCd) - dt * slow;
+      if (!e.ph && e.shCd <= 0 && tg && Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) < 380 && !(below && dx < 90)) { e.ph = 'aim'; e.abT = 0.55; }
+      if (e.ph === 'aim') { // avisa (se pone roja) y escupe tres espinas hacia el jugador
+        e.tele = true; e.abT -= dt;
+        if (e.abT <= 0) { e.tele = false; e.ph = null; e.shCd = 2.6 + Math.random(); if (tg) { const base = Math.atan2(tg.y - (e.spr.y + 10), tg.x - e.spr.x); for (const o of [-0.22, 0, 0.22]) this.spawnProj('thorn', e.spr.x, e.spr.y + 10, Math.cos(base + o) * 230, Math.sin(base + o) * 230, 2.8); } }
+        return;
+      }
       if (!e.ph) { e.cd = (e.cd === undefined ? 1.5 : e.cd) - dt; e.armT = dx < 90 && below ? (e.armT || 0) + dt : 0; if (e.armT > 0.4 && e.cd <= 0) { e.ph = 'tele'; e.abT = 0.5; e.armT = 0; } }
       else if (e.ph === 'tele') { e.tele = true; e.abT -= dt; if (e.abT <= 0) { e.tele = false; e.ph = 'act'; e.abT = 0.35; this.spawnProj('vine', e.spr.x, e.spr.y + 95, 0, 0, 0.35); } }
       else { e.abT -= dt; if (e.abT <= 0) { e.ph = null; e.cd = 1.5; } }
       return;
     }
+    if (cfg.ember) { e.emberT = (e.emberT || 0) - dt; if (e.emberT <= 0 && (b.blocked.down || b.touching.down)) { e.emberT = 0.9; this.spawnProj('ember', e.spr.x, b.bottom - 5, 0, 0, 2.5); } } // rastro de brasas
     if (cfg.slime) { e.slimeT = (e.slimeT || 0) - dt; if (e.slimeT <= 0 && (b.blocked.down || b.touching.down)) { e.slimeT = 1.0; this.spawnProj('slime', e.spr.x, b.bottom - 5, 0, 0, 3); } }
     if (cfg.kind === 'walk') {
+      if (cfg.shielded && !e.elite) { // escudo azul: lo levanta y lo baja por turnos cuando te ve cerca (con el escudo arriba no se le puede dañar; el Pisotón se lo quita)
+        if (tg && Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) < 320) { e.shT = (e.shT === undefined ? 1 : e.shT) - dt; if (e.shT <= 0) { e.shield = !e.shield; e.shT = e.shield ? 1.3 : 2.4; } } else { e.shield = false; e.shT = undefined; }
+      }
       if (e.stun > 0) { e.stun -= dt; return; }
-      if (cfg.throws) { // prisionero: se para, arranca una seta del sombrero y la lanza en parábola
+      if (cfg.throws) { // prisionero: se para, arranca una seta del sombrero y la lanza en parábola; si le tienes muy cerca, da un impulso hacia atrás y la lanza apuntándote
         e.thCd = (e.thCd === undefined ? 1 : e.thCd) - dt * slow;
+        const lob = () => { if (!tg) return; const g = 900, sx = e.spr.x, sy = e.spr.y - 30, dx = tg.x - sx, t = Phaser.Math.Clamp(Math.abs(dx) / 260, 0.45, 1.1); this.spawnProj('shroomb', sx, sy, dx / t, (tg.y - sy - 0.5 * g * t * t) / t, t + 1.5, g); };
+        const feetY = e.spr.y + (cfg.body[1] * cfg.sc) / 2 + 6;
+        if (e.thPh === 'dash') {
+          e.thT -= dt; e.tele = false; b.setVelocityX(e.dashDir * 380);
+          if (Math.random() < 0.5) this.poof(e.spr.x, feetY - 6, 1, 0xb9a9d9);
+          if (e.thT <= 0 || b.blocked.left || b.blocked.right || !this.solidAt(e.spr.x + e.dashDir * 26, feetY)) { b.setVelocityX(0); e.thPh = null; e.thCd = 2.5; lob(); }
+          return;
+        }
         if (e.thPh === 'tele') {
           e.tele = true; b.setVelocityX(0); e.thT -= dt;
-          if (e.thT <= 0) {
-            e.tele = false; e.thPh = null; e.thCd = 3.2;
-            if (tg) { const g = 900, sx = e.spr.x, sy = e.spr.y - 30, dx = tg.x - sx, t = Phaser.Math.Clamp(Math.abs(dx) / 260, 0.45, 1.1); this.spawnProj('shroomb', sx, sy, dx / t, (tg.y - sy - 0.5 * g * t * t) / t, t + 1.5, g); }
-          }
+          if (e.thT <= 0) { e.tele = false; e.thPh = null; e.thCd = 3.2; lob(); }
           return;
         }
         if (e.thCd <= 0 && tg && (b.blocked.down || b.touching.down)) {
           const dx = tg.x - e.spr.x;
+          if (Math.abs(dx) < 110 && Math.abs(tg.y - e.spr.y) < 80) { // muy cerca: impulso hacia atrás (si tiene sitio) y seta apuntando al jugador
+            const away = -(Math.sign(dx) || 1);
+            if (this.solidAt(e.spr.x + away * 40, feetY) && !this.solidAt(e.spr.x + away * 40, e.spr.y)) { e.thPh = 'dash'; e.thT = 0.28; e.dashDir = away; e.spr.setFlipX(dx < 0); this.poof(e.spr.x, feetY - 6, 4, 0xb9a9d9); return; }
+          }
           if (Math.abs(dx) < 340 && Math.abs(tg.y - e.spr.y) < 140) { e.thPh = 'tele'; e.thT = 0.55; e.spr.setFlipX(dx < 0); b.setVelocityX(0); return; }
         }
       }
@@ -834,6 +854,16 @@ class CastleScene extends Phaser.Scene {
       const ahead = this.solidAt(x + dir * 22, feet);
       if (b.blocked.left || b.blocked.right || !ahead) { if (mul > 1) { b.setVelocityX(0); e.spr.setFlipX(dir < 0); return; } dir = -dir; }
       e.dir = dir; b.setVelocityX(dir * cfg.spd * slow * mul); e.spr.setFlipX(dir < 0);
+    } else if (cfg.kind === 'moth') { // polilla de esporas: revolotea y, cuando te ve, te sobrevuela soltando esporas que te persiguen despacio
+      if (e.ox === undefined) { e.ox = e.spr.x; e.oy = e.spr.y; e.ph = (e.ox * 0.017) % 6.28; }
+      const t = this.simT * 1.7 + e.ph; let tx = e.ox + Math.sin(t) * 70, ty = e.oy + Math.sin(t * 1.9) * 34;
+      if (tg && Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) < 300) e.awake = true;
+      if (e.awake && tg) {
+        tx = tg.x + Math.sin(t) * 120; ty = tg.y - 90 + Math.sin(t * 2.3) * 30;
+        e.cd = (e.cd === undefined ? 1.5 : e.cd) - dt * slow;
+        if (e.cd <= 0) { e.cd = 3.2; const pr = this.spawnProj('spore', e.spr.x, e.spr.y + 10, 0, 40, 4.5); pr.brake = 0.6; pr.homing = 30; }
+      }
+      b.setVelocity(Phaser.Math.Clamp((tx - e.spr.x) * 1.6, -130, 130) * slow, Phaser.Math.Clamp((ty - e.spr.y) * 1.6, -110, 110) * slow); e.spr.setFlipX(b.velocity.x < 0); e.spr.setAngle(Math.sin(this.simT * 12) * 8);
     } else if (cfg.kind === 'bat') {
       e.spr.setTexture(((this.simT * 8) | 0) % 2 ? 'bat1' : 'bat2');
       // los murciélagos huyen de la luz y no pueden entrar en ella
