@@ -55,7 +55,7 @@
   area('cubil', 'Cubil de la Gárgola', 0, 7, 6, 1, 1, [['climb', 11, 4, 'norm', true], ['boss', 'garg', 13, 16]]);
   // --- Ramas del ala de entrada ---
   area('tunel', 'Túnel de Calaveras', 3, 6, 5, 1, 1, [['tri', 'tl', 4], ['tri', 'tr', 4], ['pit', 8, 16], ['E', 'bat', 12, 8], ['E', 'bat', 18, 6], ['E', 'gh', 4, 9]]);
-  area('bodega', 'Bodega', 3, 1, 6, 1, 1, [['forge', 20, 12], ['tri', 'tr', 5], ['B', 5, 15, 3, 2], ['B', 19, 14, 3, 3], ['E', 'sk', 9, 16], ['E', 'sk', 22, 16], ['E', 'bat', 15, 9]]);
+  area('bodega', 'Bodega', 3, 1, 6, 1, 1, [['tri', 'tr', 5], ['B', 5, 15, 3, 2], ['B', 19, 14, 3, 3], ['E', 'sk', 9, 16], ['E', 'sk', 22, 16], ['E', 'bat', 15, 9]]);
   area('cripta', 'Cripta Olvidada', 3, 0, 6, 1, 1, [['tri', 'tl', 6], ['pit', 7, 22], ['P', 3, 14, 4], ['cry', 4, 13], ['E', 'gh', 20, 9], ['E', 'gh', 4, 8]]);
   area('osario', 'Osario', 3, 8, 6, 2, 1, [['tri', 'tl', 7], ['tri', 'tr', 5], ['P', 30, 14, 4], ['P', 35, 11, 4], ['B', 40, 6, 8, 1], ['cry', 43, 5], ['E', 'gh', 15, 10], ['E', 'gh', 32, 6], ['E', 'sk', 10, 16], ['E', 'sk', 25, 16]]);
   area('escal', 'Escalera de los Retratos', 0, 3, 4, 1, 2, [['tri', 'tl', 6], ['tri', 'tr', 6], ['climb', 11, 4, 'norm', true], ['E', 'bat', 6, 10], ['E', 'bat', 20, 20], ['E', 'gh', 8, 28], ['E', 'sk', 20, 34]]);
