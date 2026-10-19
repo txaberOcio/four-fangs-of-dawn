@@ -1057,7 +1057,7 @@ class CastleScene extends Phaser.Scene {
       case 'whip': // Alcaide: latigazo
         b.setVelocityX(0);
         if (e.t < 0.8) e.tele = true;
-        else if (!e.fired) { e.tele = false; this.spawnProj('lash', x + e.dirT * 85, y + 18, 0, 0, 0.3); e.fired = true; e.second = false; this.cameras.main.shake(120, 0.005); }
+        else if (!e.fired) { e.tele = false; this.spawnProj('lash', x + e.dirT * 85, y + 18, 0, 0, 0.3); if (tgs.length >= 2) this.spawnProj('lash', x - e.dirT * 85, y + 18, 0, 0, 0.3); e.fired = true; e.second = false; this.cameras.main.shake(120, 0.005); }
         else if (rage && !e.second && e.t > 1.25) { e.second = true; this.spawnProj('lash', x - e.dirT * 85, y + 18, 0, 0, 0.3); }
         else if (e.t > 1.9) { e.second = false; done(0.9); }
         break;
