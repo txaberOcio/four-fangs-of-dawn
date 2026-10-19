@@ -1,8 +1,16 @@
 /* Validador de alcanzabilidad: simula la física del jugador sobre el mapa y comprueba que
-   el castillo se puede completar en orden (dash -> doble salto -> salto de pared -> Conde). */
+   el castillo se puede completar en orden (dash -> doble salto -> salto de pared -> Conde).
+   Las puertas por jefe empiezan CERRADAS y se abren al caer cada jefe alcanzable, así que además comprueba
+   el orden real de jefes contra World.PROGRESSION. Variante del Alba: PICK=aurora (por defecto) o PICK=vesper. */
 const World = require('../public/world.js');
 const w = World.build();
-w.gates.forEach(g => g.tiles.forEach(t => { w.fg[t.gy][t.gx] = -1; })); // las puertas del Conde se asumen abiertas
+// puertas por jefe: empiezan cerradas; se abren con los jefes ya derrotados (World.gateOpen, la misma regla que usa el juego)
+const defeated = new Set();
+w.gates.forEach(g => g.tiles.forEach(t => { t.orig = w.fg[t.gy][t.gx]; }));
+const applyGates = () => w.gates.forEach(g => { const open = World.gateOpen(g.boss, [...defeated]); g.tiles.forEach(t => { w.fg[t.gy][t.gx] = open ? -1 : t.orig; }); });
+const PICK = process.env.PICK === 'vesper' ? 'vesper' : 'aurora', OTHER = PICK === 'aurora' ? 'vesper' : 'aurora';
+applyGates();
+if (['from', 'room'].includes(process.argv[2])) { w.bosses.forEach(b => defeated.add(b.id)); applyGates(); } // las consultas sueltas parten con todo abierto
 const { T, PHYS: P, K, kind } = World;
 const HW = P.bodyW / 2, HH = P.bodyH / 2, DT = 1 / 60;
 
@@ -202,6 +210,7 @@ const roomOf = n => { const a = w.areaOf(Math.floor(n.x / T), Math.floor(n.y / T
 const firstStage = {};
 const stages = [];
 let stage = 0, changed = true;
+const reached = []; // jefes que se pueden alcanzar en cada etapa
 let finalNodes = [];
 while (changed) {
   const t0 = Date.now();
@@ -212,13 +221,18 @@ while (changed) {
   w.gems.forEach(c => { if (!('gem:' + c.id in firstStage) && nodes.some(n => Math.abs(n.x - c.x) < 70 && Math.abs(n.y - c.y) < 70)) firstStage['gem:' + c.id] = stage; });
   w.altars.forEach(c => { if (!('alt:' + c.id in firstStage) && nodes.some(n => Math.abs(n.x - c.x) < 70 && Math.abs(n.y - c.y) < 70)) firstStage['alt:' + c.id] = stage; });
   changed = false;
-  for (const b of w.bosses) if (rooms.has(b.area) && b.drop && !abil[b.drop]) { abil[b.drop] = true; changed = true; }
-  console.log(`Fase ${stage}: ${nodes.length} posiciones, ${rooms.size} salas alcanzables (${((Date.now() - t0) / 1000).toFixed(1)}s) habilidades=${Object.keys(abil).filter(k => abil[k]).join(',') || '-'}`);
+  const now = [];
+  for (const b of w.bosses) if (rooms.has(b.area) && !defeated.has(b.id) && b.id !== OTHER) { now.push(b.id); }
+  for (const id of now) { const b = w.bosses.find(q => q.id === id); defeated.add(id); changed = true; if (b.drop && !abil[b.drop]) abil[b.drop] = true; }
+  reached.push(now); applyGates();
+  console.log(`Fase ${stage}: ${nodes.length} posiciones, ${rooms.size} salas alcanzables (${((Date.now() - t0) / 1000).toFixed(1)}s) jefes: ${now.join(',') || '-'} → habilidades=${Object.keys(abil).filter(k => abil[k]).join(',') || '-'}`);
   finalNodes = nodes; stage++;
 }
 const allRooms = Object.keys(w.areas).filter(r => !w.areas[r].special);
-const missing = allRooms.filter(r => !(r in firstStage));
-const names = { 0: 'sin habilidades', 1: 'tras Impulso', 2: 'tras Doble salto', 3: 'tras Salto de pared' };
+// Con Vesper (sin Alas del Alba) la Cueva del Abismo y lo que exige planear sobre los pinchos son opcionales: no cuentan como error
+const OPT_ROOMS = PICK === 'vesper' ? ['caida', 'fragua', 'gran'] : [], OPT_ITEMS = PICK === 'vesper' ? ['cripta', 'cumbre', 'fragua'] : [];
+const missing = allRooms.filter(r => !(r in firstStage) && !OPT_ROOMS.includes(r));
+const names = { 0: 'inicio', 1: 'tras la Gárgola (Impulso)', 2: 'tras el Obispo (Doble salto)', 3: 'tras el Guardián del Reloj (Salto de pared)', 4: 'tras el Conde', 5: 'tras Aurora/Vesper', 6: 'tras el Alcaide (Pisotón)' };
 console.log('\nSalas por fase en la que se alcanzan:');
 for (let s = 0; s < stage; s++) {
   const list = allRooms.filter(r => firstStage[r] === s).map(r => w.areas[r].name + ' (' + r + ')');
@@ -227,9 +241,18 @@ for (let s = 0; s < stage; s++) {
 console.log('\nCristales:', w.crystals.map(c => `${c.area}→fase ${firstStage['cry:' + c.id] ?? 'INALCANZABLE'}`).join(' | '));
 console.log('Altares:', w.altars.map(c => `${c.area}→fase ${firstStage['alt:' + c.id] ?? 'INALCANZABLE'}`).join(' | '));
 console.log('\nSalas INALCANZABLES:', missing.length ? missing.map(r => w.areas[r].name + ' (' + r + ')').join(', ') : 'ninguna');
-const unreachC = w.crystals.filter(c => !('cry:' + c.id in firstStage)).concat(w.gems.filter(c => !('gem:' + c.id in firstStage)));
+const unreachC = w.crystals.filter(c => !('cry:' + c.id in firstStage) && !OPT_ITEMS.includes(c.area)).concat(w.gems.filter(c => !('gem:' + c.id in firstStage) && !OPT_ITEMS.includes(c.area)));
 console.log('Gemas:', w.gems.map(c => `${c.area}→fase ${firstStage['gem:' + c.id] ?? 'INALCANZABLE'}`).join(' | '));
-process.exitCode = missing.length || unreachC.length ? 1 : 0;
+// orden real de jefes: lo que se puede alcanzar en cada etapa debe coincidir con World.PROGRESSION
+let badOrder = false;
+console.log('\nOrden de jefes (variante ' + PICK + '):');
+World.PROGRESSION.forEach((p, i) => {
+  const exp = p.bosses.map(b => b === 'rival' ? PICK : b).sort().join(','), got = (reached[i] || []).slice().sort().join(',');
+  const ok = exp === got; if (!ok) badOrder = true;
+  console.log(`  Etapa ${i}: esperado [${exp}] alcanzado [${got}] ${ok ? 'OK' : 'ERROR'}`);
+});
+if (reached.length < World.PROGRESSION.length) { badOrder = true; console.log(`  ERROR: solo ${reached.length} etapas de ${World.PROGRESSION.length}`); }
+process.exitCode = missing.length || unreachC.length || badOrder ? 1 : 0;
 
 // ---- Rutas: ¿se puede acabar el juego con solo una de las dos recompensas del Alba? (node scripts/validate.js rutas) ----
 if (process.argv[2] === 'rutas') {

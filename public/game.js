@@ -164,11 +164,13 @@ const PR = {
   vine: { tex: 'pillar', sc: 3, hb: [22, 170], dmg: 2, tint: 0x3f8f3a }, // liana que cae
   rootwave: { tex: 'shock', sc: 2, hb: [34, 26], dmg: 2, tint: 0x3f8f3a }, // ola de raíces por el suelo
   inferno: { tex: 'puff', sc: 8, hb: [130, 130], dmg: 0.5, tint: 0xff7a2a, alpha: 0.6, linger: true }, // veneno inflamable que arde: explosión de fuego
-  shroomb: { tex: 'hongo', sc: 1.3, hb: [18, 18], dmg: 1 }, // seta lanzada por el prisionero: cae en parábola y estalla
+  thorn: { tex: 'orb', sc: 2, hb: [14, 14], dmg: 1, tint: 0x8fd35a }, // espina que escupe la liana
+  ember: { tex: 'puff', sc: 3, hb: [30, 12], dmg: 1, tint: 0xff7a2a, alpha: 0.7, linger: true }, // brasa que deja la babosa de magma
+  shroomb: { tex: 'hongo', sc: 1.3, hb: [18, 18], dmg: 2 }, // seta lanzada por el prisionero: cae en parábola y estalla
   boom: { tex: 'puff', sc: 5, hb: [74, 74], dmg: 0.25, tint: 0xb48aff, alpha: 0.55, linger: true }, // explosión de esporas de la seta
   cloud: { tex: 'puff', sc: 7, hb: [48, 48], dmg: 0.5, tint: 0x66ff44, alpha: 0.5, linger: true }, // nube de veneno: se queda en el aire
 };
-const ZONE_SCALE = [1, 1.25, 1.5, 1.35, 1.7, 2, 1, 2.4, 2.8, 3]; // vida de los enemigos corrientes según la zona
+const ZONE_SCALE = [1, 1.25, 1.5, 1.6, 1.8, 2.1, 1, 2.4, 2.8, 3]; // vida de los enemigos corrientes según la zona
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 
@@ -373,7 +375,8 @@ class CastleScene extends Phaser.Scene {
       this.time.delayedCall(8000, () => { this.centerTxt.setText(''); });
     });
     on('room', r => {
-      room = r;
+      const oldN = this.lastN === undefined ? r.players.length : this.lastN; this.lastN = r.players.length; room = r;
+      if (this.isHost && r.players.length !== oldN) this.rescaleEnemies(oldN, r.players.length);
       Object.keys(this.remotes).forEach(id => { if (!r.players.some(p => p.id === id)) { this.remotes[id].spr.destroy(); this.remotes[id].tag.destroy(); delete this.remotes[id]; } });
       if (!r.started) { endGame(); return; }
       const nowHost = r.host === socket.id;
@@ -394,18 +397,23 @@ class CastleScene extends Phaser.Scene {
     this.syncRelics(); this.openGates(!silent);
     this.scenes = this.scenes || new Set();
     (p.bosses || []).forEach(id => { if (World.BOSSES[id] && World.BOSSES[id].rival && !this.scenes.has(id)) { this.scenes.add(id); if (!silent) this.albaScene(id); } });
+    ['archon', 'reina'].forEach(id => { // al caer el Archimago o la Reina se rompe un sello del Trono: se enseña con una escena
+      const dead = (p.bosses || []).includes(id), key = 'seal_' + id;
+      if (!dead) this.scenes.delete(key); else if (!this.scenes.has(key)) { this.scenes.add(key); if (!silent) this.sealBreakScene(id); }
+    });
     this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye', 'pound'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
   }
   bossGone(b) { const r = World.BOSSES[b.id] && World.BOSSES[b.id].rival; return this.progress.bosses.includes(b.id) || !!(r && this.progress.bosses.includes(r)); }
-  gateOk(gt) { const pb = this.progress.bosses; return gt.boss === 'alba' ? (pb.includes('aurora') || pb.includes('vesper')) : gt.boss === 'sellos' ? (pb.includes('conde') || (pb.includes('archon') && pb.includes('reina'))) : pb.includes(gt.boss); }
+  gateOk(gt) { return World.gateOpen(gt.boss, this.progress.bosses); }
   openGates(show) { // los muros que cierran el foso caen cuando el Conde huye
     if (this.payBossGems) this.payBossGems(!show);
     (this.W.gates || []).forEach(gt => {
       const ok = this.gateOk(gt);
       if (gt.open || !ok) return;
+      if (gt.crack) { gt.open = true; gt.tiles.forEach(t => { this.fg.removeTileAt(t.gx, t.gy); if (show) this.poof((t.gx + 0.5) * T, (t.gy + 0.5) * T, 5, 0xaaaaaa); }); this.wallBroken(); return; } // grietas que se abren solas
       gt.open = true; gt.tiles.forEach(t => { this.fg.removeTileAt(t.gx, t.gy); if (show) this.poof((t.gx + 0.5) * T, (t.gy + 0.5) * T, 3, 0xaaaaaa); });
       this.wallBroken();
-      if (show) { this.cameras.main.shake(900, 0.012); SFX.boss(); this.toast(gt.boss === 'alba' ? '¡Se abre el camino hacia el cielo! La puerta este de la cámara de Vesper ya está libre.' : (gt.boss === 'sellos' ? '¡Los dos sellos están rotos! La puerta de la Sala del Trono se abre.' : '¡Los muros del foso se derrumban! Se abren dos caminos...'), 7000); }
+      if (show) { this.cameras.main.shake(900, 0.012); SFX.boss(); this.toast(gt.boss === 'alba' ? '¡Se abre el camino hacia el cielo! La puerta este de la cámara de Vesper ya está libre.' : (gt.boss === 'sellos' ? '¡Los dos sellos están rotos! La puerta de la Sala del Trono se abre.' : (gt.boss === 'madre' ? '¡La Madre Moho ha caído! Se abre el camino de salida hacia La Gran Hoguera.' : gt.boss === 'bishop' ? '¡El Obispo ha caído! La reja de las Cadenas se abre: ya puedes bajar a los Calabozos.' : gt.boss === 'clock' ? '¡El Guardián del Reloj ha caído! La puerta del Archivo Prohibido se abre. Allí te espera el Archimago, mucho más temible.' : '¡Los muros del foso se derrumban! Se abren dos caminos...')), 7000); }
     });
   }
   albaScene(killed) { // al caer uno de los rivales, el otro acude, se lo lleva y huye
@@ -519,12 +527,12 @@ class CastleScene extends Phaser.Scene {
   // objetivo actual: flecha y distancia
   updateObjective(dt) {
     this.objT -= dt; if (this.objT > 0) return; this.objT = 0.3; this.hiddenSweep();
-    const order = ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde'], w = this.W;
+    const order = ['garg', 'bishop', 'reina', 'clock', 'archon', 'conde'], w = this.W;
     let tgt = null, label = '';
     const relic = Object.values(this.relics)[0], pb = this.progress.bosses, chosen = pb.includes('aurora') || pb.includes('vesper');
     if (relic) { tgt = { x: relic.x, y: relic.y }; label = 'Recoge la reliquia'; }
     else if (pb.includes('conde') && !chosen) { const o = w.npcs.find(n => n.type === 'oracle'); if (o) { tgt = { x: o.x, y: o.y }; label = 'Habla con el Oráculo del Alba'; } }
-    else if (pb.includes('conde')) { tgt = null; }
+    else if (pb.includes('conde')) { const id = ['alcaide', 'madre'].find(b => !pb.includes(b)); const b = id && w.bosses.find(x => x.id === id); if (b) { tgt = { x: b.x, y: b.y }; label = 'Derrota a ' + b.name; } else tgt = null; }
     else { const id = order.find(b => !this.progress.bosses.includes(b)); const b = w.bosses.find(x => x.id === id); if (b) { tgt = { x: b.x, y: b.y }; label = 'Derrota a ' + b.name; } }
     this.objective = tgt;
     if (!tgt) { this.objTxt.setText(''); return; }
@@ -564,7 +572,8 @@ class CastleScene extends Phaser.Scene {
   // ===================================================== entidades
   createEnt(id, type, x, y, sim, extra = {}) {
     const cfg = EN[type];
-    let spr;
+    let spr, hang = 0, ay = y;
+    if (type === 'vine') { let hsh = 0; for (const ch of String(id)) hsh = (hsh * 31 + ch.charCodeAt(0)) | 0; hang = 46 + (Math.abs(hsh) % 5) * 14; if (sim) y += hang; else ay = y - hang; } // cuelga de una liana: su altura depende de su id (igual en todos los clientes)
     if (sim) {
       spr = this.physics.add.sprite(x, y, cfg.tex).setScale(cfg.sc).setDepth(6);
       spr.setSize(cfg.body[0], cfg.body[1]);
@@ -572,11 +581,17 @@ class CastleScene extends Phaser.Scene {
       spr.body.setAllowGravity(!(cfg.kind === 'bat' || cfg.kind === 'ghost' || cfg.kind === 'saw' || cfg.fly));
       spr.body.setMaxVelocityY(700);
     } else spr = this.add.sprite(x, y, cfg.tex).setScale(cfg.sc).setDepth(6);
-    const e = { id, type, cfg, spr, hp: cfg.hp, max: cfg.hp, sim, boss: cfg.kind === 'boss', dead: false, dir: Math.random() < 0.5 ? -1 : 1, flash: 0, stun: 0, tx: x, ty: y, aggro: false, tele: false, ...extra };
+    const e = { id, type, cfg, spr, hp: cfg.hp, max: cfg.hp, sim, boss: cfg.kind === 'boss', dead: false, dir: Math.random() < 0.5 ? -1 : 1, flash: 0, stun: 0, tx: x, ty: y, aggro: false, tele: false, hang, ay, ...extra };
     if (extra.zone !== undefined && !e.boss && !cfg.inv) { e.hp = e.max = Math.ceil(cfg.hp * (ZONE_SCALE[extra.zone] || 1)); e.dmgBonus = extra.zone >= 4 ? 1 : 0; }
+    if (this.lastN === undefined) this.lastN = room.players.length;
     if (extra.opts && extra.opts.elite) this.makeElite(e, extra.opts);
+    if (sim && !e.boss && !cfg.inv) { e.baseMax = e.max; e.max = Math.max(1, Math.round(e.baseMax * this.coopMul())); e.hp = e.max; } // vida según los jugadores de la sala
     this.ents.set(id, e);
     return e;
+  }
+  coopMul(n) { n = n || (room && room.players ? room.players.length : 1); return 0.7 + 0.3 * Math.max(1, n); }
+  rescaleEnemies(oldN, newN) { // entra o sale alguien: la vida de los enemigos ya creados se ajusta (conservando el porcentaje de vida)
+    this.ents.forEach(e => { if (!e.sim || e.boss || e.cfg.inv || e.dead || !e.baseMax) return; const f = e.hp / e.max; e.max = Math.max(1, Math.round(e.baseMax * this.coopMul(newN))); e.hp = Math.max(1, Math.round(e.max * f)); });
   }
   makeElite(e, opts = {}) { // élite: más grande, dorado, con más vida y premio fijo la primera vez
     e.elite = true; e.name = opts.name || e.name; e.reward = opts.reward || null;

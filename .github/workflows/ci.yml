@@ -8,6 +8,9 @@ on:
 jobs:
   check:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        pick: [aurora, vesper] # las dos elecciones del Alba se validan en paralelo
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -17,5 +20,7 @@ jobs:
       - run: npm ci
       - name: Sintaxis
         run: npm run check
-      - name: Validar que el mapa se puede completar
+      - name: Validar que el mapa se puede completar y el orden de jefes (${{ matrix.pick }})
         run: npm run validate
+        env:
+          PICK: ${{ matrix.pick }}
