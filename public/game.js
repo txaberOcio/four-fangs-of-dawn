@@ -112,6 +112,8 @@ function startGame() {
     scene: [CastleScene],
   });
 }
+// salir de la partida al menú (para elegir otro personaje)
+function leaveToMenu() { socket.emit('leaveRoom'); room = null; if (game) { game.destroy(true); game = null; } setupTouch(false); show('menu'); }
 function endGame() { if (game) { game.destroy(true); game = null; } setupTouch(false); renderLobby(); show('lobby'); }
 
 // ---------- Configuración de entidades ----------
@@ -203,7 +205,7 @@ class CastleScene extends Phaser.Scene {
     this.time.addEvent({ delay: 160, loop: true, callback: () => { this.fl = !this.fl; this.torchObjs.forEach(o => { if (o.lit) o.flame.setTexture(this.fl ? 'flame2' : 'flame1'); }); this.altars.forEach(a => a.spr.setTexture(a.lit ? (this.fl ? 'bonfire2' : 'bonfire1') : 'bonfire_off')); } });
 
     // altares, cristales, reliquias
-    this.altars = w.altars.map(a => ({ ...a, lit: a.area === 'vest', spr: this.add.image(a.x, a.y - (a.big ? 36 : 18), 'bonfire_off').setScale(a.big ? 6 : 3).setDepth(-2) }));
+    this.altars = w.altars.map(a => ({ ...a, lit: a.area === 'vest', spr: this.add.image(a.x, a.y - (a.big && !a.mini ? 36 : 18), 'bonfire_off').setScale(a.big && !a.mini ? 6 : 3).setDepth(-2) }));
     this.bonfireLit = new Set(this.altars.filter(a => a.lit).map(a => a.id));
     this.cryGot = new Set();
     this.crystals = w.crystals.map(c => ({ ...c, spr: this.add.image(c.x, c.y, 'crystal').setScale(2.6).setDepth(2) }));
@@ -452,7 +454,7 @@ class CastleScene extends Phaser.Scene {
   }
   rebuildLights() {
     this.litList = this.torchObjs.filter(o => o.lit).map(o => ({ x: o.x, y: o.y, r: o.r || 215 }));
-    this.altars.filter(a => a.lit).forEach(a => this.litList.push({ x: a.x, y: a.y - 40, r: a.big ? 330 : 160 }));
+    this.altars.filter(a => a.lit).forEach(a => this.litList.push({ x: a.x, y: a.y - 40, r: a.big && !a.mini ? 330 : 160 }));
   }
   lightLevel(x, y) {
     let best = 0;
@@ -491,7 +493,7 @@ class CastleScene extends Phaser.Scene {
     rt.clear(); rt.fill(0x04020a, 0.9);
     const lamp = (x, y, r, a = 1) => { const X = x - sx0, Y = y - sy0; if (X < -r || X > SW + r || Y < -r || Y > SH + r) return; img.setScale(r / 64 / q).setAlpha(a); rt.erase(img, X / q, Y / q); };
     this.torchObjs.forEach(o => { if (o.lit && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, (o.r || 215) * (1 + 0.03 * Math.sin(time * 0.009 + o.id)), 1); });
-    this.altars.forEach(a => { if (a.lit) lamp(a.x, a.y - 40, a.big ? 330 : 160, 0.9); });
+    this.altars.forEach(a => { if (a.lit) lamp(a.x, a.y - 40, a.big && !a.mini ? 330 : 160, 0.9); });
     lamp(p.x, p.y, 120 * this.auraMul(), 0.95);
     this.npcObjs.forEach(n => { if (!n.off) lamp(n.x, n.y - 20, n.def.shop ? 110 : 80, 0.85); });
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id) && !this.hiddenAt(f.x, f.y)) lamp(f.x, f.y, 70, 0.8); });

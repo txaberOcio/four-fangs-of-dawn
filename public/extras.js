@@ -1529,7 +1529,14 @@ Object.assign(CastleScene.prototype, {
 (() => {
   const $o = id => document.getElementById(id), panel = $o('opts'); if (!panel) return;
   const sync = () => { $o('oMusic').value = Math.round(OPT.music * 100); $o('oSfx').value = Math.round(OPT.sfx * 100); $o('vMusic').textContent = Math.round(OPT.music * 100) + '%'; $o('vSfx').textContent = Math.round(OPT.sfx * 100) + '%'; $o('oText').value = String(OPT.text); $o('oCb').checked = OPT.cb; };
-  const toggle = on => { const open = on === undefined ? panel.classList.contains('hidden') : on; panel.classList.toggle('hidden', !open); if (open) sync(); };
+  const inGame = () => typeof game !== 'undefined' && !!game && $o('ui').classList.contains('hidden');
+  const scene = () => inGame() ? game.scene.getScene('default') || game.scene.scenes[0] : null;
+  const toggle = on => {
+    const open = on === undefined ? panel.classList.contains('hidden') : on; panel.classList.toggle('hidden', !open); if (open) sync();
+    $o('oChar').classList.toggle('hidden', !(open && inGame())); $o('oCharHint').classList.toggle('hidden', !(open && inGame()));
+    const sc = scene(); if (sc && sc.input && sc.input.keyboard) sc.input.keyboard.enabled = !open; if (open) sc.input.keyboard.resetKeys(); // con el panel abierto el personaje no se mueve por las teclas
+  };
+  $o('oChar').onclick = () => { if (confirm('¿Cambiar de personaje? Saldrás de la partida y se perderá lo conseguido desde la última hoguera donde descansaste.')) { toggle(false); leaveToMenu(); } };
   $o('optBtn').onclick = () => toggle(true); $o('oClose').onclick = () => toggle(false);
   $o('oMusic').oninput = e => { OPT.music = e.target.value / 100; Music.refreshVol(); sync(); saveOpts(); };
   $o('oSfx').oninput = e => { OPT.sfx = e.target.value / 100; sync(); saveOpts(); };
@@ -1538,6 +1545,10 @@ Object.assign(CastleScene.prototype, {
   $o('oCb').onchange = e => { OPT.cb = e.target.checked; saveOpts(); };
   document.addEventListener('keydown', ev => {
     if (ev.target && /^(INPUT|SELECT|TEXTAREA)$/.test(ev.target.tagName) && ev.target.type !== 'range' && ev.target.type !== 'checkbox') return;
-    if (ev.code === 'KeyO' && !ev.repeat) toggle(); else if (ev.code === 'Escape' && !panel.classList.contains('hidden')) toggle(false);
+    if (ev.code === 'KeyO' && !ev.repeat) toggle();
+    else if (ev.code === 'Escape' && !ev.repeat) {
+      if (!panel.classList.contains('hidden')) toggle(false);
+      else { const sc = scene(); if (sc && !(sc.shopOpen || sc.dlg || sc.bookOpen || sc.travelOpen || sc.imbueOpen)) toggle(true); } // Esc en partida: abre las opciones (si no hay otro menú abierto)
+    }
   });
 })();

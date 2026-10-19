@@ -13,7 +13,7 @@ const ZONE_PAL = [
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
-const HERO_NAMES = { red: 'Vampiro carmesí', blue: 'Vampiro azul', green: 'Vampiro esmeralda', purple: 'Vampiro violeta' };
+const HERO_NAMES = { red: 'Vampiro carmesí', blue: 'Vampiro azul', green: 'Vampira esmeralda', purple: 'Vampira violeta' };
 
 const HERO_INFO = {
   red: { weapon: 'Espada', passive: 'Sed de sangre', desc: 'Espada equilibrada. Pasiva: 40% de curarse al golpear (los demás, 25%).' },

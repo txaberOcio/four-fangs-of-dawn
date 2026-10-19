@@ -72,7 +72,7 @@
   area('mazm', 'Mazmorra de Hierro', 3, 8, 3, 2, 1, [['tri', 'tl', 6], ['P', 30, 14, 4], ['P', 34, 11, 4], ['B', 40, 6, 8, 1], ['cry', 43, 5], ['E', 'gh', 18, 9], ['E', 'kn', 14, 16], ['E', 'sk', 27, 16]]);
   area('caden', 'Pasaje de Cadenas', 3, 5, 3, 2, 1, [['page', 45, 16], ['B', 1, 1, 36, 11], ['B', 41, 1, 10, 11], ['E', 'kn', 10, 16, { elite: true, name: 'Carcelero', reward: { souls: 70, item: 'pot2' } }], ['E', 'sk', 20, 16], ['E', 'sk', 30, 16], ['E', 'kn', 41, 16]]);
   // --- Capilla (camino principal hacia el Obispo) ---
-  area('naveS', 'Capilla: Nave Sur', 2, 4, 3, 1, 1, [['npc', 'monk', 18, 16], ['npc', 'merchant', 22, 16], ['tri', 'tl', 7], ['tri', 'tr', 7], ['climb', 11, 4, 'norm', true], ['bigfire', 5, 16], ['E', 'kn', 8, 16], ['E', 'gh', 18, 6], ['E', 'kn', 14, 16]]);
+  area('naveS', 'Capilla: Nave Sur', 2, 4, 3, 1, 1, [['npc', 'monk', 18, 16], ['npc', 'merchant', 22, 16], ['tri', 'tl', 7], ['tri', 'tr', 7], ['climb', 11, 4, 'norm', true], ['bigfire', 5, 16, 'mini'], ['E', 'kn', 8, 16], ['E', 'gh', 18, 6], ['E', 'kn', 14, 16]]);
   area('naveP', 'Capilla: Nave Principal', 2, 4, 1, 1, 2, [['page', 5, 34], ['tri', 'tl', 9], ['tri', 'tr', 9], ['climb', 11, 4, 'dash', true], ['E', 'gh', 8, 14], ['E', 'gh', 18, 24, { elite: true, name: 'Espectro Penitente', reward: { souls: 80, item: 'spd' } }], ['E', 'bat', 10, 28], ['E', 'kn', 20, 34]]);
   area('abs', 'Ábside', 2, 4, 0, 1, 1, [['tri', 'tl', 7], ['tri', 'tr', 7], ['boss', 'bishop', 13, 12]]);
   area('mir', 'Mirador', 2, 5, 0, 1, 1, [['npc', 'merchant', 23, 16], ['tri', 'tr', 6], ['B', 11, 9, 4, 8], ['P', 6, 14, 4], ['altar', 21, 16], ['E', 'gh', 20, 10], ['E', 'sk', 4, 16]]);
@@ -282,7 +282,7 @@
           case 'cry': world.crystals.push({ id: sid('c'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'sforge': world.sforges.push({ id: sid('sf'), area: a.id, kind: 'forge', x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'sshrine': world.sforges.push({ id: sid('sf'), area: a.id, kind: 'shrine', x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
-          case 'bigfire': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T, big: true }); break;
+          case 'bigfire': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T, big: true, mini: op[3] === 'mini' }); // mini: sigue siendo la hoguera de viaje rápido pero se dibuja y alumbra como una normal break;
           case 'altar': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T }); break;
           case 'lift': world.lifts.push({ id: 'l_' + a.id, area: a.id, x: (a.x0 + op[1]) * T, w: op[2] * T, yTop: (a.y0 - 1) * T, yBot: (a.y0 + a.rh - 1) * T }); break; // ['lift', x, ancho]: ascensor entre el suelo de la sala de arriba y el de esta
           case 'boss': world.bosses.push({ id: op[1], area: a.id, x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, ...BOSSES[op[1]] }); a.boss = op[1]; break;
