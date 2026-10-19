@@ -250,7 +250,7 @@
           const gxA = A.x0 + A.rw - 1, gxB = B.x0;
           if (l.gate) { // puerta cerrada hasta que cae el jefe indicado
             fg[gy][gxA] = A.z * 8 + K.SOLID; fg[gy][gxB] = B.z * 8 + K.SOLID;
-            let g = world.gates.find(q => q.boss === l.gate); if (!g) world.gates.push(g = { boss: l.gate, tiles: [] });
+            let g = world.gates.find(q => q.boss === l.gate && !q.crack); if (!g) world.gates.push(g = { boss: l.gate, tiles: [] });
             g.tiles.push({ gx: gxA, gy }, { gx: gxB, gy }); continue;
           }
           fg[gy][gxA] = l.crack ? A.z * 8 + K.CRACK : -1; fg[gy][gxB] = l.crack ? B.z * 8 + K.CRACK : -1;
