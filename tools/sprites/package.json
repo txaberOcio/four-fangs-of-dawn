@@ -1,0 +1,6 @@
+{
+  "name": "ffd-sprites-tools",
+  "private": true,
+  "description": "Herramientas para convertir las hojas de sprites generadas por IA en las hojas del juego (public/sprites)",
+  "dependencies": { "sharp": "^0.35.5" }
+}
