@@ -903,6 +903,7 @@ Object.assign(CastleScene.prototype, {
     });
   },
   poundLand() { // onda del Pisotón: daño en 88 px, aturde a los que caminan y rompe el suelo de raíces bajo los pies
+    if (this.cut) this.endCut();
     this.pounding = false; this.poundCd = 0.5; const p = this.player, b = p.body; b.setMaxVelocityY(P.maxFall); this.invuln = Math.max(this.invuln, 0.2);
     this.cameras.main.shake(160, 0.008); SFX.boss(); this.poof(p.x, p.y + 20, 10, 0x8fd35a);
     const fy = b.bottom, dmg = 2 + this.dmgBonus();
