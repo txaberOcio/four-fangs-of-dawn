@@ -71,6 +71,9 @@ const MAPS = {
   esporas: [ // polilla de esporas con sacos brillantes colgando
     '................', 'W..............W', 'WW....B..B....WW', 'WWW....BB....WWW', 'WwWW..BBBB..WWwW', 'WwwWBBEBBEBBWwwW', '.WwwWBBBBBBWwwW.', '..WWWWBBBBWWWW..',
     '....FWWBBWWF....', '....FF.BB.FF....', '....FF.BB.FF....', '.....F.BB.F.....', '........BB......', '................', '................', '................'],
+  magma: [ // babosa de magma: roca fundida con brasas
+    '................', '................', '................', '.........E..E...', '.........M..M...', '.....MMMMMMMM...', '...MMLLLMMMMMM..', '..MMLLMMMMMMMMM.',
+    '.MMLMMMMKMMMMMM.', '.MMMMMMMMMMKMMM.', 'MMMMKMMMMMMMMMMM', 'MMMMMMMMMMKMMMMM', 'MMMKMMMMMMMMMMMM', '.MMDDMMMMMMDDMM.', '..DDDDDDDDDDDD..', '.L..L......L..L.'],
   hongo: [ // hongo esporífero arraigado
     '................', '................', '....CCCCCCCC....', '..CCWCCCCCCWCC..', '.CCCCCCCCWCCCCC.', 'CCWCCCCCCCCCWCCC', 'CCCCCCWCCCCCCCCC', 'DDDDDDDDDDDDDDDD',
     '....FFFFFFFF....', '.....FFEEFF.....', '.....FFFFFF.....', '.....FFFFFF.....', '.....FFFFFF.....', '....FFFFFFFF....', '...FFFFFFFFFF...', '..DDDDDDDDDDDD..'],
@@ -119,6 +122,7 @@ const MAP_PAL = {
   preso: { F: '#6dffd0', W: '#e8e4d4', S: '#8aa38a', R: '#ff3b3b', D: '#15101c', M: '#3f7a3a', C: '#4a4036', I: '#8a8a96' },
   raiz: { R: '#6a4a2a', L: '#8a6a3a', V: '#3f7a3a', E: '#ff3b3b', F: '#6dffd0' },
   esporas: { B: '#2a3a30', W: '#4a6a5a', w: '#8ab89a', E: '#ff3b3b', F: '#6dffd0' },
+  magma: { M: '#ff7a2a', L: '#ffd06a', K: '#e0501a', D: '#7a2a0e', E: '#ffffff' },
   hongo: { C: '#b48aff', W: '#e8d8ff', D: '#3a2a50', F: '#d8d4b8', E: '#ff3b3b' },
   carcelero: { H: '#1a2a22', K: '#4a5a52', M: '#3f7a3a', L: '#8fd35a', R: '#ff3b3b', S: '#8aa38a', Y: '#ffd23b', I: '#8a8a96', F: '#6dffd0', D: '#1a1f1c' },
   driade: { B: '#5a4128', L: '#8a6a3a', V: '#3f7a3a', l: '#8fd35a', S: '#9ab89a', E: '#6dffd0', P: '#d86ac8' },
@@ -267,7 +271,7 @@ function buildArt(scene) {
   makeMap('npc_oracle', 'npcMad', madPal('#ffe6b0', '#c9a0ff'), 1);
   makeMap('npc_smith', 'npcMad', madPal('#2a1a10', '#8a4a1a'), 1);
   makeMap('npc_watcher', 'npcMad', madPal('#b8d8ff', '#5a7aa8'), 1);
-  ['limo', 'preso', 'raiz', 'esporas', 'hongo', 'carcelero', 'driade'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
+  ['limo', 'preso', 'raiz', 'esporas', 'hongo', 'carcelero', 'driade', 'magma'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
   makeMap('npc_prisionero_musgo', 'npcMad', madPal('#3f7a3a', '#3a4a36'), 1);
   ['archon', 'reina', 'aurora', 'vesper'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // dibujos propios de los jefes nuevos
   // fotograma de reposo: el torso baja un píxel (respiración)

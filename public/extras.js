@@ -111,7 +111,7 @@ PAGES.rai = { title: 'Nota del Montacargas', text: 'Orden del Herrero: el ascens
 PAGES.cel = { title: 'Registro de Reos', text: 'Reo 14: pidió ver el sol. Reo 15: pidió ver la luna. Reo 16: no pidió nada y fue el único que durmió sin miedo. El musgo lo abrazó primero.' };
 PAGES.rez = { title: 'Menú del último banquete', text: 'Sopa de raíces, pan de piedra y vino sin cosecha. Los carceleros comían de pie; los presos, de rodillas. Ya nadie se acuerda de quién era cada cual.' };
 PAGES.ant = { title: 'Última orden del Alcaide', text: 'Me dejaron las llaves con una sola orden: no abrir hasta que los hermanos vuelvan juntos. Nunca volvieron. Ahora el musgo me habla con la voz de los dos y ya no sé a cuál obedezco. Quien me venza no es mi enemigo: es mi relevo.' };
-const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160, alcaide: 140, madre: 300, slug: 5, shroom: 6, vine: 8, pris: 10 };
+const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160, alcaide: 140, madre: 300, slug: 5, shroom: 6, vine: 8, pris: 10, moth: 7, magma: 9 };
 const NPC_DEFS = {
   merchant: { name: 'Mercader', tex: 'npc_merchant', shop: true, lines: [['Almas, almas... Las prefiero a las monedas. Mira lo que tengo.']] },
   archivist: { name: 'Archivista Loco', tex: 'npc_archivist', lines: [
