@@ -901,6 +901,7 @@ class CastleScene extends Phaser.Scene {
     if (!e.aggro) {
       if (!tgs.some(inner)) return;
       e.aggro = true; e.emptyT = 0; e.max = e.hp = Math.max(4, Math.round(cfg.hp * (0.7 + 0.3 * tgs.length))); e.cd = 1.2; e.act = null;
+      if (e.type === 'madre') e.dormant = true; // no ataca hasta que le rompen la armadura por primera vez
       this.sealKey = e.room; this.applySeal(e.room);
       if (e.type === 'conde' && !this.floorBroken) { e.phase = 'intro'; e.introT = 0; this.floorState = 1; this.applyFloorState(1); }
       else if (e.type === 'conde' && e.arena.oy !== this.fosoArena().oy) this.moveBossToFoso(e);
@@ -927,6 +928,10 @@ class CastleScene extends Phaser.Scene {
       if (e.armor === undefined) { e.armor = tgs.length >= 3 ? 2 : 1; e.windowT = 0; }
       if (e.armor <= 0) { e.windowT -= dt; if (e.windowT <= 0) { e.armor = tgs.length >= 3 ? 2 : 1; this.poof(e.spr.x, e.spr.y, 12, 0x8fd35a); } }
       e.shield = e.armor > 0;
+      if (e.dormant) { // dormida: quieta, azul y sin atacar hasta el primer golpe fuerte
+        if (e.armor <= 0) { e.dormant = false; e.cd = 1.0; e.act = null; }
+        else { e.cd = Math.max(e.cd, 1); e.tele = false; b.setVelocityX(0); return; }
+      }
       if (e.stunT > 0) { e.stunT -= dt; e.tele = false; b.setVelocity(0, 0); return; }
     }
     const floorY = a.floor;
@@ -934,10 +939,10 @@ class CastleScene extends Phaser.Scene {
       const sy = this.surfaceBelow(x, y, floorY), onPlat = sy < floorY - 4;
       const mk = (vx, life) => { const pr = this.spawnProj('shock', x, sy - 10, vx, 0, life); if (onPlat) pr.ground = true; };
       mk(230, 1.4); mk(-230, 1.4); if (rage && n > 1) { mk(340, 1.2); mk(-340, 1.2); } this.cameras.main.shake(180, 0.006); };
-    const fan = (cnt) => { const base = Math.atan2(tg.y - y, tg.x - x); for (let i = -cnt; i <= cnt; i++) { const an = base + i * 0.24; this.spawnProj('orb', x, y, Math.cos(an) * 200, Math.sin(an) * 200, 4); } };
+    const fan = (cnt) => { const list = tgs.length >= 2 ? tgs.slice(0, 4) : [tg], c = Math.max(1, cnt - (list.length - 1)); list.forEach(tt => { const base = Math.atan2(tt.y - y, tt.x - x); for (let i = -c; i <= c; i++) { const an = base + i * 0.24; this.spawnProj('orb', x, y, Math.cos(an) * 200, Math.sin(an) * 200, 4); } }); }; // con 2 o más jugadores el abanico sale hacia cada uno (también a ambos lados)
     const gear = () => this.spawnProj('gear', Phaser.Math.Between(a.x0 + 20, a.x1 - 20), a.y0 + 12, 0, 240, 3.5, 0);
     const ring = (n, sp, off) => { for (let i = 0; i < n; i++) { const an = off + i * Math.PI * 2 / n, pr = this.spawnProj('spore', x, y - 10, Math.cos(an) * sp, Math.sin(an) * sp, 4); pr.brake = 1.0; } };
-    const sporeFan = (n) => { const base = Math.atan2(tg.y - y, tg.x - x) - 0.25; for (let i = 0; i < n; i++) { const an = base + (i - (n - 1) / 2) * 0.3, pr = this.spawnProj('spore', x, y - 30, Math.cos(an) * 260, Math.sin(an) * 260, 4.5); pr.brake = 0.75; pr.homing = 38; } }; // salen hacia el jugador y se paran lejos del jefe: así no arden junto a él
+    const sporeFan = (n0) => { const list = tgs.length >= 2 ? tgs.slice(0, 4) : [tg], n = Math.max(2, n0 - (list.length - 1)); list.forEach(tt => { const base = Math.atan2(tt.y - y, tt.x - x) - 0.25; for (let i = 0; i < n; i++) { const an = base + (i - (n - 1) / 2) * 0.3, pr = this.spawnProj('spore', x, y - 30, Math.cos(an) * 260, Math.sin(an) * 260, 4.5); pr.brake = 0.75; pr.homing = 38; } }); }; // salen hacia el jugador y se paran lejos del jefe: así no arden junto a él
     const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'reina' ? 'sk' : e.type === 'alcaide' ? 'shroom' : e.type === 'madre' ? (i < 2 ? 'shroom' : 'slug') : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
 
     if (!e.act) {
@@ -945,7 +950,7 @@ class CastleScene extends Phaser.Scene {
       if (cfg.fly) { // flotar
         b.setVelocity(Math.sin(this.simT * 1.3) * 40, (a.hover + Math.sin(this.simT * 2.1) * 14 - y) * 2.5); // flota a baja altura: siempre se le puede golpear
         e.spr.setAlpha(1);
-      } else if (e.type === 'madre' && Math.abs(tg.x - x) > 160) b.setVelocityX(dirT * 60); // con la armadura rota avanza despacio hacia el jugador
+      } else if (e.type === 'madre' && Math.abs(tg.x - x) > 110 && !(dirT < 0 && x < a.x0 + 60) && !(dirT > 0 && x > a.x1 - 60)) b.setVelocityX(dirT * 85); // en combate avanza hacia el jugador (no se queda quieta)
       else b.setVelocityX(0);
       if (e.cd <= 0) {
         const pick = arr => arr[Math.floor(Math.random() * arr.length)];
@@ -1080,12 +1085,12 @@ class CastleScene extends Phaser.Scene {
       case 'cataclysm': // Madre Moho al 50 %: lluvia de esporas por toda la sala
         b.setVelocityX(0);
         if (!e.fired) { e.fired = true; e.armor = tgs.length >= 3 ? 2 : 1; this.cameras.main.shake(300, 0.01); this.poof(x, y, 18, 0x8fd35a); }
-        if (e.t < 1.4) e.tele = true;
+        if (e.t < 0.9) e.tele = true; // más rápido: aviso corto
         else {
           e.tele = false;
           const tot = e.special === 2 ? 22 : 16; // la segunda lluvia (al 25 %) es más densa
-          if (e.n < tot && e.t > 1.4 + e.n * 0.2) { const pr = this.spawnProj('spore', Phaser.Math.Between(a.x0 + 40, a.x1 - 40), a.y0 + 16, 0, 150, 5); pr.brake = 1.5; pr.homing = 34; e.n++; }
-          else if (e.n >= tot && e.t > 1.4 + tot * 0.2 + 0.8) { ring(12, 120, 0); done(1.4); }
+          if (e.n < tot && e.t > 0.9 + e.n * 0.11) { const pr = this.spawnProj('spore', Phaser.Math.Between(a.x0 + 40, a.x1 - 40), a.y0 + 16, 0, 230, 5); pr.brake = 1.0; pr.homing = 34; e.n++; }
+          else if (e.n >= tot && e.t > 0.9 + tot * 0.11 + 0.5) { ring(12, 120, 0); done(1.0); }
         }
         break;
       case 'brood': // brote de hongos
