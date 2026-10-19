@@ -1207,7 +1207,7 @@ Object.assign(CastleScene.prototype, {
     (cur.broken || []).forEach(k => { if (!sw.broken.includes(k)) { const [gx, gy] = String(k).split(',').map(Number), a = this.W.areaOf(gx, gy); if (a) this.fg.putTileAt(a.z * 8 + K.CRACK, gx, gy); } }); // los muros rotos vuelven
     this.progress = { abilities: keepAbil, bosses: [...sw.bosses], broken: [...sw.broken], torches: Object.assign({}, sw.torches) };
     socket.emit('revertWorld', { bosses: this.progress.bosses, broken: this.progress.broken, torches: this.progress.torches });
-    (this.W.gates || []).forEach(gt => { if (gt.open && !this.gateOk(gt)) { gt.open = false; gt.tiles.forEach(t => { const a = this.W.areaOf(t.gx, t.gy); if (a) this.fg.putTileAt(a.z * 8 + K.SOLID, t.gx, t.gy); }); } }); // las puertas se vuelven a cerrar
+    (this.W.gates || []).forEach(gt => { if (gt.open && !this.gateOk(gt)) { gt.open = false; gt.tiles.forEach(t => { const a = this.W.areaOf(t.gx, t.gy); if (a) this.fg.putTileAt(a.z * 8 + (gt.crack ? K.CRACK : K.SOLID), t.gx, t.gy); }); } }); // las puertas se vuelven a cerrar
     this.torchObjs.forEach(o => { const want = this.progress.torches[o.id] !== undefined ? !!this.progress.torches[o.id] : !!(this.W.torches[o.id] && this.W.torches[o.id].lit); this.setTorch(o.id, want); });
     if (this.floorBroken && !this.progress.bosses.includes('conde')) { // el suelo del trono se reconstruye
       const th = this.W.areas.throne, fo = this.W.areas.fosoC;
