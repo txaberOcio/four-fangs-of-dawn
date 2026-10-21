@@ -29,7 +29,7 @@
     "start": "node server/index.js",
     "validate": "node scripts/validate.js",
     "validate:rutas": "node scripts/validate.js rutas",
-    "check": "node --check server/index.js && node --check public/game.js && node --check public/extras.js && node --check public/world.js && node --check public/art.js && node --check public/music.js",
+    "check": "node --check server/index.js && node --check public/game.js && node --check public/extras.js && node --check public/world.js && node --check public/art.js && node --check public/music.js && node --check public/decor.js",
     "build:exe": "powershell -ExecutionPolicy Bypass -File installer/build.ps1"
   },
   "dependencies": {

@@ -314,7 +314,7 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors();
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor();
     this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
@@ -335,7 +335,7 @@ Object.assign(CastleScene.prototype, {
     this.gems = m.gems | 0; this.perm = { dmg: (m.perm && m.perm.dmg) | 0, souls: (m.perm && m.perm.souls) | 0 };
     (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
-    this.hammerState = m.hammer | 0; this.smithMet = !!m.met; if (this.progress.bosses.includes('reina') && this.hammerState === 0) this.hammerState = 1; this.syncNpcs();
+    this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.syncNpcs();
     if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0); this.hp = this.maxHp;
@@ -885,6 +885,7 @@ Object.assign(CastleScene.prototype, {
       a.life -= dt; a.spr.x += a.vx * dt; a.spr.y += a.vy * dt;
       let dead = a.life <= 0;
       if (a.el === 'fire') this.fireTouch(a.spr.x, a.spr.y, 16, 10);
+      this.hitBreakables(a.spr.x, a.spr.y, 16, 10);
       if (!dead) {
         const t = this.fg.getTileAtWorldXY(a.spr.x, a.spr.y);
         if (t && t.index >= 0) {
@@ -904,7 +905,7 @@ Object.assign(CastleScene.prototype, {
   },
   poundLand() { // onda del Pisotón: daño en 88 px, aturde a los que caminan y rompe el suelo de raíces bajo los pies
     if (this.cut) this.endCut();
-    this.pounding = false; this.poundCd = 0.5; const p = this.player, b = p.body; b.setMaxVelocityY(P.maxFall); this.invuln = Math.max(this.invuln, 0.2);
+    this.pounding = false; this.poundCd = 0.5; const p = this.player, b = p.body; this.hitBreakables(p.x, p.y + 24, 200, 70); b.setMaxVelocityY(P.maxFall); this.invuln = Math.max(this.invuln, 0.2);
     this.cameras.main.shake(160, 0.008); SFX.boss(); this.poof(p.x, p.y + 20, 10, 0x8fd35a);
     const fy = b.bottom, dmg = 2 + this.dmgBonus();
     this.ents.forEach(en => {
@@ -954,6 +955,7 @@ Object.assign(CastleScene.prototype, {
     const p = this.player, f = this.facing, w = this.wstats(), wp = this.wpn;
     const cy = p.y - 2 + (this.crouching ? 7 : 0), bx = p.x + f * wp.off, bw = w.w, bh = wp.h;
     if (this.element === 'fire') this.fireTouch(bx, cy, bw, bh);
+    this.hitBreakables(bx, cy, bw, bh);
     this.ents.forEach(e => {
       if (e.dead || this.swingHit.has(e.id)) return;
       const [ex, ey, ew, eh] = this.entBox(e);
@@ -1157,6 +1159,7 @@ Object.assign(CastleScene.prototype, {
     this.interactTorch(ePress);
   },
   restAt(a) {
+    this.resetBreakables();
     a.lit = true; this.bonfireLit.add(a.id); this.lastAltar = { x: a.x, y: a.y }; this.lastBonfire = a; this.canAuto = true; this.hp = this.maxHp; this.rebuildLights();
     SFX.rest(); this.poof(a.x, a.y - 30, 10, 0xffb347);
     if (this.isHost) this.restReset(); else socket.emit('rest');
