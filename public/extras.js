@@ -91,7 +91,7 @@ const BESTIARY = {
   aurora: { name: 'Aurora, Dama del Alba', text: 'Hermana de Vesper y señora del Conde, vuela entre rayos de luz. Si cae, su hermano la rescata y huye. Premio: Alas del Alba.', tip: 'Esquiva la lluvia de rayos y sus picados; golpéala cuando baje.' },
   vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora y señor del Conde, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y huye. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
   archon: { name: 'Archimago Silente', text: 'Guardián del sello de tinta. Entre sus libros flotan tormentas de luz y fantasmas que acuden a su llamada.', tip: 'Esquiva sus abanicos de orbes y la lluvia de rayos; cuando invoque ayuda, golpéalo sin parar.' },
-  reina: { name: 'Reina de Huesos', text: 'Guardiana del sello de hueso. Salta con todo su peso, embiste y llama a los esqueletos de la cripta. Guarda el Martillo Latente del herrero.', tip: 'Vigila los pilares marcados en el suelo y no te quedes bajo sus saltos.' },
+  reina: { name: 'Reina de Huesos', text: 'Guardiana del sello de hueso. Salta con todo su peso, embiste y llama a los esqueletos de la cripta.', tip: 'Vigila los pilares marcados en el suelo y no te quedes bajo sus saltos.' },
   conde: { name: 'El Conde', text: 'Siervo de los hermanos del Alba y portero de su castillo. Rompe el suelo de su trono para enterrar a sus cazadores en el foso, y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
 };
 const PAGES = {
@@ -168,7 +168,8 @@ const NPC_DEFS = {
       'Y que quien venció a Aurora puede planear hasta el balcón lejano, sobre el vacío, donde brilla otro cristal.',
       'Al este hay un jardín colgante: hace falta impulso, doble salto y salto de pared. Descansad en la hoguera cuando queráis.'],
     ['El viento aquí huele a ceniza y a amanecer. Pronto habrá más que ver.'] ] },
-  // El herrero empieza en la Cueva del Abismo. Si le llevas el Martillo Latente (lo guarda la Reina de Huesos) se muda a su santuario secreto bajo la Cumbre del Alba.
+  // El herrero se queda en la Cueva del Abismo hasta que le lleves el Martillo Latente; entonces se muda a su santuario secreto bajo la Cumbre del Alba.
+  // De momento el martillo NO se consigue en ningún sitio (pendiente de decidir dónde y cuándo): cuando se decida, basta con llamar a this.giveHammer() allí.
   smith: { name: 'Herrero de la Cueva', tex: 'npc_smith', menu: 'imbue', show: sc => sc.hammerState < 2, talk: (sc, n) => sc.smithTalk(n), lines: [['Aquí abajo el fuego no se apaga nunca. Dime qué poder quieres en tu arma.']] },
   smith2: { name: 'Herrero de la Cueva', tex: 'npc_smith', menu: 'all', show: sc => sc.hammerState >= 2, lines: [['Mi nuevo taller. Con el Martillo Latente puedo forjar cualquier poder: fuego, hielo, rayo, veneno... y las sombras.']] },
   monk: { name: 'Monje Trastornado', tex: 'npc_monk', lines: [
@@ -368,7 +369,6 @@ Object.assign(CastleScene.prototype, {
   payBossGems(silent) { // cada jefe suelta gemas la primera vez que cae
     if (!this.bossGemsPaid) return; let got = 0;
     (this.progress.bosses || []).forEach(id => { if (this.bossGemsPaid.has(id)) return; this.bossGemsPaid.add(id); if (!silent && GEMS_BOSS[id]) got += GEMS_BOSS[id];
-      if (id === 'reina' && this.hammerState === 0) { this.hammerState = 1; if (!silent) this.time.delayedCall(2500, () => this.toast('La Reina de Huesos guardaba el Martillo Latente. Llévaselo al Herrero de la Cueva, en la Cueva del Abismo.', 8000)); }
     });
     if (got) { this.addGems(got); this.toast('Recompensa del jefe: ' + got + ' gemas ✦', 5000); this.autoSave(); }
   },
@@ -693,7 +693,7 @@ Object.assign(CastleScene.prototype, {
     const W = this.W, box = document.createElement('div');
     box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#0a0612ee;color:#fff;font:13px Courier New,monospace;padding:10px;display:none;overflow:auto';
     box.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b>MODO DESARROLLO</b>' +
-      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
+      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devHammer">Dar el Martillo</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
       '<span id="devInfo" style="color:#ffd98a">Haz clic en el mapa para teletransportarte</span></div><canvas id="devMap" style="image-rendering:pixelated;cursor:crosshair;border:2px solid #ffb347"></canvas>';
     document.body.appendChild(box);
     box.querySelectorAll('button').forEach(b => { b.style.cssText = 'width:auto;margin:0;padding:4px 10px;font:12px Courier New,monospace;cursor:pointer'; });
@@ -715,6 +715,7 @@ Object.assign(CastleScene.prototype, {
     box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
     box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
+    box.querySelector('#devHammer').onclick = () => { this.giveHammer(); };
     box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
     const orig = this.hurt; this.hurt = (d, x) => { if (this.devGod) return; return orig.call(this, d, x); };
     const toggle = () => { const open = box.style.display === 'none'; box.style.display = open ? 'block' : 'none'; if (open) draw(); else if (document.activeElement) document.activeElement.blur(); };
@@ -1203,7 +1204,7 @@ Object.assign(CastleScene.prototype, {
     if (solo) this.bossGemsPaid = new Set(s.bg);
     this.souls = s.souls; this.inv = Object.assign({}, s.inv); this.wlv = s.wlv; this.maxHp = s.maxHp; this.gems = s.gems + bossGems; this.perm = Object.assign({}, s.perm); this.element = s.element; this.travel = s.travel; this.smithMet = s.met;
     Object.keys(this.abil).forEach(k => { this.abil[k] = !!s.abil[k]; });
-    this.hammerState = s.hammer; if (!solo && this.progress.bosses.includes('reina') && this.hammerState === 0) this.hammerState = 1;
+    this.hammerState = s.hammer;
     if (solo) this.revertWorld(s.world);
     this.syncRelics(); this.applyProgress(this.progress, true); this.syncNpcs(); this.wallBroken();
     const after = JSON.stringify([this.abil, this.cryGot.size, this.forgeGot.size, this.gemGot.size, this.wlv, this.maxHp, this.element, this.perm, this.pagesGot.size, this.eliteGot.size, this.hammerState]);
@@ -1461,13 +1462,17 @@ Object.assign(CastleScene.prototype, {
     this.dlg = { npc: n, page: lines, i: 0 }; this.dlgObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false);
     this.dlgName.setText(n.def.name); this.dlgText.setText(lines[0]); SFX.altar();
   },
+  giveHammer(texto) { // entrega el Martillo Latente al jugador (queda en el HUD hasta que se lo lleve al herrero)
+    if (this.hammerState !== 0) return false; this.hammerState = 1; SFX.pick();
+    this.toast(texto || 'Has conseguido el Martillo Latente. Llévaselo al Herrero de la Cueva.', 8000); return true;
+  },
   smithTalk(n) { // el herrero de la cueva: primera charla, entrega del Martillo Latente o menú de imbuir
     if (this.hammerState === 1) {
       this.hammerState = 2; this.syncNpcs(); this.smithMet = true; SFX.pick();
       this.showLines(n, ['¡El Martillo Latente! Todavía late... lo siento caliente en las manos.', 'Con él puedo forjar el poder de las sombras, pero necesito un lugar oculto: me mudo al Santuario de las Sombras, bajo el suelo agrietado de la Cumbre del Alba.', 'Ven a verme allí: te imbuiré con cualquier poder que quieras.']);
       this.toast('El herrero se muda a su santuario secreto, bajo el suelo agrietado de la Cumbre del Alba', 7000); return true;
     }
-    if (!this.smithMet) { this.smithMet = true; this.showLines(n, ['Soy el herrero de la Cueva. Aquí abajo el fuego no se apaga nunca, y con él puedo imbuir tu arma.', 'Pero mi Martillo Latente se perdió hace siglos. Dicen que la Reina de Huesos lo guarda en las Catacumbas, bajo la Mazmorra de Hierro.', 'Tráemelo y podré forjar poderes de sombra... aunque tendría que mudarme a un santuario oculto, bajo la Cumbre del Alba.']); return true; }
+    if (!this.smithMet) { this.smithMet = true; this.showLines(n, ['Soy el herrero de la Cueva. Aquí abajo el fuego no se apaga nunca, y con él puedo imbuir tu arma.', 'Pero mi Martillo Latente se perdió hace siglos y nadie sabe dónde está.', 'Si alguien me lo trae, podré forjar poderes de sombra... aunque tendría que mudarme a un santuario oculto, bajo la Cumbre del Alba.']); return true; }
     return false;
   },
   syncNpcs() { // muestra u oculta a los NPC según la historia (el herrero se muda al santuario)
