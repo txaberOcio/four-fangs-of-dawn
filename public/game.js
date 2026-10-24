@@ -172,6 +172,9 @@ const PR = {
   boom: { tex: 'puff', sc: 5, hb: [74, 74], dmg: 0.25, tint: 0xb48aff, alpha: 0.55, linger: true }, // explosión de esporas de la seta
   cloud: { tex: 'puff', sc: 7, hb: [48, 48], dmg: 0.5, tint: 0x66ff44, alpha: 0.5, linger: true }, // nube de veneno: se queda en el aire
 };
+const OTHER_ROOM_DARK = 0.86; // cuánto se oscurecen las salas en las que no estás (0 = nada, 1 = negro)
+const NEAR_ROOM_DARK = 0.3; // salas vecinas con el paso abierto: se ven al 70 %
+const ROOM_FADE = 0.7; // segundos que tarda una sala en aclararse u oscurecerse al cambiar de sala
 const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
@@ -306,6 +309,10 @@ class CastleScene extends Phaser.Scene {
   }
 
   // Pinta un área en el lienzo del minimapa (solo se ve lo explorado)
+  mapTitle() { // título del mapa grande (M) con la sala en la que estás
+    const a = this.W.areas[this.myArea];
+    this.bigTitle.setText('MAPA DEL CASTILLO  (M para cerrar)' + (a ? '\nEstás en: ' + (World.ZONES[a.z] ? World.ZONES[a.z] + ' — ' : '') + a.name : ''));
+  }
   markVisited(a) {
     if (this.visited.has(a.id)) return;
     this.visited.add(a.id);
@@ -330,7 +337,7 @@ class CastleScene extends Phaser.Scene {
       W.altars.forEach(a => { if (this.visited.has(a.area)) g.fillStyle(0xffd23b, 1).fillRect(mx(a.x / T) - 2, my(a.y / T) - 3, 4, 4); });
       if (this.objective && ((this.time.now >> 8) & 1)) g.fillStyle(0x6bff8a, 1).fillRect(mx(this.objective.x / T) - 4, my(this.objective.y / T) - 4, 8, 8);
       W.bosses.forEach(b => { if (this.visited.has(b.area) && !this.bossGone(b)) g.fillStyle(0xff3b3b, 1).fillRect(mx(b.x / T) - 3, my(b.y / T) - 6, 6, 6); });
-      W.crystals.forEach(c => { if (this.visited.has(c.area) && !this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y)) g.fillStyle(0xff7aa0, 1).fillRect(mx(c.x / T) - 1, my(c.y / T) - 1, 3, 3); });
+      W.crystals.forEach(c => { if (this.visited.has(c.area) && !this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y) && (!c.peek || c.peeked)) g.fillStyle(0xff7aa0, 1).fillRect(mx(c.x / T) - 1, my(c.y / T) - 1, 3, 3); });
       Object.values(this.remotes).forEach(r => g.fillStyle(parseInt(HERO_COLORS[r.color].slice(1), 16), 1).fillRect(mx(r.spr.x / T) - 2, my(r.spr.y / T) - 2, 5, 5));
       if ((this.time.now >> 8) & 1) g.fillStyle(0xffffff, 1).fillRect(mx(tx) - 2, my(ty) - 2, 5, 5);
       return;
@@ -493,7 +500,7 @@ class CastleScene extends Phaser.Scene {
   }
   interactTorch(pressedE) {
     const p = this.player; let best = null, bd = 1e9;
-    if (!this.dead) for (const o of this.torchObjs) { const dx = Math.abs(o.x - p.x), dy = Math.abs(o.y - p.y); if (dx < 70 && dy < 135) { const d = dx + dy; if (d < bd) { bd = d; best = o; } } }
+    if (!this.dead) for (const o of this.torchObjs) { const dx = Math.abs(o.x - p.x), dy = Math.abs(o.y - p.y); if (dx < 48 && dy < 100) { /* hay que estar cerca: las antorchas altas se encienden en mitad de un salto */ const d = dx + dy; if (d < bd) { bd = d; best = o; } } }
     if (best) { this.promptTxt.setVisible(true).setPosition(best.x, best.y - 26).setText(best.lit ? '{act}: apagar' : '{act}: encender'); } else this.promptTxt.setVisible(false);
     if (best && pressedE) { const on = !best.lit; this.setTorch(best.id, on); socket.emit('torch', { id: best.id, on }); SFX.altar(); }
   }
@@ -510,20 +517,31 @@ class CastleScene extends Phaser.Scene {
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id) && !this.hiddenAt(f.x, f.y)) lamp(f.x, f.y, 70, 0.8); });
     (this.sforgeObjs || []).forEach(f => lamp(f.x, f.y, 120, 0.9));
     if (this.timedStep) this.timedStep(time);
-    (this.caveLamps || []).forEach(L => lamp(L.x, L.y, L.r, 0.85)); this.caveEmbers(time); this.mossSpores(time); this.liftStep(0.016);
+    (this.caveLamps || []).forEach(L => { if (!(L.gate && L.gate.open)) lamp(L.x, L.y, L.r, 0.85); }); this.caveEmbers(time); this.mossSpores(time); this.liftStep(0.016);
     (this.gemObjs || []).forEach(o => { if (!this.gemGot.has(o.id) && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, 45, 0.8); });
     Object.values(this.remotes).forEach(r => lamp(r.spr.x, r.spr.y, 90, 0.8));
-    this.crystals.forEach(c => { if (!this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y)) lamp(c.x, c.y, 60, 0.8); });
+    this.crystals.forEach(c => { if (!this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y) && this.peekOk(c)) lamp(c.x, c.y, 60, 0.8); });
     Object.values(this.relics).forEach(r => lamp(r.x, r.y, 110, 1));
     this.ents.forEach(e => { if (e.boss && e.aggro) lamp(e.spr.x, e.spr.y, 150, 0.85); });
     this.projs.forEach(pr => lamp(pr.spr.x, pr.spr.y, 55, 0.9));
     this.drawBond(time);
-    // ojos rojos de los enemigos que están en la oscuridad
+    // las salas al otro lado de un muro quedan casi a oscuras: no se ve lo que espera hasta entrar
+    const cur = this.W.areas[this.myArea];
+    // la oscuridad de cada sala cambia poco a poco (no de golpe) al entrar o salir de ella
+    const ddt = Math.min(0.1, Math.max(0, (time - (this.darkPrevT || time)) / 1000)); this.darkPrevT = time; this.roomDark = this.roomDark || {};
+    const open = cur ? this.openNeighbors(cur.id) : null;
+    if (cur) this.W.areaList.forEach(a => {
+      const want = a === cur ? 0 : (open.has(a.id) ? NEAR_ROOM_DARK : OTHER_ROOM_DARK), was = this.roomDark[a.id] !== undefined ? this.roomDark[a.id] : want, step = OTHER_ROOM_DARK * ddt / ROOM_FADE;
+      const v = this.roomDark[a.id] = was < want ? Math.min(want, was + step) : Math.max(want, was - step);
+      if (v <= 0.01) return; const X = a.x0 * T - sx0, Y = a.y0 * T - sy0, Wd = a.rw * T, Hd = a.rh * T; if (X > SW || Y > SH || X + Wd < 0 || Y + Hd < 0) return; rt.fill(0x04020a, v, X / q, Y / q, Wd / q, Hd / q);
+    });
+    // ojos rojos de los enemigos que están en la oscuridad (solo los de tu sala)
     const g = this.eyeG; g.clear(); g.fillStyle(0xff2a2a, 0.9);
     this.ents.forEach(e => {
       if (e.boss && e.aggro) return;
       const x = e.spr.x, y = e.spr.y; if (x < sx0 - 40 || x > sx0 + SW + 40 || y < sy0 - 40 || y > sy0 + SH + 40) return;
       if (this.lightLevel(x, y) > 0.22) return;
+      { const ea = this.W.areaOf(Math.floor(x / T), Math.floor(y / T)); if (cur && ea && ea !== cur && (this.roomDark[ea.id] || 0) > 0.5) return; } // en salas a oscuras no se ven ni los ojos
       const fx = e.spr.flipX ? -1 : 1; g.fillRect(x - 7 + fx, y - 9, 4, 4); g.fillRect(x + 3 + fx, y - 9, 4, 4);
     });
   }
@@ -564,6 +582,7 @@ class CastleScene extends Phaser.Scene {
       if (gx % 3 === 0) this.poof((gx + 0.5) * T, (th.y0 + th.rh) * T, 4, 0x9a8a8a);
     }
     this.floorBroken = true; this.floorState = 2; this.cameras.main.shake(700, 0.02); SFX.boss(); this.toast('¡El suelo se derrumba! Caéis al foso del Conde...', 4000);
+    if (this.dropThroneDecor) this.dropThroneDecor(true); // el mobiliario del trono cae al foso
   }
   applySeal(key) {
     if (this.curSeal === key) return;
@@ -615,6 +634,14 @@ class CastleScene extends Phaser.Scene {
     for (const t of this.targets()) { const d = Math.hypot(t.x - x, t.y - y); if (d < bd) { bd = d; best = t; } }
     return best;
   }
+  openNeighbors(id) { // salas vecinas con el paso libre ahora mismo (sin puerta cerrada ni muro sin romper)
+    if (!this.passIdx) { this.passIdx = {}; Object.entries(this.W.passages || {}).forEach(([k, pairs]) => { const [a, b] = k.split('|'); (this.passIdx[a] = this.passIdx[a] || []).push({ other: b, pairs }); (this.passIdx[b] = this.passIdx[b] || []).push({ other: a, pairs }); }); }
+    const free = (gx, gy) => { const t = this.fg.getTileAt(gx, gy); return !t || t.index < 0 || t.index % 8 === K.ONEWAY; };
+    const out = new Set(); (this.passIdx[id] || []).forEach(n => { if (n.pairs.some(([p, q]) => free(p[0], p[1]) && free(q[0], q[1]))) out.add(n.other); });
+    return out;
+  }
+  peekOk(c) { const ok = !c.peek || this.player.y < c.y + 6 * T; if (ok) c.peeked = true; return ok; } // cristal escondido: solo se ve desde arriba o saltando
+  safeAt(wx, wy) { const a = this.W.areaOf(Math.floor(wx / T), Math.floor(wy / T)); return !!(a && a.safe); } // sala segura (hoguera o personaje): los enemigos no entran
   solidAt(wx, wy) { const t = this.fg.getTileAtWorldXY(wx, wy); return !!t && t.index >= 0 && (t.index % 8 === K.SOLID || t.index % 8 === K.FLOOR || t.index % 8 === K.CRACK || t.index % 8 === K.ONEWAY); }
 
   // ---- venenos inflamables (solo el anfitrión los simula): al tocar fuego arden y dañan a todos alrededor
@@ -686,6 +713,7 @@ class CastleScene extends Phaser.Scene {
       active.forEach(k => { this.cellIdle[k] = 0; });
       this.W.spawns.forEach(s => {
         if (!active.has(cellKey(s.x, s.y - 1)) || this.ents.has(s.id) || this.killed.has(s.id)) return;
+        if (s.opts && s.opts.elite && this.eliteGot && this.eliteGot.has(s.opts.name)) return; // un élite vencido no vuelve a aparecer
         const cfg = EN[s.type];
         const y = cfg.kind === 'saw' ? s.y - 16 : (cfg.kind === 'bat' || cfg.kind === 'ghost' ? s.y - 40 : s.y - (cfg.body[1] * cfg.sc) / 2 - 1);
         this.createEnt(s.id, s.type, s.x, y, true, { room: cellKey(s.x, s.y - 1), home: { x: s.x, y }, opts: s.opts, zone: s.zone });
@@ -708,7 +736,10 @@ class CastleScene extends Phaser.Scene {
       Object.keys(this.cellIdle).forEach(k => { if (!active.has(k)) { this.cellIdle[k] += 0.4; if (this.cellIdle[k] > 10) { this.W.spawns.forEach(s => { if (cellKey(s.x, s.y - 1) === k) this.killed.delete(s.id); }); delete this.cellIdle[k]; } } });
     }
     // IA
-    [...this.ents.values()].forEach(e => { if (e.sim && !e.dead && !e.boss) { const sa = this.W.areaOf(Math.floor(e.spr.x / T), Math.floor(e.spr.y / T)); if (sa && sa.safe) { this.poof(e.spr.x, e.spr.y, 4); e.spr.destroy(); this.ents.delete(e.id); return; } }
+    [...this.ents.values()].forEach(e => { if (e.sim && !e.dead && !e.boss) { // borde de sala segura: el enemigo rebota y se aleja un rato (solo desaparece si ya estaba dentro)
+        if (e.calmT > 0) e.calmT -= dt;
+        if (this.safeAt(e.spr.x, e.spr.y)) { if (e.safeX === undefined) { this.poof(e.spr.x, e.spr.y, 4); e.spr.destroy(); this.ents.delete(e.id); return; } const bd = e.spr.body; e.spr.setPosition(e.safeX, e.safeY); bd.setVelocity(-bd.velocity.x, -bd.velocity.y); if (e.dir) e.dir = -e.dir; e.calmT = 1.6; }
+        else { e.safeX = e.spr.x; e.safeY = e.spr.y; } }
       if (e.sim && !e.dead) { if (e.flash > 0) { e.flash -= dt; if (e.flash <= 0) this.clearFlash(e); } this.statusTick(e, dt); if (e.boss) this.bossAI(e, dt); else this.aiUpdate(e, dt); } });
     // proyectiles
     [...this.projs.values()].forEach(p => {
@@ -851,7 +882,8 @@ class CastleScene extends Phaser.Scene {
       }
       let dir = e.dir, mul = (e.abPh === 'act' && (ELITE_AB[e.name] || {}).kind === 'haste' && !e.cloudTurn) ? 1.8 : 1;
       const x = e.spr.x, feet = e.spr.y + (cfg.body[1] * cfg.sc) / 2 + 6;
-      if (!cfg.patrol && tg && Math.abs(tg.y - e.spr.y) < 80 && Math.abs(tg.x - x) < 240) { dir = Math.sign(tg.x - x) || dir; mul = 1.7; }
+      if (!cfg.patrol && !(e.calmT > 0) && tg && Math.abs(tg.y - e.spr.y) < 80 && Math.abs(tg.x - x) < 240) { dir = Math.sign(tg.x - x) || dir; mul = 1.7; }
+      if (this.safeAt(x + dir * 26, e.spr.y)) { dir = -dir; mul = 1; e.calmT = 1.6; } // no entra en salas seguras: da la vuelta
       const ahead = this.solidAt(x + dir * 22, feet);
       if (b.blocked.left || b.blocked.right || !ahead) { if (mul > 1) { b.setVelocityX(0); e.spr.setFlipX(dir < 0); return; } dir = -dir; }
       e.dir = dir; b.setVelocityX(dir * cfg.spd * slow * mul); e.spr.setFlipX(dir < 0);
@@ -1181,7 +1213,7 @@ class CastleScene extends Phaser.Scene {
 
     // ---- zona actual y mapa
     const ar = this.W.areaOf(Math.floor(p.x / T), Math.floor(p.y / T));
-    if (ar && ar.id !== this.myArea) { this.myArea = ar.id; this.markVisited(ar); this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z);
+    if (ar && ar.id !== this.myArea) { this.myArea = ar.id; this.markVisited(ar); this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle();
       const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
       if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche y el Santuario de las Sombras.', 9000); }
     this.mmT -= dt;
@@ -1189,6 +1221,7 @@ class CastleScene extends Phaser.Scene {
     if (inp.mapPress) {
       this.showMap = !this.showMap;
       [this.bigBg, this.bigImg, this.bigTitle, this.bigStats].forEach(o => o.setVisible(this.showMap));
+      this.mapTitle();
       [this.mmBg, this.mmImg, this.mmDots].forEach(o => o.setVisible(!this.showMap));
       this.bigDots.clear(); this.updateMaps();
     }
@@ -1229,6 +1262,11 @@ class CastleScene extends Phaser.Scene {
   }
 
   nearSpikes() { return this.spikeScan(14); }
+  overSpikes() { // ¿hay pinchos debajo (bajo plataformas finas)? Desde ahí no se guarda el punto seguro: al pincharte vuelves al borde del lado por el que entraste
+    const p = this.player, feet = Math.floor((p.y + 22) / T);
+    for (const dx of [-14, 0, 14]) { const gx = Math.floor((p.x + dx) / T); for (let gy = feet; gy < feet + 24; gy++) { const t = this.fg.getTileAt(gx, gy), k = t && t.index >= 0 ? t.index % 8 : -1; if (k === K.SPIKES) return true; if (k === K.SOLID || k === K.FLOOR || k === K.CRACK) break; } }
+    return false;
+  }
   spikesTouch() { return this.spikeScan(-2); }
   spikeScan(pad) {
     const p = this.player, hw = 15 + pad, hh = 19 + pad;
@@ -1281,6 +1319,7 @@ class CastleScene extends Phaser.Scene {
     });
     this.crystals.forEach(c => {
       if (this.cryGot.has(c.id)) return;
+      if (c.peek) c.spr.setVisible(this.peekOk(c) && !this.hiddenAt(c.x, c.y));
       if (Math.abs(p.x - c.x) < 28 && Math.abs(p.y - c.y) < 36) { this.cryGot.add(c.id); c.spr.setVisible(false); this.maxHp++; this.hp = this.maxHp; this.toast('¡Cristal de vida! +1 corazón máximo'); SFX.pick(); this.autoSave(); }
     });
     Object.values(this.relics).forEach(r => {

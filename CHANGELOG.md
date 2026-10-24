@@ -2,8 +2,26 @@
 
 Resumen de lo que ha cambiado en el juego, de lo más nuevo a lo más antiguo. 
 
-## Sin publicar
+## 0.4.0
 
+- **Pinchos:** al pincharte vuelves al borde del foso por el lado por el que entraste, no a la última plataforma: las plataformas que tienen pinchos debajo ya no cuentan como punto seguro.
+- **Celdas Cubiertas:** el muro agrietado de la celda secreta sangra (regueros, charco y gotas que caen, con un poco de luz), como dice la pista del Jardinero. Al romperlo desaparece. Nueva marca ['bleed', x, y, alto] en world.js.
+- **Musgo (Calabozos Profundos):** su suelo frena al andar (un 15 %; el salto no cambia) y sus enemigos reciben un 20 % más de daño de fuego (golpes con el poder de Fuego, quemaduras y explosiones). Se ajusta con MOSS_SLOW y MOSS_FIRE en public/extras.js.
+- **Cumbre del Alba:** el cristal del balcón lejano pasa a un rincón alto sobre los salientes de la izquierda. Solo se ve cuando estás arriba (o saltando) y solo se alcanza saltando desde esos salientes; ya no es exclusivo de Aurora.
+- **Puertas selladas:** las puertas que abre un jefe se ven como una reja de hierro con un sello rojo y, al acercarte, dicen a quién hay que vencer. Desaparecen al abrirse.
+- **Trono del Conde:** al hundirse el suelo, el mobiliario cae al foso; unas piezas se rompen y otras quedan tiradas. Si vuelves al punto de control, todo vuelve a su sitio.
+- **Escalera Real:** la hoguera del Pasillo Real se muda aquí, y aquí espera el Rey Destronado, con la primera misión secundaria: llevar el Anillo del Rey a la Reina Isolda, que estará en la Zona 2 (el anillo sale en el HUD y se guarda con la partida). El Pasillo Real deja de ser sala segura.
+- **Guardado:** el servidor ahora guarda cuántos Frutos de sangre has comprado (antes se perdía al recargar y se podía saltar el límite) y el estado de las misiones. Hay que reiniciar el servidor para que lo aplique.
+- **Panel de desarrollo (F2):** botones «Tienda» (todos los objetos), «Guardar aquí» (guarda la partida y recuerda el sitio exacto) y «Cargar» (vuelve a lo guardado y a ese sitio).
+- **Mapas:** el mapa de desarrollador (F2) marca tu sala en cian y tu posición en magenta; el mapa grande (M) dice en qué sala estás.
+- **Impulso más corto:** unos 3 bloques en vez de 4,4 (dashTime 0,18). Las subidas que lo exigen (Gran Salón, Nave Principal, Observatorio) tienen las plataformas más cerca; el validador pasa con Aurora y con Vesper.
+- **Arco más lento y de menos alcance:** unos 30 % más de espera entre flechas y un 20 % menos de alcance en todos los niveles (de 290 a 450 px según el nivel; antes de 360 a 560).
+- **Salas vecinas:** si el paso hacia ellas está abierto se ven al 70 % de luz; si hay una puerta cerrada, un muro agrietado o raíces sin romper, se ven casi negras (y sin los ojos rojos de sus enemigos) hasta que se abre el paso. world.js calcula los pasos entre salas (world.passages) y el juego mira si están libres. Al cambiar de sala, la luz pasa de una a otra poco a poco (0,7 s, ROOM_FADE en game.js).
+- **Antorchas como guía:** solo empiezan encendidas en salas seguras, tranquilas o sin enemigos; las demás están apagadas hasta que las enciendes. Hay que estar más cerca para encenderlas (antes se llegaba desde lejos) y 24 de ellas, en salas con enemigos, están altas: se encienden en mitad de un salto.
+- **Enemigos y salas seguras:** al llegar al borde de una sala segura dan la vuelta y siguen andando, en vez de desaparecer.
+- **Élites:** una vez vencidos ya no vuelven a aparecer (su recompensa ya era única).
+- **Gran Salón:** la plataforma apoyada en el bloque ya no deja colarse dentro de la piedra (y caer a la sala de abajo) al bajar con ↓ + saltar.
+- **Inventario de uso (Q/R):** solo salen los objetos que se gastan y de los que tienes alguno (si no tienes ninguno, pone «Sin objetos»); los amuletos se ven aparte en el HUD. Los Frutos de sangre que quedaran en partidas antiguas se aplican al cargar.
 - **Zona 1 reequilibrada** (todo el mapa actual; detalle en docs/ZONA1.md):
   - **Daño:** una sola mejora de daño por zona, al final de cada zona. En la Zona 1 está en la Antesala del Abismo (tras la Madre Moho). La mejora de arma de la Gran Biblioteca sigue (más alcance, mismo daño) y la de la Torre del Reloj desaparece. El Colmillo de acero ya no se vende.
   - **Corazones:** quedan 8 cristales de vida (cada partida puede coger 7; fuera los de la Cripta, el Observatorio, la Torre del Reloj y el Santuario). El Fruto de sangre pasa a ser una mejora con límite: 2 compras (5 y 7 gemas), solo en la Casa del Mercader.

@@ -189,6 +189,31 @@
         }
       });
     },
+    // el suelo del trono se derrumba: lo que había encima cae al foso; la mitad se rompe y el resto queda tirado (sin animar si ya estaba roto al cargar)
+    dropThroneDecor(animate) {
+      const th = this.W.areas.throne; if (!th || !this.decorObjs) return;
+      const fy = (th.y0 + th.rh - 1) * T, xa = (th.x0 + 2) * T, xb = (th.x0 + th.rw - 2) * T;
+      const onFloor = s => s.x > xa && s.x < xb && s.y > fy - 260 && s.y <= fy + 1 && s.depth !== -7; // las piezas de pared siguen colgadas
+      const items = this.decorObjs.filter(s => s.visible !== false && onFloor(s)).map(s => ({ spr: s }))
+        .concat((this.breakables || []).filter(o => onFloor(o.spr)).map(o => ({ spr: o.spr, prop: o })));
+      const rnd = rndSeeded(th.x0 * 3 + 11);
+      items.forEach(it => {
+        const s = it.spr; if (s._home) return; s._home = { x: s.x, y: s.y, angle: s.angle, visible: s.visible };
+        let ly = fy + T; for (let gy = th.y0 + th.rh + 1; gy < th.y0 + th.rh + 40; gy++) if (this.solidAt(s.x, gy * T + 4)) { ly = gy * T; break; } // primer suelo bajo la pieza
+        const land = s.y + (ly - fy), glow = s.texture.key === 'glow'; // todo baja lo mismo que el suelo que tenía debajo
+        const breaks = !glow && rnd() < 0.5, tilt = (rnd() - 0.5) * 50;
+        const done = () => {
+          if (breaks) { s.setVisible(false); if (it.prop) it.prop.broken = true; this.poof(s.x, land - 10, 5, 0xbfb09a); if (animate) SFX.hit(); }
+          else if (glow) s.setVisible(false); else s.setAngle(tilt);
+          if (it.prop) { it.prop.x = s.x; it.prop.y = land - it.prop.h / 2; }
+        };
+        if (animate) this.tweens.add({ targets: s, y: land, duration: 520 + rnd() * 380, delay: rnd() * 260, ease: 'Quad.in', onComplete: done }); else { s.y = land; done(); }
+      });
+    },
+    restoreThroneDecor() { // el suelo se reconstruye (vuelta al punto de control): todo a su sitio
+      (this.decorObjs || []).concat((this.breakables || []).map(o => o.spr)).forEach(s => { if (!s._home) return; this.tweens.killTweensOf(s); s.setPosition(s._home.x, s._home.y).setAngle(s._home.angle).setVisible(s._home.visible); s._home = null; });
+      (this.breakables || []).forEach(o => { if (o.spr.y !== o.y + o.h / 2) { o.x = o.spr.x; o.y = o.spr.y - o.h / 2; } });
+    },
     // un golpe (espada, flecha o Pisotón) rompe los objetos que toca
     hitBreakables(cx, cy, w, h) {
       (this.breakables || []).forEach(o => { if (!o.broken && rectsOverlap(cx, cy, w, h, o.x, o.y, o.w, o.h)) this.breakProp(o); });

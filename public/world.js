@@ -6,7 +6,7 @@
   const T = 32, CW = 26, CH = 18, COLS = 22, ROWS = 10;
   const PHYS = {
     gravity: 900, speed: 165, jump: -470, djump: -420,
-    dashSpeed: 560, dashTime: 0.25, dashCd: 0.5,
+    dashSpeed: 560, dashTime: 0.18, dashCd: 0.5, // Impulso: unos 100 px (antes 0.25 s = 140 px)
     wjY: -430, wjX: 190, wjLock: 0.18, slide: 110, maxFall: 700,
     bodyW: 30, bodyH: 39,
   };
@@ -36,7 +36,7 @@
   // area(id, nombre, zona, celdaX, celdaY, anchoCeldas, altoCeldas, ops)
   // ops (coords locales al área): ['P',x,y,w] plataforma | ['B',x,y,w,h] bloque | ['K',x,y,w,h] rompible | ['S',x,y,w] pinchos
   //   ['forge',x,y] mejora de arma | ['npc',tipo,x,y] personaje | ['door',x,sala,xDestino] puerta para entrar en una casa (E) |
-  //   ['calm'] sala tranquila: sin enemigos y con música de calma | ['unsafe'] la hoguera de la sala no quita los enemigos | ['interior'] interior de casa (no sale en el mapa) |
+  //   ['bleed',x,y,alto] muro agrietado que sangra (pista visual) | ['calm'] sala tranquila: sin enemigos y con música de calma | ['unsafe'] la hoguera de la sala no quita los enemigos | ['interior'] interior de casa (no sale en el mapa) |
   //   ['pit',x0,x1] foso | ['E',tipo,x,y] enemigo | ['cry',x,y] cristal | ['altar',x,y] | ['boss',id,x,y]
   //   ['climb',hx,hw,tipo,hayAgujero] subida en zigzag hacia un agujero en el techo (norm | dj | dash)
   const AREAS = [];
@@ -86,7 +86,7 @@
     ['E', 'saw', 11, 7, { ax: 'h', r: 90, w: 1.4 }], ['E', 'saw', 19, 13, { ax: 'v', r: 55, w: 1.8 }], ['E', 'saw', 9, 20, { ax: 'h', r: 110, w: 1.2 }], ['E', 'saw', 15, 26, { ax: 'v', r: 65, w: 1.6 }]]);
   area('torre', 'Torre del Reloj', 4, 6, 1, 1, 2, [['tri', 'tl', 6], ['tri', 'tr', 6], ['climb', 11, 4, 'dj', true], ['E', 'kn', 8, 34, { elite: true, name: 'Relojero Oxidado', reward: { souls: 100, item: 'rage' } }], ['E', 'gh', 20, 24], ['E', 'gh', 8, 10], ['E', 'bat', 14, 28], ['E', 'saw', 13, 21, { ax: 'h', r: 90, w: 1.2 }], ['E', 'saw', 13, 13, { ax: 'h', r: 80, w: 1.5 }]]);
   area('clkC', 'Cámara del Reloj', 4, 6, 0, 1, 1, [['torch', 4, 12], ['torch', 9, 12], ['torch', 14, 12], ['torch', 19, 12], ['torch', 23, 12], ['tri', 'tl', 5], ['tri', 'tr', 5], ['boss', 'clock', 19, 16]]);
-  area('pasR', 'Pasillo Real', 5, 7, 0, 1, 1, [['page', 20, 16], ['tri', 'tl', 5], ['B', 11, 3, 4, 14], ['B', 7, 3, 1, 10], ['altar', 22, 16], ['E', 'gh', 3, 9]]);
+  area('pasR', 'Pasillo Real', 5, 7, 0, 1, 1, [['page', 20, 16], ['tri', 'tl', 5], ['B', 11, 3, 4, 14], ['B', 7, 3, 1, 10], ['E', 'gh', 3, 9]]);
   // Arena inferior del Conde: no tiene puertas; se llega al romperse el suelo del trono. 'special' = fuera de la comprobación de alcance
   area('fosoC', 'Foso del Conde', 5, 8, 1, 2, 1, [['special'], ['calm'], ['B', 5, 15, 5, 2], ['B', 7, 14, 2, 1], ['B', 14, 16, 3, 1], ['B', 15, 15, 1, 1], ['B', 22, 15, 4, 2], ['B', 23, 14, 2, 1],
     ['B', 31, 16, 3, 1], ['B', 36, 15, 5, 2], ['B', 38, 14, 2, 1], ['B', 45, 15, 4, 2], ['P', 10, 11, 4], ['P', 19, 12, 5], ['P', 29, 10, 5], ['P', 40, 11, 4]]);
@@ -94,7 +94,7 @@
 
   // ---------- Conexiones ----------
   // --- Torres del Alba (tras el Conde): su huida abre el foso por ambos lados ---
-  area('escalaR', 'Escalera Real', 5, 7, 1, 1, 2, [['calm'], ['climb', 16, 4, 'norm', true]]);
+  area('escalaR', 'Escalera Real', 5, 7, 1, 1, 2, [['calm'], ['altar', 4, 34], ['npc', 'king', 10, 34], ['climb', 16, 4, 'norm', true]]); // hoguera y el Rey Destronado (misión del Anillo)
   area('alba1', 'Torre del Alba', 7, 10, 0, 1, 2, [['calm'], ['P', 3, 32, 5], ['P', 10, 29, 5], ['P', 17, 26, 5], ['P', 9, 23, 5], ['P', 3, 20, 5], ['P', 10, 17, 5], ['P', 17, 17, 8]]);
   area('albaH', 'Sala de los Rivales', 7, 11, 0, 2, 1, [['calm'], ['door', 33, 'casaM', 5], ['npc', 'oracle', 14, 16], ['altar', 4, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
   area('albaA', 'Cámara de Aurora', 7, 13, 0, 2, 1, [['tri', 'tl', 6], ['tri', 'tr', 6], ['boss', 'aurora', 26, 10]]);
@@ -107,8 +107,8 @@
   area('torreC', 'Escalera al Cielo', 7, 15, 0, 1, 2, [['P', 3, 32, 5], ['P', 10, 29, 5], ['P', 17, 26, 5], ['P', 9, 23, 5], ['P', 3, 20, 5], ['P', 10, 17, 5], ['P', 17, 17, 8],
     ['E', 'kn', 14, 34], ['E', 'bat', 12, 10], ['E', 'gh', 18, 22], ['E', 'gh', 6, 14], ['E', 'bat', 20, 28], ['E', 'saw', 13, 24, { ax: 'h', r: 90, w: 1.3 }]]);
   area('cumbre', 'Cumbre del Alba', 7, 16, 0, 2, 1, [['npc', 'watcher', 20, 16], ['npc', 'rivalA', 12, 16], ['npc', 'rivalV', 12, 16], ['page', 26, 16], ['altar', 6, 16], ['tri', 'tl', 5], ['tri', 'tr', 5],
-    // escalera al saliente izquierdo y balcón lejano (solo se alcanza planeando con las Alas del Alba)
-    ['P', 3, 13, 4], ['P', 1, 10, 3], ['P', 3, 7, 4], ['P', 22, 10, 3], ['cry', 23, 9],
+    // escalera al saliente izquierdo; junto al techo, a la derecha del último saliente, un cristal que solo se ve desde arriba (o saltando) y solo se alcanza saltando desde esos salientes
+    ['P', 3, 13, 4], ['P', 1, 10, 3], ['P', 3, 7, 4], ['cry', 9, 4, 'peek'],
     // alcoba secreta tras un muro agrietado (el Ojo de la Noche la revela): dos cristales de vida
     ['P', 41, 13, 4], ['P', 46, 10, 4], ['P', 41, 7, 4],
     ['B', 45, 1, 6, 2], ['B', 45, 3, 1, 2], ['K', 45, 5, 1, 2], ['B', 50, 3, 1, 4], ['B', 45, 7, 6, 1], ['cry', 47, 6],
@@ -145,7 +145,7 @@
   area('cist', 'Cisterna de Musgo', 9, 17, 3, 2, 2, [['climb', 40, 4, 'norm', true], ['P', 24, 23, 4],
     ['E', 'bat', 28, 10], ['E', 'bat', 20, 24], ['E', 'gh', 14, 14], ['E', 'gh', 46, 12], ['E', 'slug', 20, 34], ['E', 'slug', 30, 34], ['E', 'shroom', 40, 34]]);
   area('cel', 'Celdas Cubiertas', 9, 15, 4, 2, 1, [['page', 47, 16], ['B', 14, 1, 2, 11], ['B', 26, 1, 2, 11], ['B', 38, 1, 2, 11],
-    ['B', 1, 1, 6, 8], ['B', 6, 9, 1, 4], ['K', 6, 13, 1, 4], ['cry', 3, 16],
+    ['B', 1, 1, 6, 8], ['B', 6, 9, 1, 4], ['K', 6, 13, 1, 4], ['bleed', 6, 13, 4], ['cry', 3, 16],
     ['E', 'pris', 10, 16], ['E', 'slug', 20, 16], ['E', 'gh', 32, 8], ['E', 'shroom', 42, 16], ['E', 'bat', 44, 6],
     ['E', 'kn', 32, 16, { elite: true, name: 'Verdugo Cubierto de Musgo', reward: { souls: 90, item: 'ward', hammer: true } }]]);
   area('rez', 'Refectorio Podrido', 9, 17, 5, 2, 1, [['climb', 8, 4, 'norm', true], ['page', 13, 16], ['B', 20, 15, 3, 2], ['B', 25, 15, 2, 2],
@@ -208,7 +208,7 @@
       const i = idx + 1;
       if (type === 'dj' && i === 2) return;
       let x;
-      if (type === 'dash' && i === 1) x = hc + 5; else if (type === 'dash' && i === 2) x = hc - 9; else if (type === 'dash' && i === 3) x = hc - 2;
+      if (type === 'dash' && i === 1) x = hc + 4; else if (type === 'dash' && i === 2) x = hc - 7; else if (type === 'dash' && i === 3) x = hc - 2; // hueco de 7 casillas: solo se cruza con el Impulso
       else x = (i % 2 === 1) ? hc + 1 : hc - 6;
       ops.push(['P', Math.max(2, x), y, 5]);
     });
@@ -221,7 +221,7 @@
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], lifts: [], roots: new Set() };
+    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], bleeds: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], lifts: [], roots: new Set() };
     let uid = 1;
     // 1) interior de cada área
     for (const a of AREAS) {
@@ -299,8 +299,9 @@
           case 'pit': for (let x = op[1]; x <= op[2]; x++) setF(a, x, a.rh - 1, K.SPIKES); break;
           case 'E': if (a.safe) break; world.spawns.push({ id: 'e' + (uid++), area: a.id, type: op[1], x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, opts: op[4] || null, zone: a.diff }); break;
           case 'door': { const b = world.areas[op[2]]; if (!b) throw new Error('Puerta a área inexistente ' + op[2]); world.doors.push({ id: sid('d'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, to: op[2], toX: (b.x0 + op[3] + 0.5) * T, toY: (b.y0 + b.rh - 1) * T }); break; }
+          case 'bleed': world.bleeds.push({ area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], h: op[3] }); break; // ['bleed', x, y, alto]: muro agrietado que gotea sangre (pista)
           case 'page': world.pages.push({ id: sid('p'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
-          case 'cry': world.crystals.push({ id: sid('c'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
+          case 'cry': world.crystals.push({ id: sid('c'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T, peek: op[3] === 'peek' }); break; // 'peek': solo se ve cuando el jugador está a su altura
           case 'sforge': world.sforges.push({ id: sid('sf'), area: a.id, kind: 'forge', x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'sshrine': world.sforges.push({ id: sid('sf'), area: a.id, kind: 'shrine', x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'bigfire': world.altars.push({ id: sid('a'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T, big: true, mini: op[3] === 'mini' }); break; // mini: sigue siendo la hoguera de viaje rápido pero se dibuja y alumbra como una normal
@@ -310,11 +311,28 @@
         }
       }
       // antorchas
+      // antorchas encendidas solo en salas tranquilas o sin enemigos: el resto empiezan apagadas y, al encenderlas, marcan por dónde ha pasado el jugador
+      const quiet = a.safe || a.calm || (!a.boss && !a.ops.some(o => o[0] === 'E'));
       const doorXs = a.ops.filter(o => o[0] === 'door').map(o => o[1]); // ninguna antorcha sobre la fachada de una casa
-      if (!a.ops.some(o => o[0] === 'torch')) for (let x = 5; x < a.rw - 4; x += 13) for (let k = 0; k < a.h; k++) if (!doorXs.some(d => Math.abs(d - x) <= 5)) for (const dy of [13, 12, 14, 11]) { const yy = k * 18 + dy; if (yy < a.rh - 1 && yy > 1 && free(a, x, yy)) { world.torches.push({ id: world.torches.length, x: (a.x0 + x + 0.5) * T, y: (a.y0 + yy + 0.5) * T, z: a.z, area: a.id, lit: a.z !== 3, r: 215 }); break; } }
+      // algunas antorchas (una de cada tres en salas con enemigos) van altas: hay que encenderlas en mitad de un salto. Solo sobre suelo firme y con hueco libre debajo
+      const highTorch = (x, k) => { if (quiet || k !== a.h - 1 || (x / 13 | 0) % 3 !== 1) return false; const fy = a.rh - 1; if (kind(fg[a.y0 + fy][a.x0 + x]) !== K.FLOOR) return false; for (let y = k * 18 + 9; y < fy; y++) if (!free(a, x, y)) return false; return true; };
+      if (!a.ops.some(o => o[0] === 'torch')) for (let x = 5; x < a.rw - 4; x += 13) for (let k = 0; k < a.h; k++) if (!doorXs.some(d => Math.abs(d - x) <= 5)) for (const dy of (highTorch(x, k) ? [10, 9] : [13, 12, 14, 11])) { const yy = k * 18 + dy; if (yy < a.rh - 1 && yy > 1 && free(a, x, yy)) { world.torches.push({ id: world.torches.length, x: (a.x0 + x + 0.5) * T, y: (a.y0 + yy + 0.5) * T, z: a.z, area: a.id, lit: quiet, r: 215 }); break; } }
     }
+    // una plataforma apoyada sobre roca se vuelve sólida: si no, al bajar atravesándola (↓ + saltar) te quedas dentro del bloque y caes a la sala de abajo
+    for (let y = 0; y < Ht - 1; y++) for (let x = 0; x < Wt; x++) { const v = fg[y][x], b = fg[y + 1][x]; if (v >= 0 && v % 8 === K.ONEWAY && b >= 0 && (b % 8 === K.SOLID || b % 8 === K.CRACK)) fg[y][x] = v - K.ONEWAY + K.SOLID; }
     const gcnt = {};
     for (const [aid, gx, gy] of GEMS) { const a = world.areas[aid]; if (!a) throw new Error('Gema en área inexistente ' + aid); gcnt[aid] = (gcnt[aid] || 0) + 1; world.gems.push({ id: 'g_' + aid + '_' + gcnt[aid], area: aid, x: (a.x0 + gx + 0.5) * T, y: (a.y0 + gy + 0.5) * T }); }
+    // pasos entre salas: casillas pegadas a ambos lados de la frontera que no son pared fija (huecos, puertas por jefe, grietas, raíces). El juego mira si están libres para saber si el paso está abierto
+    const gateSet = new Set(); world.gates.forEach(g => g.tiles.forEach(t => gateSet.add(t.gy * Wt + t.gx)));
+    const passTile = (x, y) => { const v = fg[y][x]; return v < 0 || v % 8 === K.ONEWAY || v % 8 === K.CRACK || gateSet.has(y * Wt + x); };
+    const pass = {}, addPass = (ia, ib, t1, t2) => { const A = AREAS[ia].id, B = AREAS[ib].id, k = A < B ? A + '|' + B : B + '|' + A; (pass[k] = pass[k] || []).push([t1, t2]); };
+    for (let y = 0; y < Ht - 1; y++) for (let x = 0; x < Wt - 1; x++) {
+      const ia = areaAt[y][x]; if (ia < 0) continue;
+      const ir = areaAt[y][x + 1], id = areaAt[y + 1][x];
+      if (ir >= 0 && ir !== ia && passTile(x, y) && passTile(x + 1, y)) addPass(ia, ir, [x, y], [x + 1, y]);
+      if (id >= 0 && id !== ia && passTile(x, y) && passTile(x, y + 1)) addPass(ia, id, [x, y], [x, y + 1]);
+    }
+    world.passages = pass; // { 'salaA|salaB': [[[gx,gy],[gx,gy]], ...] }
     world.spawnPoint = world.altars.find(a => a.area === 'vest');
     world.areaOf = (gx, gy) => { const i = (areaAt[gy] || [])[gx]; return i >= 0 && i !== undefined ? AREAS[i] : null; };
     return world;

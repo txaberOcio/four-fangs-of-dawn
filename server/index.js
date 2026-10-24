@@ -49,7 +49,8 @@ function sanitizeMe(m) {
     abil: { dash: !!(m.abil && m.abil.dash), dj: !!(m.abil && m.abil.dj), wj: !!(m.abil && m.abil.wj), wings: !!(m.abil && m.abil.wings), eye: !!(m.abil && m.abil.eye), pound: !!(m.abil && m.abil.pound) }, elite: strList(m.elite, 20, 40), pages: strList(m.pages, 20), seen: strList(m.seen, 20), kills: (() => { const o = {}; for (const k of ['sk', 'kn', 'bat', 'gh', 'saw', 'sentinel', 'garg', 'bishop', 'clock', 'archon', 'reina', 'conde', 'aurora', 'vesper']) o[k] = clampInt(m.kills && m.kills[k], 0, 99999); return o; })(),
     travel: !!m.travel, el: ELEMS.includes(m.el) ? m.el : '',
     hammer: clampInt(m.hammer, 0, 2), met: !!m.met,
-    gems: clampInt(m.gems, 0, 999), gemGot: strList(m.gemGot, 60), bg: strList(m.bg, 12), perm: { dmg: clampInt(m.perm && m.perm.dmg, 0, 3), souls: clampInt(m.perm && m.perm.souls, 0, 2) },
+    gems: clampInt(m.gems, 0, 999), gemGot: strList(m.gemGot, 60), bg: strList(m.bg, 12), perm: { dmg: clampInt(m.perm && m.perm.dmg, 0, 3), souls: clampInt(m.perm && m.perm.souls, 0, 2), hp: clampInt(m.perm && m.perm.hp, 0, 2) },
+    quests: { anillo: clampInt(m.quests && m.quests.anillo, 0, 2) },
     altar: typeof m.altar === 'string' ? m.altar.slice(0, 24) : '', lit: strList(m.lit, 30), visited: strList(m.visited, 80) };
 }
 // datos personales que se entregan a un jugador: las habilidades solo valen si su jefe ya cayó en el mundo de la sala

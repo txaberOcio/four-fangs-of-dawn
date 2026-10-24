@@ -11,7 +11,7 @@ const WEAPONS = {
   blue: { name: 'Lanza', kind: 'melee', fx: 'spear', fxScale: 2.2, tint: 0x9fd4ff, off: 56, h: 26, act: 0.14,
     lv: [{ dmg: 1, w: 104, cd: 0.44 }, { dmg: 1, w: 120, cd: 0.40 }, { dmg: 2, w: 120, cd: 0.40 }, { dmg: 2, w: 140, cd: 0.36 }, { dmg: 3, w: 150, cd: 0.34 }] },
   green: { name: 'Arco', kind: 'ranged', fx: 'arrow', tint: 0xb8ff9a,
-    lv: [{ dmg: 1, cd: 0.45, n: 1, range: 360 }, { dmg: 1, cd: 0.42, n: 1, range: 440 }, { dmg: 1, cd: 0.42, n: 2, range: 440 }, { dmg: 2, cd: 0.40, n: 2, range: 520 }, { dmg: 2, cd: 0.36, n: 2, range: 560 }] },
+    lv: [{ dmg: 1, cd: 0.58, n: 1, range: 290 }, { dmg: 1, cd: 0.54, n: 1, range: 350 }, { dmg: 1, cd: 0.54, n: 2, range: 350 }, { dmg: 2, cd: 0.52, n: 2, range: 420 }, { dmg: 2, cd: 0.47, n: 2, range: 450 }] }, // ataque más lento (≈ +30 % de espera) y alcance un 20 % menor que antes
   purple: { name: 'Guadaña', kind: 'melee', fx: 'slash', fxScale: 3.2, tint: 0xc07aff, off: 26, h: 74, act: 0.22,
     lv: [{ dmg: 2, w: 92, cd: 0.62 }, { dmg: 2, w: 102, cd: 0.56 }, { dmg: 3, w: 102, cd: 0.56 }, { dmg: 3, w: 114, cd: 0.50 }, { dmg: 4, w: 124, cd: 0.50 }] },
 };
@@ -38,6 +38,11 @@ const ITEMS = [
   { id: 'fang', name: 'Colmillo de acero', price: 0, gems: 4, perm: 'dmg', max: 3, desc: '+1 de daño para siempre (hasta 3 veces; cada una cuesta más).' },
   { id: 'talis', name: 'Talismán de almas', price: 0, gems: 3, perm: 'souls', max: 2, desc: '+20% de almas de los enemigos para siempre (hasta 2 veces).' },
 ];
+// a quién hay que vencer para abrir cada puerta sellada (clave = gate de world.js)
+const GATE_BY = { bishop: 'al Obispo Caído', clock: 'al Guardián del Reloj', conde: 'al Conde', sellos: 'al Archimago y a la Reina (sus dos sellos)', alba: 'a Aurora o a Vesper', madre: 'a la Madre Moho' };
+// objetos que se usan con Q: las mejoras permanentes (perm) y el amuleto (se gasta solo al morir) no entran en el inventario de uso
+const MOSS_SLOW = 0.85, MOSS_FIRE = 1.2; // Calabozos Profundos: el suelo de musgo frena al andar y sus enemigos reciben un 20 % más de daño de fuego
+const usableItem = it => !it.perm && it.id !== 'amu';
 // Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
 const GEMS_BOSS = { garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
@@ -50,6 +55,7 @@ const SHOP_STOCK = {
   casaM: [['pot', 0], ['pot2', 0], ['ward', 0], ['str', 0], ['spd', 0], ['rage', 0], ['tonic', 0], ['amu', 0], ['talis', 0], ['fruit', 0]],
   asc: [['pot', 0], ['pot2', 0], ['bomb', 0], ['ward', 0], ['str', 0], ['rage', 0], ['amu', 0]]
 };
+SHOP_STOCK.dev = ITEMS.map(i => [i.id, 0]); // tienda del panel de desarrollo (F2)
 const SHOP_ORDER = ['vest', 'naveS', 'casaM', 'asc'];
 // poderes elementales de la Forja de los Elementos: cambian el color del ataque y añaden un efecto
 const ELEMENTS = {
@@ -166,10 +172,12 @@ const NPC_DEFS = {
       'El Alcaide Verdín aún guarda las llaves. No es malo: es leal, que a veces es peor. Y bajo su sala hay un suelo de raíces que solo cede a un buen pisotón.',
       'El Verdugo de las Celdas Cubiertas lleva al cinto un martillo que late como un corazón. No es suyo: es del herrero de la Cueva.'],
     ['¿Oyes las gotas? Cuentan los días que no pasan.'] ] },
+  // El Rey Destronado (Escalera Real): da el Anillo del Rey para la Reina Isolda, que estará en la Zona 2 (quests.anillo: 0 sin empezar, 1 lo llevas, 2 entregado)
+  king: { name: 'El Rey Destronado', tex: 'npc_king', talk: (sc, n) => sc.kingTalk(n), lines: [['...']] },
   watcher: { name: 'Vigía del Cielo', tex: 'npc_watcher', lines: [
     ['Habéis subido hasta la Cumbre del Alba. Aquí no hay jefes: es un lugar para explorar con todo lo que habéis aprendido.',
       'Dicen que quien venció a Vesper ve un tesoro tras un muro agrietado, al fondo de esta sala (dos cristales de vida), y que el suelo agrietado de aquí abajo guarda el Santuario de las Sombras.',
-      'Y que quien venció a Aurora puede planear hasta el balcón lejano, sobre el vacío, donde brilla otro cristal.',
+      'Y que quien sube a los salientes de la izquierda y mira hacia el techo encuentra otro cristal. Desde el suelo no se ve.',
       'Al este hay un jardín colgante: hace falta impulso, doble salto y salto de pared. Descansad en la hoguera cuando queráis.'],
     ['El viento aquí huele a ceniza y a amanecer. Pronto habrá más que ver.'] ] },
   // El herrero se queda en la Cueva del Abismo hasta que le lleves el Martillo Latente; entonces se muda a su santuario secreto bajo la Cumbre del Alba.
@@ -276,7 +284,7 @@ const _hurt = CastleScene.prototype.hurt, _die = CastleScene.prototype.die, _res
 Object.assign(CastleScene.prototype, {
   // ---- inicio
   initExtras() {
-    this.element = ''; this.travel = false; this.travelOpen = false; this.imbueOpen = false; this.hammerState = 0; this.smithMet = false; // hammerState: 0 sin martillo, 1 lo llevas, 2 entregado
+    this.element = ''; this.travel = false; this.travelOpen = false; this.imbueOpen = false; this.hammerState = 0; this.smithMet = false; this.quests = { anillo: 0 }; // hammerState: 0 sin martillo, 1 lo llevas, 2 entregado
     this.buildAlbaDecor(); this.buildHelp();
     if (/[?&]dev=1/.test(location.search)) this.setupDev();
     const w = this.W;
@@ -319,7 +327,7 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.buildHouses();
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.buildHouses(); this.buildGateDoors(); this.buildBleeds(); if (this.floorBroken) this.dropThroneDecor(false);
     this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
@@ -340,10 +348,11 @@ Object.assign(CastleScene.prototype, {
     this.gems = m.gems | 0; this.perm = { dmg: (m.perm && m.perm.dmg) | 0, souls: (m.perm && m.perm.souls) | 0, hp: (m.perm && m.perm.hp) | 0 };
     (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
-    this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.syncNpcs();
+    this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.quests = { anillo: (m.quests && m.quests.anillo) | 0 }; this.syncNpcs();
     if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
-    this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0); this.hp = this.maxHp;
+    const oldFruit = this.inv.fruit | 0; this.inv.fruit = 0; this.inv.fang = 0; this.inv.talis = 0; // eran objetos de inventario en partidas antiguas
+    this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0) + oldFruit; this.hp = this.maxHp;
     const visited = new Set(m.visited || []);
     (m.visited || []).forEach(id => { const ar = this.W.areas[id]; if (ar) this.markVisited(ar); });
     (m.elite || []).forEach(id => this.eliteGot.add(id)); (m.seen || []).forEach(id => this.seen.add(id)); this.kills = Object.assign({}, m.kills || {});
@@ -405,13 +414,14 @@ Object.assign(CastleScene.prototype, {
       this.bigStats.setText('Exploración ' + x.pct + '%   ·   Salas ' + x.vis + '/' + x.rooms + '   Cristales y forjas ' + x.gotItems + '/' + x.items + '   Hogueras ' + x.litB + '/' + x.bon + '\nJefes ' + x.dead + '/' + x.bos + '   Diarios ' + x.pages + '/' + x.nPages + '   Élites ' + x.elites + '/' + x.nElites);
     }
     this.ents.forEach(e => { if (e.type === 'clock' && e.aggro && !this.clockHint) { this.clockHint = true; this.toast('El Guardián es inmune a la luz: apaga las antorchas de la sala con {act}. ¡Él irá a encenderlas!', 8000); } });
+    if (!usableItem(ITEMS[this.selItem]) || !(this.inv[ITEMS[this.selItem].id] > 0)) { const k = ITEMS.findIndex(i => usableItem(i) && this.inv[i.id] > 0); if (k >= 0) this.selItem = k; } // solo se elige entre lo que tienes
     const it = ITEMS[this.selItem], n = this.inv[it.id];
-    this.itemIcon.setTexture('it_' + it.id).setAlpha(n > 0 ? 1 : 0.3);
-    this.itemTxt.setText(`${it.name} x${n}` + (IS_TOUCH ? '' : '   [Q usar · R cambiar]'));
+    this.itemIcon.setTexture('it_' + it.id).setVisible(n > 0);
+    this.itemTxt.setText((n > 0 ? `${it.name} x${n}` + (IS_TOUCH ? '' : '   [Q usar · R cambiar]') : 'Sin objetos') + (this.inv.amu > 0 ? '    Amuleto x' + this.inv.amu : ''));
     const b = this.buffs, parts = [];
     if (b.spd > 0) parts.push('VEL ' + Math.ceil(b.spd) + 's'); if (b.str > 0) parts.push('FUE ' + Math.ceil(b.str) + 's'); if (b.lamp > 0) parts.push('LUZ ' + Math.ceil(b.lamp) + 's'); if (b.rage > 0) parts.push('FUR ' + Math.ceil(b.rage) + 's'); if (b.tonic > 0) parts.push('ALM ' + Math.ceil(b.tonic) + 's'); if (this.ward > 0) parts.push('PIEL x' + this.ward);
     this.buffTxt.setText(parts.join('  '));
-    this.hudSouls.setText(`◆ ${this.souls}  ✦ ${this.gems}${this.hammerState === 1 ? '  [Martillo Latente]' : ''}    ${this.wpn.name} Nv.${this.wlv}${this.element ? ' [' + ELEMENTS[this.element].name + ']' : ''}    ${this.pas.name || ''}`);
+    this.hudSouls.setText(`◆ ${this.souls}  ✦ ${this.gems}${this.hammerState === 1 ? '  [Martillo Latente]' : ''}${this.quests.anillo === 1 ? '  [Anillo del Rey]' : ''}    ${this.wpn.name} Nv.${this.wlv}${this.element ? ' [' + ELEMENTS[this.element].name + ']' : ''}    ${this.pas.name || ''}`);
   },
   floatText(x, y, text, color = '#d9b3ff') {
     const t = this.add.text(x, y, text, { fontSize: '14px', fontFamily: 'Courier New', color, stroke: '#000', strokeThickness: 4 }).setOrigin(0.5).setDepth(28);
@@ -574,7 +584,7 @@ Object.assign(CastleScene.prototype, {
     if (onFloor && !this.wasFloor && (this.lastVy || 0) > 260) SFX.land();
     if (onFloor && !ui && Math.abs(b.velocity.x) > 40 && (this.stepT = (this.stepT || 0) - dt) <= 0) { this.stepT = 0.3; SFX.step(); }
     this.wasFloor = onFloor; this.lastVy = b.velocity.y;
-    if (onFloor) { this.coyote = 0.1; this.jumpsUsed = 0; this.dashAvail = true; if (!this.nearSpikes()) { this.lastGround.x = p.x; this.lastGround.y = p.y; } } else this.coyote -= dt;
+    if (onFloor) { this.coyote = 0.1; this.jumpsUsed = 0; this.dashAvail = true; if (!this.nearSpikes() && !this.overSpikes()) { this.lastGround.x = p.x; this.lastGround.y = p.y; } } else this.coyote -= dt;
     const left = !ui && (held(K_.LEFT, K_.A) || touch.left || pad.left), right = !ui && (held(K_.RIGHT, K_.D) || touch.right || pad.right);
     const crouchHeld = (!ui && (held(K_.DOWN, K_.S) || touch.down || pad.down)) || (!!this.cut && this.cut.phase === 'dive');
     const dir = (right ? 1 : 0) - (left ? 1 : 0);
@@ -583,7 +593,8 @@ Object.assign(CastleScene.prototype, {
     const wantCrouch = crouchHeld && onFloor && this.dashT <= 0 && this.stun <= 0;
     if (wantCrouch && !this.crouching) this.setCrouch(true); else if (!wantCrouch && this.crouching && this.canStand()) this.setCrouch(false);
     const wall = b.blocked.left ? -1 : b.blocked.right ? 1 : 0;
-    const speed = P.speed * (this.slowT > 0 ? 0.5 : 1) * (this.pas.speed || 1) * (this.buffs.spd > 0 ? 1.35 : 1) * (this.crouching ? 0.5 : 1);
+    const mossy = onFloor && this.W.areas[this.myArea] && this.W.areas[this.myArea].z === 9; // el suelo de musgo frena un poco (solo andando: en el aire no cambia el salto)
+    const speed = P.speed * (this.slowT > 0 ? 0.5 : 1) * (this.pas.speed || 1) * (this.buffs.spd > 0 ? 1.35 : 1) * (this.crouching ? 0.5 : 1) * (mossy ? MOSS_SLOW : 1);
     if (!this.crouching) { // caminar / saltar: fotogramas de piernas
       const moving = onFloor && dir !== 0 && this.dashT <= 0 && this.stun <= 0;
       const key = 'hero_' + this.color + (moving ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : (!onFloor ? '_w2' : (((time / 550) | 0) % 2 ? '_i' : '')));
@@ -698,7 +709,7 @@ Object.assign(CastleScene.prototype, {
     const W = this.W, box = document.createElement('div');
     box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#0a0612ee;color:#fff;font:13px Courier New,monospace;padding:10px;display:none;overflow:auto';
     box.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b>MODO DESARROLLO</b>' +
-      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devHammer">Dar el Martillo</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
+      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devHammer">Dar el Martillo</button><button id="devShop">Tienda</button><button id="devSave">Guardar aquí</button><button id="devLoad">Cargar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
       '<span id="devInfo" style="color:#ffd98a">Haz clic en el mapa para teletransportarte</span></div><canvas id="devMap" style="image-rendering:pixelated;cursor:crosshair;border:2px solid #ffb347"></canvas>';
     document.body.appendChild(box);
     box.querySelectorAll('button').forEach(b => { b.style.cssText = 'width:auto;margin:0;padding:4px 10px;font:12px Courier New,monospace;cursor:pointer'; });
@@ -711,16 +722,26 @@ Object.assign(CastleScene.prototype, {
         g.fillStyle = k === -1 ? (a ? '#241a3a' : '#0a0612') : k === K.ONEWAY ? '#ffffff' : k === K.SPIKES ? '#ff4a4a' : k === K.CRACK ? '#ffcf6a' : (pal ? pal.light : '#444');
         g.fillRect(x, y, 1, 1);
       }
+      // dónde estás: borde de tu sala en cian y tu posición en magenta
+      const px = Math.floor(this.player.x / T), py = Math.floor(this.player.y / T), here = W.areaOf(px, py);
+      if (here) { g.strokeStyle = '#3bf0ff'; g.lineWidth = 2; g.strokeRect(here.x0 + 1, here.y0 + 1, here.rw - 2, here.rh - 2); }
+      g.fillStyle = '#ffffff'; g.fillRect(px - 4, py - 4, 9, 9); g.fillStyle = '#ff3bd9'; g.fillRect(px - 3, py - 3, 7, 7);
+      g.fillStyle = '#ff3bd9'; g.fillRect(px - 14, py, 8, 1); g.fillRect(px + 7, py, 8, 1); g.fillRect(px, py - 14, 1, 8); g.fillRect(px, py + 7, 1, 8);
+      info.textContent = here ? 'Estás en: ' + here.name + ' (' + here.id + ') · haz clic en el mapa para teletransportarte' : 'Haz clic en el mapa para teletransportarte';
       const s = scale(); cv.style.width = (W.Wt * s) + 'px'; cv.style.height = (W.Ht * s) + 'px';
     };
     const at = ev => { const r = cv.getBoundingClientRect(), s = r.width / W.Wt; return [Math.floor((ev.clientX - r.left) / s), Math.floor((ev.clientY - r.top) / s)]; };
-    cv.onmousemove = ev => { const [x, y] = at(ev), a = W.areaOf(x, y); info.textContent = a ? a.name + ' (' + a.id + ')' : 'roca'; };
+    cv.onmousemove = ev => { const [x, y] = at(ev), a = W.areaOf(x, y), here = W.areaOf(Math.floor(this.player.x / T), Math.floor(this.player.y / T)); info.textContent = (a ? a.name + ' (' + a.id + ')' : 'roca') + (here ? '   ·   estás en: ' + here.name : ''); };
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
     box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
     box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
     box.querySelector('#devHammer').onclick = () => { this.giveHammer(); };
+    // guardar y cargar: guarda la partida (como al descansar, en la última hoguera) y recuerda el sitio exacto; cargar vuelve a ese estado y a ese sitio
+    box.querySelector('#devSave').onclick = () => { const a = this.lastBonfire || this.altars[0]; this.savePersonal(a); this.devPos = { x: this.player.x, y: this.player.y }; try { localStorage.setItem('devPos_' + this.color, JSON.stringify(this.devPos)); } catch (e) { /* sin almacenamiento */ } toggle(); this.toast('Partida guardada aquí (modo desarrollo)'); };
+    box.querySelector('#devLoad').onclick = () => { let pos = this.devPos; try { pos = pos || JSON.parse(localStorage.getItem('devPos_' + this.color) || 'null'); } catch (e) { /* ok */ } toggle(); this.revertToCheckpoint(); if (pos) { this.player.setPosition(pos.x, pos.y); this.player.body.setVelocity(0, 0); this.invuln = 2; } this.hp = this.maxHp; this.toast('Partida cargada (modo desarrollo)'); };
+    box.querySelector('#devShop').onclick = () => { toggle(); this.curNpc = { area: 'dev' }; this.openShop(); }; // tienda de desarrollo: todos los objetos
     box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
     const orig = this.hurt; this.hurt = (d, x) => { if (this.devGod) return; return orig.call(this, d, x); };
     const toggle = () => { const open = box.style.display === 'none'; box.style.display = open ? 'block' : 'none'; if (open) draw(); else if (document.activeElement) document.activeElement.blur(); };
@@ -809,7 +830,7 @@ Object.assign(CastleScene.prototype, {
     if (this.coverDirty || this.coverEye !== !!this.abil.eye || !this.hidCover) this.redrawHidCover();
     if (this.sealLabel) { const pb = this.progress.bosses, n = (pb.includes('archon') ? 1 : 0) + (pb.includes('reina') ? 1 : 0), open = pb.includes('conde') || n === 2; this.sealLabel.setText(open ? 'La puerta del trono\nestá abierta' : 'Sellos del trono: ' + n + '/2\n(Archimago y Reina de Huesos)'); }
     this.crackGlow(); // oculta lo que está dentro de una sala secreta aún cerrada
-    this.crystals.forEach(c => { if (!this.cryGot.has(c.id)) c.spr.setVisible(!this.hiddenAt(c.x, c.y)); });
+    this.crystals.forEach(c => { if (!this.cryGot.has(c.id)) c.spr.setVisible(!this.hiddenAt(c.x, c.y) && this.peekOk(c)); });
     this.pageObjs.forEach(pg => { if (!this.pagesGot.has(pg.id)) { const h = this.hiddenAt(pg.x, pg.y); pg.spr.setVisible(!h); pg.glow.setVisible(!h && !LITE); } });
     this.gemObjs.forEach(gm => { if (!this.gemGot.has(gm.id)) { const h = this.hiddenAt(gm.x, gm.y); gm.spr.setVisible(!h); gm.glow.setVisible(!h && !LITE); } });
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id)) { const h = this.hiddenAt(f.x, f.y); f.spr.setVisible(!h); f.glow.setVisible(!h && !LITE); } });
@@ -982,6 +1003,7 @@ Object.assign(CastleScene.prototype, {
     if (e.melt) return; // la Madre Moho diluida es intocable
     if (el === 'pound' && e.cfg.shielded && !e.boss) { e.shield = false; e.shT = 2.2; } // el Pisotón rompe el escudo azul un rato
     if (e.type === 'alcaide' && e.shield) return; // hundido bajo el suelo
+    if (el === 'fire' || el === 'burn') { const ar = this.W.areaOf(Math.floor(e.spr.x / T), Math.floor(e.spr.y / T)); if (ar && ar.z === 9) dmg *= MOSS_FIRE; } // el musgo arde: más daño de fuego
     if (e.type === 'madre' && e.armor > 0) { // armadura de raíces
       if (el !== 'pound' && (!e.armorMsg || Date.now() - e.armorMsg > 2500)) { e.armorMsg = Date.now(); this.floatText(e.spr.x, e.spr.y - 70, '¡Armadura de raíces! Rómpela con el Pisotón (en el aire, mantén ↓)', '#8fd35a'); }
       if (el === 'pound' || (e.hitsAcc = (e.hitsAcc || 0) + 1) >= 8) { e.hitsAcc = 0; e.armor--; e.flash = 0.2; this.poof(e.spr.x, e.spr.y - 20, 10, 0x8fd35a); this.cameras.main.shake(200, 0.008); this.floatText(e.spr.x, e.spr.y - 70, e.armor > 0 ? '¡Armadura dañada!' : '¡PUNTO DÉBIL! Armadura rota', e.armor > 0 ? '#8fd35a' : '#ffc83d'); if (e.armor <= 0) { e.windowT = e.hp < e.max * 0.25 ? 5 : (e.hp < e.max * 0.5 ? 6 : 7); e.stunT = 1; e.act = null; e.tele = false; } }
@@ -1008,7 +1030,7 @@ Object.assign(CastleScene.prototype, {
   statusTick(e, dt) { // daño continuo y ralentización (lo ejecuta el anfitrión)
     if (e.markT > 0) { e.markT -= dt; if (e.markT <= 0 && !e.elite && !(e.slowT > 0)) e.spr.clearTint(); }
     if (e.slowT > 0) { e.slowT -= dt; if (e.slowT <= 0 && !e.elite) e.spr.clearTint(); }
-    if (e.dotT > 0) { e.dotT -= dt; e.dotAcc = (e.dotAcc || 0) + dt; if (e.dotAcc >= e.dotTick) { e.dotAcc -= e.dotTick; this.poof(e.spr.x, e.spr.y - 10, 2, e.dotCol); this.damageEnt(e, 1, 0, e.dotBy, undefined, true); } }
+    if (e.dotT > 0) { e.dotT -= dt; e.dotAcc = (e.dotAcc || 0) + dt; if (e.dotAcc >= e.dotTick) { e.dotAcc -= e.dotTick; this.poof(e.spr.x, e.spr.y - 10, 2, e.dotCol); this.damageEnt(e, 1, 0, e.dotBy, e.dotCol === 0xff7a2a ? 'burn' : undefined, true); } } // 'burn': quemadura (cuenta como fuego)
   },
   killEnt(e, by) {
     if (!e.boss) SFX.die();
@@ -1099,6 +1121,7 @@ Object.assign(CastleScene.prototype, {
   // ---- objetos consumibles
   useItem() {
     const it = ITEMS[this.selItem];
+    if (!usableItem(it)) return;
     if (this.inv[it.id] <= 0) { this.toast('No tienes ' + it.name.toLowerCase()); return; }
     if (it.id === 'amu') { this.toast('El amuleto se usa solo cuando mueres.'); return; }
     this.inv[it.id]--; SFX.pick();
@@ -1135,8 +1158,7 @@ Object.assign(CastleScene.prototype, {
     if (!this.dead && Math.hypot(this.player.x - x, this.player.y - y) < 55) this.hurt(1, x); // la explosión también te alcanza si estás pegado
   },
   cycleItem() {
-    for (let i = 1; i <= ITEMS.length; i++) { const n = (this.selItem + i) % ITEMS.length; if (this.inv[ITEMS[n].id] > 0) { this.selItem = n; return; } }
-    this.selItem = (this.selItem + 1) % ITEMS.length;
+    for (let i = 1; i <= ITEMS.length; i++) { const n = (this.selItem + i) % ITEMS.length; if (usableItem(ITEMS[n]) && this.inv[ITEMS[n].id] > 0) { this.selItem = n; return; } }
   },
 
   // ---- interacción: NPC primero, antorchas después
@@ -1147,6 +1169,11 @@ Object.assign(CastleScene.prototype, {
       this.promptTxt.setVisible(!(this.shopOpen || this.dlg || this.imbueOpen)).setPosition(best.x, best.y - 74).setText(best.def.shop ? '{act}: comerciar' : (best.def.menu ? '{act}: imbuir el arma' : '{act}: hablar'));
       if (ePress) { this.curNpc = best; if (best.def.talk && best.def.talk(this, best)) return; if (best.def.shop) this.openShop(best); else if (best.def.menu) this.openImbue(best.def.menu === 'all' ? 'all' : 'forge', best); else this.openDialogue(best); }
       return;
+    }
+    // puertas selladas por un jefe: se ven mientras están cerradas y dicen qué jefe las abre
+    for (const sd of this.sealDoors || []) {
+      sd.g.setVisible(!sd.gate.open);
+      if (!sd.gate.open && Math.abs(sd.x - p.x) < 110 && Math.abs(sd.y - p.y) < 90) { this.promptTxt.setVisible(!(this.shopOpen || this.dlg || this.imbueOpen)).setPosition(sd.x, sd.y - sd.h / 2 - 24).setText('Puerta sellada: se abre al vencer ' + (GATE_BY[sd.gate.boss] || 'a un jefe')); }
     }
     // puertas de las casas
     for (const d of this.W.doors || []) {
@@ -1194,13 +1221,13 @@ Object.assign(CastleScene.prototype, {
   savePersonal(a) {
     this.snap = this.captureState(); // nuevo punto de control: lo guardado al descansar en la hoguera
     socket.emit('save', { souls: this.souls, inv: this.inv, wlv: this.wlv, maxHp: this.maxHp, cry: [...this.cryGot], forge: [...this.forgeGot],
-      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: [...this.gemGot], perm: this.perm, bg: [...this.bossGemsPaid], hammer: this.hammerState, met: this.smithMet });
+      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: [...this.gemGot], perm: this.perm, bg: [...this.bossGemsPaid], hammer: this.hammerState, met: this.smithMet, quests: this.quests });
   },
 
   // ---- punto de control: lo conseguido desde el último descanso en una hoguera se pierde al morir
   captureState() {
     return { souls: this.souls, inv: Object.assign({}, this.inv), wlv: this.wlv, maxHp: this.maxHp, abil: Object.assign({}, this.abil), cry: [...this.cryGot], forge: [...this.forgeGot], gem: [...this.gemGot], gems: this.gems,
-      perm: Object.assign({}, this.perm), element: this.element, travel: this.travel, hammer: this.hammerState, met: this.smithMet, elite: [...this.eliteGot], pages: [...this.pagesGot], bg: [...this.bossGemsPaid],
+      perm: Object.assign({}, this.perm), element: this.element, travel: this.travel, hammer: this.hammerState, met: this.smithMet, quests: Object.assign({}, this.quests), elite: [...this.eliteGot], pages: [...this.pagesGot], bg: [...this.bossGemsPaid],
       world: JSON.parse(JSON.stringify({ bosses: this.progress.bosses || [], broken: this.progress.broken || [], torches: this.progress.torches || {} })) };
   },
   revertToCheckpoint() {
@@ -1219,7 +1246,7 @@ Object.assign(CastleScene.prototype, {
     if (solo) this.bossGemsPaid = new Set(s.bg);
     this.souls = s.souls; this.inv = Object.assign({}, s.inv); this.wlv = s.wlv; this.maxHp = s.maxHp; this.gems = s.gems + bossGems; this.perm = Object.assign({}, s.perm); this.element = s.element; this.travel = s.travel; this.smithMet = s.met;
     Object.keys(this.abil).forEach(k => { this.abil[k] = !!s.abil[k]; });
-    this.hammerState = s.hammer;
+    this.hammerState = s.hammer; this.quests = Object.assign({ anillo: 0 }, s.quests);
     if (solo) this.revertWorld(s.world);
     this.syncRelics(); this.applyProgress(this.progress, true); this.syncNpcs(); this.wallBroken();
     const after = JSON.stringify([this.abil, this.cryGot.size, this.forgeGot.size, this.gemGot.size, this.wlv, this.maxHp, this.element, this.perm, this.pagesGot.size, this.eliteGot.size, this.hammerState]);
@@ -1236,7 +1263,7 @@ Object.assign(CastleScene.prototype, {
     if (this.floorBroken && !this.progress.bosses.includes('conde')) { // el suelo del trono se reconstruye
       const th = this.W.areas.throne, fo = this.W.areas.fosoC;
       for (let gx = th.x0 + 2; gx <= th.x0 + th.rw - 3; gx++) for (const gy of [th.y0 + th.rh - 1, fo.y0]) { const v = this.W.fg[gy][gx]; if (v >= 0) this.fg.putTileAt(v, gx, gy); }
-      this.floorBroken = false; this.floorState = 0;
+      this.floorBroken = false; this.floorState = 0; this.restoreThroneDecor();
     }
     this.sealKey = null; this.applySeal(null); this.curSeal = null;
     this.ents.forEach((en, id) => { if (en.sim && en.boss) { en.spr.destroy(); this.ents.delete(id); } }); // los jefes reaparecen
@@ -1308,8 +1335,8 @@ Object.assign(CastleScene.prototype, {
       const idx = list.indexOf(r.it), vis = idx >= 0 && this.shopOpen;
       [r.row, r.icon, r.nameT, r.ownT, r.priceT].forEach(o => o.setVisible(vis));
       if (!vis) return;
-      const y = cy - 195 + idx * 31;
-      [r.row, r.icon, r.nameT, r.ownT, r.priceT].forEach(o => o.setY(y));
+      const step = list.length > 11 ? 27 : 31, y = cy - 195 + idx * step; // con muchos objetos (tienda de F2) las filas se juntan
+      [r.row, r.icon, r.nameT, r.ownT, r.priceT].forEach(o => o.setY(y)); r.row.setDisplaySize(560, step - 1);
       r.row.setFillStyle(idx === this.shopSel ? 0x5a3a9a : 0x2a1d4d, 1);
       const it = r.it, gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price, maxed = it.perm && (this.perm[it.perm] | 0) >= it.max;
       r.ownT.setText(it.perm ? 'nivel ' + (this.perm[it.perm] | 0) + '/' + it.max : 'tienes ' + this.inv[it.id]);
@@ -1337,7 +1364,7 @@ Object.assign(CastleScene.prototype, {
     if ((gem ? this.gems : this.souls) < cost) { this.toast(gem ? 'No tienes suficientes gemas ✦ (se encuentran por el mapa y las sueltan los jefes)' : 'No tienes suficientes almas'); SFX.hurt(); this.refreshShop(); return; }
     if (!it.perm && this.inv[it.id] >= 9) { this.toast('No puedes llevar más'); this.refreshShop(); return; }
     if (gem) this.gems -= cost; else this.souls -= cost;
-    if (it.perm) { this.perm[it.perm] = (this.perm[it.perm] | 0) + 1; if (it.perm === 'hp') { this.maxHp++; this.hp = this.maxHp; } this.toast(it.name + ': ' + it.desc, 5000); this.autoSave(); } else { this.inv[it.id]++; if (this.inv[ITEMS[this.selItem].id] === 0) this.selItem = ITEMS.indexOf(it); }
+    if (it.perm) { this.perm[it.perm] = (this.perm[it.perm] | 0) + 1; if (it.perm === 'hp') { this.maxHp++; this.hp = this.maxHp; } this.toast(it.name + ': ' + it.desc, 5000); this.autoSave(); } else { this.inv[it.id]++; if (usableItem(it) && this.inv[ITEMS[this.selItem].id] === 0) this.selItem = ITEMS.indexOf(it); }
     SFX.pick(); this.refreshShop();
   },
   // ---- bestiario y diarios (tecla B)
@@ -1482,6 +1509,39 @@ Object.assign(CastleScene.prototype, {
     const cam = this.cameras.main; cam.fadeOut(160, 0, 0, 0);
     this.time.delayedCall(170, () => { this.player.setPosition(d.toX, d.toY - 21); this.player.body.setVelocity(0, 0); cam.fadeIn(220, 0, 0, 0); this.doorBusy = false; });
   },
+  buildGateDoors() { // reja de hierro con sello rojo sobre cada puerta que abre un jefe (las grietas que se abren solas no)
+    this.sealDoors = []; this.caveLamps = this.caveLamps || [];
+    (this.W.gates || []).filter(gt => !gt.crack).forEach(gt => {
+      const groups = []; // casillas juntas = una misma puerta
+      gt.tiles.forEach(t => { const gr = groups.find(q => q.some(u => Math.abs(u.gx - t.gx) <= 2 && Math.abs(u.gy - t.gy) <= 2)); if (gr) gr.push(t); else groups.push([t]); });
+      groups.forEach(gr => {
+        const xs = gr.map(t => t.gx), ys = gr.map(t => t.gy), x0 = Math.min(...xs) * T, x1 = (Math.max(...xs) + 1) * T, y0 = Math.min(...ys) * T, y1 = (Math.max(...ys) + 1) * T, w = x1 - x0, h = y1 - y0, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
+        const g = this.add.graphics().setDepth(-4.9);
+        g.fillStyle(0x140c16, 1).fillRect(x0, y0, w, h).fillStyle(0x3a2a20, 1).fillRect(x0 - 4, y0 - 8, w + 8, 8).fillRect(x0 - 4, y0, 4, h).fillRect(x1, y0, 4, h);
+        for (let x = x0 + 5; x < x1 - 2; x += 11) { g.fillStyle(0x5a5a6a, 1).fillRect(x, y0, 5, h); g.fillStyle(0x9a9aaa, 1).fillRect(x, y0, 2, h); g.fillStyle(0x5a5a6a, 1).fillTriangle(x - 1, y1, x + 6, y1, x + 2.5, y1 + 6); }
+        [y0 + h * 0.3, y0 + h * 0.7].forEach(y => g.fillStyle(0x4a4a58, 1).fillRect(x0, y - 3, w, 6));
+        g.fillStyle(0x5a1018, 1).fillCircle(cx, cy, 15).fillStyle(0xc8283a, 1).fillCircle(cx, cy, 12).fillStyle(0xff6a6a, 1).fillRect(cx - 2, cy - 8, 4, 16).fillRect(cx - 8, cy - 2, 16, 4);
+        g.setVisible(!gt.open);
+        this.sealDoors.push({ gate: gt, g, x: cx, y: cy, h });
+        this.caveLamps.push({ x: cx, y: cy, r: 70, gate: gt });
+      });
+    });
+  },
+  buildBleeds() { // regueros y gotas de sangre sobre los muros agrietados marcados con 'bleed'; desaparecen al romper el muro
+    (this.W.bleeds || []).forEach(bl => {
+      const x0 = bl.gx * T, y0 = bl.gy * T, h = bl.h * T, g = this.add.graphics().setDepth(-4.9), rnd = rndSeeded(bl.gx * 7 + bl.gy);
+      for (let i = 0; i < 5; i++) { const x = x0 + 4 + i * 6 + rnd() * 3, top = y0 + rnd() * 18, len = 20 + rnd() * (h - 40); g.fillStyle(0x8a0f1e, 1).fillRect(x, top, 3, len).fillStyle(0xd8283a, 1).fillRect(x, top, 2, len * 0.7).fillCircle(x + 1, top + len, 2.5); }
+      g.fillStyle(0x8a0f1e, 0.85).fillEllipse(x0 + T / 2, y0 + h + 2, T + 10, 6); // charco al pie del muro
+      const drips = [], glow = { open: false }; this.caveLamps = this.caveLamps || []; this.caveLamps.push({ x: x0 + T / 2, y: y0 + h / 2, r: 75, gate: glow }); // un poco de luz para que se vea
+      const drip = () => { if (!g.active) return; const d = this.add.rectangle(x0 + 6 + Math.random() * (T - 12), y0 + 10 + Math.random() * 30, 3, 5, 0xc81e32).setDepth(-4.8); drips.push(d);
+        this.tweens.add({ targets: d, y: y0 + h - 2, duration: 900 + Math.random() * 500, ease: 'Quad.in', onComplete: () => { d.destroy(); drips.splice(drips.indexOf(d), 1); } }); };
+      const ev = this.time.addEvent({ delay: 700, loop: true, callback: () => {
+        const t = this.fg.getTileAt(bl.gx, bl.gy + 1); // ¿sigue en pie el muro?
+        if (!t || t.index < 0) { glow.open = true; g.destroy(); drips.forEach(d => d.destroy()); ev.remove(); return; }
+        if (Math.abs(this.player.x - x0) < SW) drip();
+      } });
+    });
+  },
   buildHouses() { // fachada de cada casa (en la sala de fuera) y su interior de madera
     const W = this.W; this.caveLamps = this.caveLamps || [];
     (W.doors || []).forEach(d => {
@@ -1514,6 +1574,18 @@ Object.assign(CastleScene.prototype, {
       g.fillStyle(0x2a1a10, 1).fillRect(d.x + 44, top + 98, 4, 14).fillRect(d.x + 76, top + 98, 4, 14).fillStyle(0x7a5a3a, 1).fillRect(d.x + 38, top + 110, 48, 26).fillStyle(0xff3b5c, 1).fillRect(d.x + 56, top + 116, 12, 14).fillStyle(0x1a1018, 1).fillRect(d.x + 59, top + 112, 6, 5);
       this.caveLamps.push({ x: d.x, y: fy - 50, r: 120 }, { x: L + 44, y: top + 73, r: 80 });
     });
+  },
+  kingTalk(n) { // misión secundaria del Anillo del Rey
+    const q = this.quests;
+    if (!q.anillo) {
+      q.anillo = 1; SFX.pick();
+      this.showLines(n, ['¿Un cazador? Hace siglos que nadie baja por esta escalera... Soy el rey de este castillo. O lo era, hasta que el Conde abrió las puertas a los hermanos del Alba.',
+        'Mi esposa, la Reina Isolda, huyó antes del cerco. Dicen que cruzó más allá de La Gran Hoguera, a tierras que yo ya no pisaré.',
+        'Llévale este anillo: es lo único que me dejaron. Dile que sigo aquí... y que la escalera aún huele a sus rosas.']);
+      this.toast('Misión secundaria: lleva el Anillo del Rey a la Reina Isolda, más allá de La Gran Hoguera (Zona 2).', 8000); return true;
+    }
+    this.showLines(n, q.anillo === 1 ? ['La Reina Isolda... más allá de La Gran Hoguera. No pierdas el anillo, cazador.', 'Cuando caiga el Conde, la puerta del este se abrirá. Yo no tengo fuerzas para cruzarla.'] : ['Le llevaste el anillo. Por primera vez en siglos, esta escalera no me parece tan fría.']);
+    return true;
   },
   giveHammer(texto) { // entrega el Martillo Latente al jugador (queda en el HUD hasta que se lo lleve al herrero)
     if (this.hammerState !== 0) return false; this.hammerState = 1; SFX.pick();

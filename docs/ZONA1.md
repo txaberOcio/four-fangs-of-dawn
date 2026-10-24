@@ -92,6 +92,7 @@ Solo hay dos elecciones de orden: en la **etapa 2** (Reina o Reloj primero) y en
 - **Gemas:** 16 en el mapa, 24 de los jefes y 1 por élite: unas 47 en toda la zona. Sirven para Frutos, Talismanes, Amuletos y poderes de la forja.
 - **Enemigos:** su vida sube despacio por zona: ×1 (Vestíbulo) → ×1,1 (Biblioteca y Capilla) → ×1,25 (Calabozos, Torre del Reloj, Archivo Prohibido) → ×1,4 (Sala Real) → ×1,5 (Torres del Alba y camino de salida) → ×1,6 (Cueva del Abismo) → ×1,7 (Calabozos Profundos). Desde la zona 4 pegan 1 más. Los élites tienen el triple de vida. En cooperativo, ×1,3 / ×1,6 / ×1,9.
 - **Tramos tranquilos:** sin enemigos y con música de calma (marca `['calm']` en `world.js`). Ahora: Escalera Real, Foso del Conde, Torre del Alba, Sala de los Rivales y la Casa del Mercader.
+- **Misiones secundarias:** el Rey Destronado (Escalera Real, con hoguera) da el Anillo del Rey para la Reina Isolda, que estará en la Zona 2.
 - **Tiendas:** Vestíbulo (básico), Nave Sur (Capilla), Casa del Mercader (tras el Conde) y Pozo del Ascensor (Calabozos Profundos). Cada una enseña lo que tendrá cuando caigan más jefes.
 
 | Etapa | Jefe | Vida (= golpes con 1 de daño) | Vida de enemigos en el camino | Corazones máx. al empezar la etapa |
