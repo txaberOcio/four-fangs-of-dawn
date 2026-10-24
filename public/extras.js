@@ -33,21 +33,24 @@ const ITEMS = [
   { id: 'amu', name: 'Amuleto de resurrección', price: 0, gems: 3, desc: 'Si mueres, revives (se gasta solo).' },
   { id: 'rage', name: 'Elixir de furia', price: 70, desc: 'Atacas un 40% más rápido durante 20 s.' },
   { id: 'tonic', name: 'Tónico de almas', price: 80, desc: 'Doble de almas durante 60 s.' },
-  { id: 'fruit', name: 'Fruto de sangre', price: 0, gems: 4, desc: '+1 corazón máximo para siempre.' },
+  { id: 'fruit', name: 'Fruto de sangre', price: 0, gems: 5, perm: 'hp', max: 2, desc: '+1 corazón máximo para siempre (hasta 2 veces; el segundo cuesta más).' },
+  // el Colmillo no se vende en la Zona 1: el daño sube con una sola mejora de arma al final de cada zona
   { id: 'fang', name: 'Colmillo de acero', price: 0, gems: 4, perm: 'dmg', max: 3, desc: '+1 de daño para siempre (hasta 3 veces; cada una cuesta más).' },
   { id: 'talis', name: 'Talismán de almas', price: 0, gems: 3, perm: 'souls', max: 2, desc: '+20% de almas de los enemigos para siempre (hasta 2 veces).' },
 ];
 // Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
-const GEMS_BOSS = { garg: 2, bishop: 3, clock: 4, archon: 6, reina: 4, conde: 5, aurora: 6, vesper: 6, alcaide: 5, madre: 7 }; // gemas que suelta cada jefe la primera vez
+const GEMS_BOSS = { garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
 // [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
 // Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
+// Vestíbulo (inicio) → Nave Sur (Capilla) → Casa del Mercader (Torres del Alba, tras el Conde) → Pozo del Ascensor (Calabozos Profundos)
 const SHOP_STOCK = {
-  vest: [['pot', 0], ['bomb', 1, 'green'], ['lamp', 2], ['spd', 3], ['talis', 2]],
-  naveS: [['pot', 0], ['bomb', 0], ['lamp', 0], ['spd', 1], ['pot2', 1], ['ward', 2], ['str', 3], ['amu', 0], ['fang', 1]],
-  mir: [['pot', 0], ['bomb', 0], ['spd', 0], ['pot2', 0], ['ward', 1], ['str', 1], ['rage', 2], ['tonic', 3], ['amu', 0], ['fang', 0], ['talis', 1], ['fruit', 1]]
+  vest: [['pot', 0], ['bomb', 1, 'green'], ['lamp', 1], ['talis', 2]],
+  naveS: [['pot', 0], ['bomb', 0], ['lamp', 0], ['spd', 1], ['amu', 1], ['pot2', 2], ['ward', 2], ['str', 3]],
+  casaM: [['pot', 0], ['pot2', 0], ['ward', 0], ['str', 0], ['spd', 0], ['rage', 0], ['tonic', 0], ['amu', 0], ['talis', 0], ['fruit', 0]],
+  asc: [['pot', 0], ['pot2', 0], ['bomb', 0], ['ward', 0], ['str', 0], ['rage', 0], ['amu', 0]]
 };
-const SHOP_ORDER = ['vest', 'naveS', 'mir'];
+const SHOP_ORDER = ['vest', 'naveS', 'casaM', 'asc'];
 // poderes elementales de la Forja de los Elementos: cambian el color del ataque y añaden un efecto
 const ELEMENTS = {
   fire: { name: 'Fuego', tint: 0xff7a2a, desc: 'quema al enemigo: daño extra durante 3 s', long: 'El filo arde. Cada golpe prende al enemigo: sufre 1 de daño cada 0,75 s durante 3 s (el fuego no se acumula, se renueva). Muy útil contra enemigos con mucha vida.' },
@@ -160,7 +163,8 @@ const NPC_DEFS = {
     ['Chss... no pises el musgo con prisa. Aquí abajo crece todo menos la esperanza.',
       'El ascensor sube y baja solo. Paciencia: es lo único que el musgo respeta.',
       'En las Celdas Cubiertas hay una celda cuyos barrotes sangran. Dale un buen golpe a la pared.',
-      'El Alcaide Verdín aún guarda las llaves. No es malo: es leal, que a veces es peor. Y bajo su sala hay un suelo de raíces que solo cede a un buen pisotón.'],
+      'El Alcaide Verdín aún guarda las llaves. No es malo: es leal, que a veces es peor. Y bajo su sala hay un suelo de raíces que solo cede a un buen pisotón.',
+      'El Verdugo de las Celdas Cubiertas lleva al cinto un martillo que late como un corazón. No es suyo: es del herrero de la Cueva.'],
     ['¿Oyes las gotas? Cuentan los días que no pasan.'] ] },
   watcher: { name: 'Vigía del Cielo', tex: 'npc_watcher', lines: [
     ['Habéis subido hasta la Cumbre del Alba. Aquí no hay jefes: es un lugar para explorar con todo lo que habéis aprendido.',
@@ -169,7 +173,7 @@ const NPC_DEFS = {
       'Al este hay un jardín colgante: hace falta impulso, doble salto y salto de pared. Descansad en la hoguera cuando queráis.'],
     ['El viento aquí huele a ceniza y a amanecer. Pronto habrá más que ver.'] ] },
   // El herrero se queda en la Cueva del Abismo hasta que le lleves el Martillo Latente; entonces se muda a su santuario secreto bajo la Cumbre del Alba.
-  // De momento el martillo NO se consigue en ningún sitio (pendiente de decidir dónde y cuándo): cuando se decida, basta con llamar a this.giveHammer() allí.
+  // El martillo lo suelta el Verdugo Cubierto de Musgo, élite de las Celdas Cubiertas (reward.hammer en world.js; ver eliteReward).
   smith: { name: 'Herrero de la Cueva', tex: 'npc_smith', menu: 'imbue', show: sc => sc.hammerState < 2, talk: (sc, n) => sc.smithTalk(n), lines: [['Aquí abajo el fuego no se apaga nunca. Dime qué poder quieres en tu arma.']] },
   smith2: { name: 'Herrero de la Cueva', tex: 'npc_smith', menu: 'all', show: sc => sc.hammerState >= 2, lines: [['Mi nuevo taller. Con el Martillo Latente puedo forjar cualquier poder: fuego, hielo, rayo, veneno... y las sombras.']] },
   monk: { name: 'Monje Trastornado', tex: 'npc_monk', lines: [
@@ -278,7 +282,7 @@ Object.assign(CastleScene.prototype, {
     const w = this.W;
     this.wpn = WEAPONS[this.color] || WEAPONS.red; this.pas = PASSIVES[this.color] || {}; this.wlv = 1;
     this.maxHp = 5 + (this.pas.hp || 0); this.hp = this.maxHp;
-    this.gems = 0; this.perm = { dmg: 0, souls: 0 }; this.gemGot = new Set(); this.bossGemsPaid = new Set(this.progress ? this.progress.bosses : []);
+    this.gems = 0; this.perm = { dmg: 0, souls: 0, hp: 0 }; this.gemGot = new Set(); this.bossGemsPaid = new Set(this.progress ? this.progress.bosses : []);
     this.souls = 0; this.inv = {}; ITEMS.forEach(i => { this.inv[i.id] = 0; }); this.ward = 0; this.selItem = 0; this.buffs = { spd: 0, str: 0, lamp: 0, rage: 0, tonic: 0 };
     this.crouching = false; this.arrows = []; this.forgeGot = new Set(); this.shopOpen = false; this.dlg = null; this.shopSel = 0;
     this.kills = {}; this.seen = new Set(); this.eliteGot = new Set(); this.pagesGot = new Set(); this.bookOpen = false; this.bookSel = 0; this.expT = 0;
@@ -315,7 +319,7 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor();
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.buildHouses();
     this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
@@ -333,7 +337,7 @@ Object.assign(CastleScene.prototype, {
   // Recupera los datos personales de la partida guardada
   loadPersonal(m) {
     this.travel = !!m.travel; this.element = ELEMENTS[m.el] ? m.el : '';
-    this.gems = m.gems | 0; this.perm = { dmg: (m.perm && m.perm.dmg) | 0, souls: (m.perm && m.perm.souls) | 0 };
+    this.gems = m.gems | 0; this.perm = { dmg: (m.perm && m.perm.dmg) | 0, souls: (m.perm && m.perm.souls) | 0, hp: (m.perm && m.perm.hp) | 0 };
     (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
     this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.syncNpcs();
@@ -343,6 +347,7 @@ Object.assign(CastleScene.prototype, {
     const visited = new Set(m.visited || []);
     (m.visited || []).forEach(id => { const ar = this.W.areas[id]; if (ar) this.markVisited(ar); });
     (m.elite || []).forEach(id => this.eliteGot.add(id)); (m.seen || []).forEach(id => this.seen.add(id)); this.kills = Object.assign({}, m.kills || {});
+    { const hs = this.W.spawns.find(s => s.opts && s.opts.reward && s.opts.reward.hammer); if (hs && this.hammerState === 0 && this.eliteGot.has(hs.opts.name)) this.hammerState = 1; } // partidas que ya vencieron al Verdugo antes de que llevara el martillo
     (m.pages || []).forEach(id => { this.pagesGot.add(id); const pg = this.pageObjs.find(x => x.id === id); if (pg) { pg.spr.destroy(); pg.glow.destroy(); } });
     // objetos recogidos: si algún id antiguo ya no existe, se marcan como recogidos los primeros de las zonas visitadas
     const restore = (ids, list, apply) => {
@@ -372,7 +377,7 @@ Object.assign(CastleScene.prototype, {
     });
     if (got) { this.addGems(got); this.toast('Recompensa del jefe: ' + got + ' gemas ✦', 5000); this.autoSave(); }
   },
-  itemCost(it) { return it.perm ? it.gems + 2 * this.perm[it.perm === 'dmg' ? 'dmg' : 'souls'] : (it.gems || 0); },
+  itemCost(it) { return it.perm ? it.gems + 2 * (this.perm[it.perm] | 0) : (it.gems || 0); },
 
   // ---- HUD
   buildExtraHud() {
@@ -1026,6 +1031,8 @@ Object.assign(CastleScene.prototype, {
     if (reward.item && this.inv[reward.item] !== undefined) this.inv[reward.item] = Math.min(9, this.inv[reward.item] + 1);
     if (reward.souls) this.addSouls(reward.souls, false);
     this.addGems(1);
+    const sp = this.W.spawns.find(s => s.opts && s.opts.name === eid); // el élite que guarda el Martillo Latente
+    if (sp && sp.opts.reward && sp.opts.reward.hammer) this.time.delayedCall(5800, () => this.giveHammer('¡El Verdugo soltó el Martillo Latente! Llévaselo al Herrero de la Cueva del Abismo.'));
     const it = ITEMS.find(i => i.id === reward.item);
     this.toast('¡Has derrotado a ' + eid + '! Recompensa: ' + (it ? it.name + ' + ' : '') + (reward.souls || 0) + ' almas', 5500);
     SFX.pick(); this.autoSave();
@@ -1140,6 +1147,14 @@ Object.assign(CastleScene.prototype, {
       this.promptTxt.setVisible(!(this.shopOpen || this.dlg || this.imbueOpen)).setPosition(best.x, best.y - 74).setText(best.def.shop ? '{act}: comerciar' : (best.def.menu ? '{act}: imbuir el arma' : '{act}: hablar'));
       if (ePress) { this.curNpc = best; if (best.def.talk && best.def.talk(this, best)) return; if (best.def.shop) this.openShop(best); else if (best.def.menu) this.openImbue(best.def.menu === 'all' ? 'all' : 'forge', best); else this.openDialogue(best); }
       return;
+    }
+    // puertas de las casas
+    for (const d of this.W.doors || []) {
+      if (Math.abs(d.x - p.x) < 40 && Math.abs((d.y - 30) - p.y) < 60) {
+        this.promptTxt.setVisible(true).setPosition(d.x, d.y - 104).setText(this.W.areas[d.area].interior ? '{act}: salir' : '{act}: entrar en la ' + this.W.areas[d.to].name);
+        if (ePress) this.useDoor(d);
+        return;
+      }
     }
     // forja de los elementos
     let sf = null, sfd = 1e9;
@@ -1296,8 +1311,8 @@ Object.assign(CastleScene.prototype, {
       const y = cy - 195 + idx * 31;
       [r.row, r.icon, r.nameT, r.ownT, r.priceT].forEach(o => o.setY(y));
       r.row.setFillStyle(idx === this.shopSel ? 0x5a3a9a : 0x2a1d4d, 1);
-      const it = r.it, gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price, maxed = it.perm && this.perm[it.perm] >= it.max;
-      r.ownT.setText(it.perm ? 'nivel ' + this.perm[it.perm] + '/' + it.max : 'tienes ' + this.inv[it.id]);
+      const it = r.it, gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price, maxed = it.perm && (this.perm[it.perm] | 0) >= it.max;
+      r.ownT.setText(it.perm ? 'nivel ' + (this.perm[it.perm] | 0) + '/' + it.max : 'tienes ' + this.inv[it.id]);
       r.priceT.setText(maxed ? 'máximo' : cost + (gem ? ' ✦' : ' ◆')).setColor(maxed ? '#9fffb0' : ((gem ? this.gems : this.souls) >= cost ? (gem ? '#7ae8ff' : '#d9b3ff') : '#ff7a7a'));
     });
     this.shopDesc.setText(list[this.shopSel].desc);
@@ -1318,11 +1333,11 @@ Object.assign(CastleScene.prototype, {
     const it = this.shopItems()[k]; if (!it) return;
     this.shopSel = k;
     const gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price;
-    if (it.perm && this.perm[it.perm] >= it.max) { this.toast('Ya tienes el máximo de este objeto'); this.refreshShop(); return; }
+    if (it.perm && (this.perm[it.perm] | 0) >= it.max) { this.toast('Ya tienes el máximo de este objeto'); this.refreshShop(); return; }
     if ((gem ? this.gems : this.souls) < cost) { this.toast(gem ? 'No tienes suficientes gemas ✦ (se encuentran por el mapa y las sueltan los jefes)' : 'No tienes suficientes almas'); SFX.hurt(); this.refreshShop(); return; }
     if (!it.perm && this.inv[it.id] >= 9) { this.toast('No puedes llevar más'); this.refreshShop(); return; }
     if (gem) this.gems -= cost; else this.souls -= cost;
-    if (it.perm) { this.perm[it.perm]++; this.toast(it.name + ': ' + it.desc, 5000); this.autoSave(); } else { this.inv[it.id]++; if (this.inv[ITEMS[this.selItem].id] === 0) this.selItem = ITEMS.indexOf(it); }
+    if (it.perm) { this.perm[it.perm] = (this.perm[it.perm] | 0) + 1; if (it.perm === 'hp') { this.maxHp++; this.hp = this.maxHp; } this.toast(it.name + ': ' + it.desc, 5000); this.autoSave(); } else { this.inv[it.id]++; if (this.inv[ITEMS[this.selItem].id] === 0) this.selItem = ITEMS.indexOf(it); }
     SFX.pick(); this.refreshShop();
   },
   // ---- bestiario y diarios (tecla B)
@@ -1462,6 +1477,44 @@ Object.assign(CastleScene.prototype, {
     this.dlg = { npc: n, page: lines, i: 0 }; this.dlgObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false);
     this.dlgName.setText(n.def.name); this.dlgText.setText(lines[0]); SFX.altar();
   },
+  useDoor(d) { // entrar o salir de una casa: fundido a negro y aparece al otro lado de la puerta
+    if (this.doorBusy || this.dead) return; this.doorBusy = true; SFX.altar();
+    const cam = this.cameras.main; cam.fadeOut(160, 0, 0, 0);
+    this.time.delayedCall(170, () => { this.player.setPosition(d.toX, d.toY - 21); this.player.body.setVelocity(0, 0); cam.fadeIn(220, 0, 0, 0); this.doorBusy = false; });
+  },
+  buildHouses() { // fachada de cada casa (en la sala de fuera) y su interior de madera
+    const W = this.W; this.caveLamps = this.caveLamps || [];
+    (W.doors || []).forEach(d => {
+      const a = W.areas[d.area], fy = d.y, g = this.add.graphics().setDepth(-5.6);
+      if (a.interior) { // interior: paredes de tablones, alfombra, estantes con frascos y el mostrador del mercader
+        const x0 = (a.x0 + 3) * T, x1 = (a.x0 + 23) * T, y0 = (a.y0 + 8) * T;
+        g.setDepth(-6.5).fillStyle(0x5a3d28, 1).fillRect(x0, y0, x1 - x0, fy - y0);
+        for (let y = y0 + 22; y < fy; y += 22) g.fillStyle(0x47301f, 1).fillRect(x0, y, x1 - x0, 3);
+        for (let x = x0 + 70; x < x1; x += 140) g.fillStyle(0x3a2616, 1).fillRect(x, y0, 10, fy - y0);
+        g.fillStyle(0x3a2616, 1).fillRect(x0, fy - 40, x1 - x0, 40).fillStyle(0x6b2a32, 1).fillRect(x0 + 120, fy - 6, x1 - x0 - 240, 6);
+        const cols = [0xff3b5c, 0xb43bff, 0x3bd9ff, 0xff9a3b, 0x3bff9a, 0xffe066];
+        [[x0 + 300, y0 + 70], [x0 + 300, y0 + 130], [x0 + 470, y0 + 70]].forEach(([sx, sy], k) => {
+          g.fillStyle(0x2e1d12, 1).fillRect(sx, sy, 130, 8);
+          for (let i = 0; i < 6; i++) { const c = cols[(i + k * 2) % cols.length]; g.fillStyle(0x1a1018, 1).fillRect(sx + 8 + i * 20, sy - 22, 12, 22); g.fillStyle(c, 1).fillRect(sx + 10 + i * 20, sy - 16, 8, 14); g.fillStyle(0xffffff, 0.5).fillRect(sx + 11 + i * 20, sy - 14, 2, 6); }
+        });
+        const m = W.npcs.find(n => n.area === a.id && n.type === 'merchant');
+        if (m) { const c = this.add.graphics().setDepth(5); c.fillStyle(0x3e2a1c, 1).fillRect(m.x - 70, fy - 16, 140, 16).fillStyle(0x6b4a32, 1).fillRect(m.x - 76, fy - 22, 152, 8).fillStyle(0xffd27a, 1).fillRect(m.x - 62, fy - 32, 14, 10).fillStyle(0xff3b5c, 1).fillRect(m.x + 48, fy - 36, 10, 14); }
+        this.caveLamps.push({ x: (x0 + x1) / 2, y: fy - 120, r: 330 }, { x: d.x, y: fy - 40, r: 120 });
+        g.fillStyle(0x1a0f08, 1).fillRect(d.x - 22, fy - 76, 44, 76).fillStyle(0x6b4a32, 1).fillRect(d.x - 26, fy - 80, 52, 6); // la puerta, por dentro
+        return;
+      }
+      // fachada: zócalo de piedra, muros entramados, tejado rojo, chimenea, ventana encendida, puerta abierta con luz y cartel con un frasco
+      const L = d.x - 112, R = d.x + 112, top = fy - 150;
+      g.fillStyle(0x7a2f3a, 1).fillTriangle(L - 26, top + 46, R + 26, top + 46, d.x, top - 26).fillStyle(0x4a4058, 1).fillRect(R - 64, top - 16, 22, 44);
+      g.fillStyle(0x6b4a32, 1).fillRect(L, top + 40, R - L, fy - top - 40).fillStyle(0x3e2a1c, 1);
+      [L, d.x - 40, d.x + 32, R - 8].forEach(x => g.fillRect(x, top + 40, 8, fy - top - 40)); g.fillRect(L, top + 40, R - L, 8); g.fillRect(L, top + 86, R - L, 6);
+      g.fillStyle(0x5a1f2a, 1).fillRect(L - 26, top + 42, R - L + 52, 8).fillStyle(0x4a4058, 1).fillRect(L - 6, fy - 14, R - L + 12, 14);
+      g.fillStyle(0x1a0f08, 1).fillRect(d.x - 24, fy - 90, 48, 76).fillStyle(0xffb35a, 0.85).fillRect(d.x - 18, fy - 84, 36, 70);
+      g.fillStyle(0x2a1a10, 1).fillRect(L + 22, top + 56, 44, 34).fillStyle(0xffd27a, 0.9).fillRect(L + 26, top + 60, 36, 26).fillStyle(0x2a1a10, 1).fillRect(L + 42, top + 60, 4, 26).fillRect(L + 26, top + 71, 36, 4);
+      g.fillStyle(0x2a1a10, 1).fillRect(d.x + 44, top + 98, 4, 14).fillRect(d.x + 76, top + 98, 4, 14).fillStyle(0x7a5a3a, 1).fillRect(d.x + 38, top + 110, 48, 26).fillStyle(0xff3b5c, 1).fillRect(d.x + 56, top + 116, 12, 14).fillStyle(0x1a1018, 1).fillRect(d.x + 59, top + 112, 6, 5);
+      this.caveLamps.push({ x: d.x, y: fy - 50, r: 120 }, { x: L + 44, y: top + 73, r: 80 });
+    });
+  },
   giveHammer(texto) { // entrega el Martillo Latente al jugador (queda en el HUD hasta que se lo lleve al herrero)
     if (this.hammerState !== 0) return false; this.hammerState = 1; SFX.pick();
     this.toast(texto || 'Has conseguido el Martillo Latente. Llévaselo al Herrero de la Cueva.', 8000); return true;
@@ -1472,7 +1525,7 @@ Object.assign(CastleScene.prototype, {
       this.showLines(n, ['¡El Martillo Latente! Todavía late... lo siento caliente en las manos.', 'Con él puedo forjar el poder de las sombras, pero necesito un lugar oculto: me mudo al Santuario de las Sombras, bajo el suelo agrietado de la Cumbre del Alba.', 'Ven a verme allí: te imbuiré con cualquier poder que quieras.']);
       this.toast('El herrero se muda a su santuario secreto, bajo el suelo agrietado de la Cumbre del Alba', 7000); return true;
     }
-    if (!this.smithMet) { this.smithMet = true; this.showLines(n, ['Soy el herrero de la Cueva. Aquí abajo el fuego no se apaga nunca, y con él puedo imbuir tu arma.', 'Pero mi Martillo Latente se perdió hace siglos y nadie sabe dónde está.', 'Si alguien me lo trae, podré forjar poderes de sombra... aunque tendría que mudarme a un santuario oculto, bajo la Cumbre del Alba.']); return true; }
+    if (!this.smithMet) { this.smithMet = true; this.showLines(n, ['Soy el herrero de la Cueva. Aquí abajo el fuego no se apaga nunca, y con él puedo imbuir tu arma.', 'Pero mi Martillo Latente se perdió hace siglos. Dicen que un verdugo de los calabozos lo usa como maza...', 'Si alguien me lo trae, podré forjar poderes de sombra... aunque tendría que mudarme a un santuario oculto, bajo la Cumbre del Alba.']); return true; }
     return false;
   },
   syncNpcs() { // muestra u oculta a los NPC según la historia (el herrero se muda al santuario)

@@ -1,4 +1,4 @@
-/* Música procedural gótica (WebAudio, sin archivos). Una pista por zona y una más intensa para los jefes. */
+/* Música procedural gótica (WebAudio, sin archivos). Una pista por zona, una de calma para las salas tranquilas y una más intensa para los jefes. */
 // Opciones del jugador (se guardan en este navegador): volumen de música y efectos, tamaño de texto, ayuda visual
 const OPT = { music: 1, sfx: 1, text: 1, cb: false };
 try { Object.assign(OPT, JSON.parse(localStorage.getItem('opts') || '{}')); } catch (e) { /* sin almacenamiento */ }
@@ -22,8 +22,11 @@ const Music = (() => {
     { root: 45, bpm: 66, pad: 'triangle', organ: true },    // Torres del Alba (la)
     { root: 36, bpm: 52, pad: 'sawtooth', drone: true },    // El Abismo (do)
     { root: 34, bpm: 46, pad: 'triangle', drone: true, drip: true }, // Calabozos Profundos (si bemol grave, lentísimo, colchón suave + goteo)
+    { root: 43, bpm: 50, pad: 'triangle', calm: true },     // Calma: salas tranquilas y casas (sol mayor, lento, sin bajo grave y con campanas)
   ];
+  const CALM = ZONES.length - 1;
   const CHORDS = [[0, 3, 7], [-4, 0, 3], [3, 7, 10], [-2, 2, 5]]; // i · VI · III · VII
+  const CALM_CHORDS = [[0, 4, 7], [5, 9, 12], [-3, 0, 4], [-5, -1, 2]]; // I · IV · vi · V (mayor: da calma)
   const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
   const lite = () => typeof LITE !== 'undefined' && LITE;
 
@@ -64,7 +67,7 @@ const Music = (() => {
   function stepDur() { const z = ZONES[zone]; return 60 / (boss ? 128 : z.bpm) / 4; }
 
   function playStep(s16, bar, t) {
-    const z = ZONES[zone], sd = stepDur(), chord = CHORDS[bar % 4], root = z.root;
+    const z = ZONES[zone], sd = stepDur(), chord = (z.calm && !boss ? CALM_CHORDS : CHORDS)[bar % 4], root = z.root;
     if (s16 === 0) { // colchón: acorde sostenido
       chord.forEach(n => tone(mtof(root + 12 + n), t, sd * 16 * 0.98, z.pad, z.organ ? 0.03 : 0.028, z.organ ? 900 : 650, 0.35));
       if (z.drone && bar % 2 === 0) tone(mtof(root - 12), t, sd * 32, 'sawtooth', 0.05, 260, 0.2);
@@ -72,12 +75,13 @@ const Music = (() => {
     }
     // bajo
     if (boss) { if (s16 % 2 === 0) { tone(mtof(root + chord[0]), t, sd * 1.8, 'sawtooth', 0.075, 520, 0.1); if (s16 % 4 === 0) tone(mtof(root + chord[0] + 12), t, sd * 1.6, 'square', 0.025, 900, 0.1); } if (bossKind === 1 && s16 % 8 === 6) tone(mtof(root + chord[2] + 24), t, sd * 2, 'sawtooth', 0.03, 3000, 0.5); if (bossKind === 2 && s16 % 16 === 12) noise(t, 0.3, 0.08, 800); }
+    else if (z.calm) { if (s16 === 0) tone(mtof(root + chord[0]), t, sd * 14, 'sine', 0.07, 380, 0.2); } // calma: un bajo largo y suave por compás
     else if (s16 % 8 === 0) { tone(mtof(root + chord[0]), t, sd * 7, 'sine', 0.13, 420, 0.1); tone(mtof(root + chord[0] + 12), t, sd * 6, 'triangle', 0.05, 900, 0.1); } // la octava de arriba se oye en altavoces pequeños
     // arpegio
     if (boss) { if (!lite() || s16 % 2 === 0) tone(mtof(root + chord[(s16 >> 1) % 3] + 24), t, sd * 1.5, 'square', 0.022, 2200, 0.4); }
     else if (s16 % 2 === 0 && (!lite() || s16 % 4 === 0) && Math.random() < 0.78) tone(mtof(root + chord[(s16 / 2 + bar) % 3 | 0] + 24), t, sd * 2.6, 'triangle', 0.05, 2600, 0.6);
     // campana
-    if (!boss && s16 === 8 && bar % 2 === 1) tone(mtof(root + chord[2] + 36), t, 2.4, 'sine', 0.05, 5000, 0.7);
+    if (!boss && ((s16 === 8 && bar % 2 === 1) || (z.calm && s16 === 12 && bar % 2 === 0))) tone(mtof(root + chord[2] + 36), t, 2.4, 'sine', 0.05, 5000, 0.7);
     // percusión de jefe, tic-tac del reloj
     if (boss) { if (s16 % 4 === 0) kick(t); if (s16 % 8 === 4) noise(t, 0.12, 0.12, 1200); else if (s16 % 2 === 1 && !lite()) noise(t, 0.04, 0.05, 6000); }
     if (z.tick && !boss && s16 % 4 === 0) noise(t, 0.03, 0.06, 3500);
@@ -102,6 +106,7 @@ const Music = (() => {
       started = true; step = 0; nextT = ctx.currentTime + 0.1; timer = setInterval(schedule, 90);
     },
     stop() { if (timer) clearInterval(timer); timer = null; started = false; if (master) master.gain.value = 0; },
+    CALM,
     setZone(z) { if (ZONES[z]) zone = z; },
     setBossKind(k) { bossKind = k || 0; },
     setBoss(b) { if (b !== boss && bossPending !== b) bossPending = b; },

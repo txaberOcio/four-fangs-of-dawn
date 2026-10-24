@@ -123,13 +123,13 @@ const EN = {
   bat: { tex: 'bat1', sc: 3, body: [10, 6], hp: 1, dmg: 1, spd: 90, hb: [28, 18], kind: 'bat' },
   gh: { tex: 'gh', sc: 3, body: [8, 10], hp: 3, dmg: 1, spd: 45, hb: [24, 32], kind: 'ghost' },
   garg: { tex: 'garg', sc: 4, body: [12, 14], hp: 12, dmg: 2, hb: [50, 56], kind: 'boss' },
-  bishop: { tex: 'bishop', sc: 4, body: [10, 14], hp: 22, dmg: 1, hb: [40, 56], kind: 'boss', fly: true },
-  clock: { tex: 'clock', sc: 4, body: [12, 15], hp: 32, dmg: 2, hb: [52, 60], kind: 'boss' },
-  conde: { tex: 'conde', sc: 4, body: [10, 15], hp: 42, dmg: 2, hb: [48, 60], kind: 'boss', fly: true },
-  archon: { tex: 'archon', sc: 4, body: [10, 14], hp: 64, dmg: 2, hb: [40, 56], kind: 'boss', fly: true, fearsome: true }, // fearsome: jefe especialmente fuerte (su imagen se duplica y tiembla al empezar el combate)
-  reina: { tex: 'reina', sc: 4, body: [12, 14], hp: 28, dmg: 2, hb: [50, 56], kind: 'boss' },
-  aurora: { tex: 'aurora', sc: 4, body: [10, 14], hp: 36, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
-  vesper: { tex: 'vesper', sc: 4, body: [10, 15], hp: 36, dmg: 2, hb: [48, 60], kind: 'boss' },
+  bishop: { tex: 'bishop', sc: 4, body: [10, 14], hp: 16, dmg: 1, hb: [40, 56], kind: 'boss', fly: true },
+  clock: { tex: 'clock', sc: 4, body: [12, 15], hp: 22, dmg: 2, hb: [52, 60], kind: 'boss' },
+  conde: { tex: 'conde', sc: 4, body: [10, 15], hp: 32, dmg: 2, hb: [48, 60], kind: 'boss', fly: true },
+  archon: { tex: 'archon', sc: 4, body: [10, 14], hp: 30, dmg: 2, hb: [40, 56], kind: 'boss', fly: true, fearsome: true }, // fearsome: jefe especialmente fuerte (su imagen se duplica y tiembla al empezar el combate)
+  reina: { tex: 'reina', sc: 4, body: [12, 14], hp: 20, dmg: 2, hb: [50, 56], kind: 'boss' },
+  aurora: { tex: 'aurora', sc: 4, body: [10, 14], hp: 34, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
+  vesper: { tex: 'vesper', sc: 4, body: [10, 15], hp: 34, dmg: 2, hb: [48, 60], kind: 'boss' },
   // Calabozos Profundos
   slug: { tex: 'limo', sc: 3, body: [14, 10], hp: 3, dmg: 1, spd: 28, hb: [40, 26], kind: 'walk', slime: true },
   shroom: { tex: 'hongo', sc: 3, body: [14, 14], hp: 4, dmg: 1, spd: 0, hb: [40, 40], kind: 'turret' },
@@ -137,8 +137,8 @@ const EN = {
   moth: { tex: 'esporas', sc: 3, body: [14, 12], hp: 3, dmg: 1, spd: 60, hb: [44, 38], kind: 'moth', fly: true }, // polilla de esporas: revolotea y suelta esporas
   magma: { tex: 'magma', sc: 3, body: [14, 10], hp: 4, dmg: 1, spd: 30, hb: [42, 30], kind: 'walk', ember: true }, // babosa de magma: deja brasas
   pris: { tex: 'preso', sc: 3, body: [12, 15], hp: 6, dmg: 2, spd: 42, hb: [34, 44], kind: 'walk', rez: true, throws: true },
-  alcaide: { tex: 'carcelero', sc: 4, body: [12, 15], hp: 32, dmg: 2, hb: [54, 62], kind: 'boss' },
-  madre: { tex: 'driade', sc: 5, body: [14, 15], hp: 44, dmg: 2, hb: [64, 74], kind: 'boss' },
+  alcaide: { tex: 'carcelero', sc: 4, body: [12, 15], hp: 36, dmg: 2, hb: [54, 62], kind: 'boss' },
+  madre: { tex: 'driade', sc: 5, body: [14, 15], hp: 40, dmg: 2, hb: [64, 74], kind: 'boss' },
   // enemigos invulnerables: solo se esquivan
   saw: { tex: 'saw', sc: 3, body: [12, 12], hp: 9999, dmg: 2, hb: [34, 34], kind: 'saw', inv: true },
   sentinel: { tex: 'sentinel', sc: 3, body: [12, 15], hp: 9999, dmg: 2, spd: 70, hb: [34, 44], kind: 'walk', inv: true, patrol: true },
@@ -172,7 +172,7 @@ const PR = {
   boom: { tex: 'puff', sc: 5, hb: [74, 74], dmg: 0.25, tint: 0xb48aff, alpha: 0.55, linger: true }, // explosión de esporas de la seta
   cloud: { tex: 'puff', sc: 7, hb: [48, 48], dmg: 0.5, tint: 0x66ff44, alpha: 0.5, linger: true }, // nube de veneno: se queda en el aire
 };
-const ZONE_SCALE = [1, 1.25, 1.5, 1.6, 1.8, 2.1, 1, 2.4, 2.8, 3]; // vida de los enemigos corrientes según la zona
+const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 
@@ -313,6 +313,7 @@ class CastleScene extends Phaser.Scene {
   }
   // los muros agrietados y las salas secretas cerradas se dibujan como pared normal
   paintMapArea(a) {
+    if (a.interior) return; // el interior de las casas no sale en el mapa
     const g = this.mapCtx, light = ZONE_PAL[a.z].light, D = this.fg.layer.data;
     for (let y = 0; y < a.rh; y++) for (let x = 0; x < a.rw; x++) {
       const gx = a.x0 + x, gy = a.y0 + y, v = D[gy][gx] ? D[gy][gx].index : -1, k = v < 0 ? -1 : v % 8;
@@ -1180,7 +1181,7 @@ class CastleScene extends Phaser.Scene {
 
     // ---- zona actual y mapa
     const ar = this.W.areaOf(Math.floor(p.x / T), Math.floor(p.y / T));
-    if (ar && ar.id !== this.myArea) { this.myArea = ar.id; this.markVisited(ar); this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.z);
+    if (ar && ar.id !== this.myArea) { this.myArea = ar.id; this.markVisited(ar); this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z);
       const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
       if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche y el Santuario de las Sombras.', 9000); }
     this.mmT -= dt;

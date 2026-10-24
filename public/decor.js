@@ -153,6 +153,7 @@
         const avoid = [], torches = [];
         [W.altars, W.npcs, W.crystals, W.forges, W.pages, W.bosses, W.sforges || []].forEach(list => list.forEach(o => { if (o.area === a.id) avoid.push(Math.floor(o.x / T) - a.x0); }));
         W.torches.forEach(o => { if (o.area === a.id) torches.push(Math.floor(o.x / T) - a.x0); });
+        (W.doors || []).forEach(o => { if (o.area === a.id) { const dx = Math.floor(o.x / T) - a.x0; for (let i = -4; i <= 4; i += 2) { avoid.push(dx + i); torches.push(dx + i); } } }); // la fachada de la casa
         const used = []; // tramos de suelo ocupados [desde, hasta]
         const fits = (x, half) => { for (let i = x - half; i <= x + half; i++) if (i < 3 || i > a.rw - 4 || !groundOk(i)) return false; return !avoid.some(v => Math.abs(v - x) <= half + 2) && !used.some(([d, h]) => x + half >= d - 1 && x - half <= h + 1); };
         const glowFor = (key, x, y) => { if (GLOW[key] && !LITE) { const gl = this.add.image(x, y, 'glow').setScale(1.4 + ART[key][0] / 14).setTint(GLOW[key]).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.3).setDepth(-5.4); this.decorObjs.push(gl); } };
