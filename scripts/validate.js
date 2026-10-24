@@ -211,9 +211,11 @@ const firstStage = {};
 const stages = [];
 let stage = 0, changed = true;
 const reached = []; // jefes que se pueden alcanzar en cada etapa
+const abilAt = []; // habilidades con las que se empieza cada etapa
 let finalNodes = [];
 while (changed) {
   const t0 = Date.now();
+  abilAt.push(Object.keys(abil).filter(k => abil[k]));
   const nodes = bfs(abil, start);
   const rooms = new Set(nodes.map(roomOf));
   rooms.forEach(r => { if (!(r in firstStage)) firstStage[r] = stage; });
@@ -253,6 +255,8 @@ World.PROGRESSION.forEach((p, i) => {
 });
 if (reached.length < World.PROGRESSION.length) { badOrder = true; console.log(`  ERROR: solo ${reached.length} etapas de ${World.PROGRESSION.length}`); }
 process.exitCode = missing.length || unreachC.length || badOrder ? 1 : 0;
+// DUMP=fichero.json: guarda en qué etapa se alcanza cada sala y objeto (lo usa scripts/recorrido.js)
+if (process.env.DUMP) require('fs').writeFileSync(process.env.DUMP, JSON.stringify({ pick: PICK, firstStage, reached, abilAt }));
 
 // ---- Rutas: ¿se puede acabar el juego con solo una de las dos recompensas del Alba? (node scripts/validate.js rutas) ----
 if (process.argv[2] === 'rutas') {

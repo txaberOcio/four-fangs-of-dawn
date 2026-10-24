@@ -110,6 +110,7 @@ Se genera con `npm run build:exe` (salida en `dist/`), ver [docs/DESARROLLO.md](
 | `npm start` | Arranca el servidor en el puerto 3000 (`PORT` lo cambia) |
 | `npm run check` | Comprueba la sintaxis de todos los ficheros |
 | `npm run validate` | Simula la física del jugador sobre el mapa y comprueba que todo el castillo se puede completar en orden |
+| `npm run recorrido` | Genera [docs/RECORRIDO-ZONA1.md](docs/RECORRIDO-ZONA1.md): en qué etapa se abre cada sala, camino hasta cada jefe, desvíos y dificultad (el diseño está en [docs/ZONA1.md](docs/ZONA1.md)) |
 
 ## Estructura
 
