@@ -2,6 +2,14 @@
 
 Resumen de lo que ha cambiado en el juego, de lo más nuevo a lo más antiguo. 
 
+## 0.5.0
+
+- **Archivo → Nave Sur:** el muro agrietado entre las dos salas desaparece; ahora es un paso abierto.
+- **Historia (docs/HISTORIA.md, hecha con el agente Narrador):** los cuatro vampiros son los colmillos que crearon y abandonaron los hermanos del Alba. Escena de inicio en las partidas nuevas, final de la Zona 1 al llegar a La Gran Hoguera tras la Madre Moho (con aviso del Anillo si lo llevas), el Conde muere al caer y el rival rescatado se queda en la Cumbre. Corregidos 17 textos que se contradecían (diarios, bestiario, Oráculo, escenas) y los README.
+- **Inicio:** en las partidas nuevas, la historia se cuenta sobre fondo negro antes de poder jugar (E o Espacio pasan de frase). Después, en todas las partidas, una pantalla de controles con las teclas dibujadas y lo que hace cada una; el juego espera hasta que pulsas E.
+- **Panel de desarrollo (F2):** selector de zona y sala para teletransportarse (agrupado por zona y región).
+- **Agente Narrador:** .claude/agents/narrador.md, para seguir inventando la historia con Claude Code.
+
 ## 0.4.0
 
 - **Pinchos:** al pincharte vuelves al borde del foso por el lado por el que entraste, no a la última plataforma: las plataformas que tienen pinchos debajo ya no cuentan como punto seguro.

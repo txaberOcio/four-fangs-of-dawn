@@ -279,7 +279,7 @@ class CastleScene extends Phaser.Scene {
     this.objTxt = this.add.text(SW / 2, 18, '', f('13px', '#9fffb0')).setOrigin(0.5).setScrollFactor(0).setDepth(30);
     this.promptTxt = this.add.text(0, 0, '', f('12px', '#ffe9a0')).setOrigin(0.5).setDepth(27).setVisible(false);
     this.eyeG = this.add.graphics().setDepth(26);
-    this.centerTxt = this.add.text(SW / 2, SH / 2 - 40, '', f('28px', '#ffd98a')).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlign('center');
+    this.centerTxt = this.add.text(SW / 2, SH / 2 - 40, '', f('28px', '#ffd98a')).setOrigin(0.5).setScrollFactor(0).setDepth(50).setAlign('center').setWordWrapWidth(SW - 60);
   }
   drawHearts() {
     while (this.hearts.length < this.maxHp) {
@@ -380,7 +380,7 @@ class CastleScene extends Phaser.Scene {
     on('progress', p => this.applyProgress(p, false));
     on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(gx, gy); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
     on('victory', v => { // el Conde cae, pero el castillo continúa: se despide y desaparece
-      this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Necios... esto no ha terminado.\nMis señores, Aurora y Vesper,\nme esperan más arriba, en las torres del alba.\nSeguidme... si os atrevéis.»\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
+      this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Por fin... los sellos están rotos, y yo con ellos.\nAurora y Vesper os esperan más arriba,\nen las torres del alba.\nSubid, colmillos... y cobrad lo que os deben.»\n\nEl Conde se deshace en ceniza.\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
       SFX.pick(); this.won = true; this.cameras.main.shake(500, 0.008);
       this.time.delayedCall(8000, () => { this.centerTxt.setText(''); });
     });
@@ -429,7 +429,7 @@ class CastleScene extends Phaser.Scene {
   albaScene(killed) { // al caer uno de los rivales, el otro acude, se lo lleva y huye
     const B = World.BOSSES, other = B[killed].rival, kb = this.W.bosses.find(b => b.id === killed), ob = this.W.bosses.find(b => b.id === other);
     const re = this.ents.get(other); if (re) { re.spr.destroy(); this.ents.delete(other); }
-    this.centerTxt.setText(B[killed].name + ' ha caído...\n\n¡' + B[other].name + ' acude,\n' + (killed === 'aurora' ? 'la recoge y huye con ella!' : 'lo recoge y huye con él!') + '\nYa no podrás enfrentarte a ' + B[other].name.split(',')[0] + '.');
+    this.centerTxt.setText(B[killed].name + ' ha caído...\n\n¡' + B[other].name + ' acude,\n' + (killed === 'aurora' ? 'la recoge y se la lleva a la Cumbre!' : 'lo recoge y se lo lleva a la Cumbre!') + '\nYa no podrás enfrentarte a ' + B[other].name.split(',')[0] + '.');
     if (kb && ob) {
       const x = kb.x, y = kb.y - 40;
       const spr = this.add.image(x + 340, y - 260, EN[other].tex).setScale(4).setDepth(30).setAlpha(0);
@@ -1213,9 +1213,9 @@ class CastleScene extends Phaser.Scene {
 
     // ---- zona actual y mapa
     const ar = this.W.areaOf(Math.floor(p.x / T), Math.floor(p.y / T));
-    if (ar && ar.id !== this.myArea) { this.myArea = ar.id; this.markVisited(ar); this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle();
+    if (ar && ar.id !== this.myArea) { this.myArea = ar.id; this.markVisited(ar); this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle(); if (this.zoneEndCheck) this.zoneEndCheck(ar);
       const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
-      if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche y el Santuario de las Sombras.', 9000); }
+      if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche (ves tras los muros agrietados).', 9000); }
     this.mmT -= dt;
     if (this.mmT <= 0 || this.showMap) { this.mmT = 0.2; this.updateMaps(); }
     if (inp.mapPress) {

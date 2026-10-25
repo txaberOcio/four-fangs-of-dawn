@@ -12,7 +12,7 @@
 ![Socket.IO](https://img.shields.io/badge/Socket.IO-4-black)
 ![Jugadores](https://img.shields.io/badge/jugadores-1--4-c0392b)
 
-*Four vampire hunters, one cursed castle, one blood-red moon. A co-op metroidvania that runs in any browser.*
+*Four vampires, one cursed castle, a debt written in blood. A co-op metroidvania that runs in any browser.*
 
 </div>
 
@@ -22,7 +22,7 @@
 
 ## Qué es
 
-Cuatro cazadores vampiro irrumpen en el castillo del Conde. Exploras un mapa conectado de más de 25 zonas, derrotas a cuatro jefes que te entregan nuevas habilidades y vuelves sobre tus pasos para abrir atajos y secretos. Se puede jugar en solitario o con hasta **tres amigos más**, cada uno desde su navegador (PC, móvil, tele con navegador o con mando).
+Cuatro vampiros, los colmillos que los hermanos del Alba crearon y abandonaron, vuelven al castillo a cobrar lo que se les debe. Exploras un mapa conectado de más de 25 zonas, derrotas a jefes que te entregan nuevas habilidades y vuelves sobre tus pasos para abrir atajos y secretos. Se puede jugar en solitario o con hasta **tres amigos más**, cada uno desde su navegador (PC, móvil, tele con navegador o con mando).
 
 | | |
 |---|---|
@@ -45,15 +45,15 @@ Cuatro cazadores vampiro irrumpen en el castillo del Conde. Exploras un mapa con
 - **Metroidvania de verdad:** Impulso, Doble salto y Salto de pared abren zonas y atajos nuevos. Cada vampiro conquista sus propios poderes y tiene su propia partida guardada.
 - **Oscuridad y luz como mecánica:** las antorchas se encienden y apagan (`E`) y su estado se comparte. Los fantasmas no ven a quien está bajo la luz, los murciélagos huyen de ella y el Guardián del Reloj es invulnerable mientras haya luz.
 - **Jefes con mecánicas propias**, incluida la pelea final, donde el suelo del trono se derrumba y todos caen a un foso con escombros.
-- **Las Torres del Alba (tras el Conde):** al caer, el Conde huye y derriba los muros del foso. Arriba esperan dos hermanos rivales, **Aurora** y **Vesper**: solo puedes derrotar a uno, porque al caer el otro lo rescata y huye. Cada uno da una habilidad distinta (**Alas del Alba**: planear, u **Ojo de la Noche**: ver los secretos tras los muros agrietados). Un oráculo explica la elección antes de decidir. Al vencer a uno se abre el camino al cielo: una zona **sin jefes** (Cumbre del Alba, Jardín Colgante y Mazmorra de Nubes) hecha para explorar con todas las habilidades. Quien eligió a Aurora puede planear sobre los pinchos largos de la Cripta Olvidada y hasta un balcón lejano; quien eligió a Vesper ve la alcoba secreta de la Cumbre con dos cristales de vida.
-- **La Cueva del Abismo (secreto de las Alas del Alba):** al final de los pinchos largos de la Cripta Olvidada hay un hueco que da paso a una caída libre por una cueva de lava. Abajo trabaja el **Herrero de la Cueva**, que imbuye tu arma con un poder elemental (Fuego, Hielo, Rayo o Veneno) con un menú que explica cada elección y cambia el color del ataque. Si le llevas el **Martillo Latente** (aún por decidir dónde se consigue) se muda a un santuario secreto bajo la Cumbre del Alba y ofrece también los poderes de sombra (Sombra, Eclipse y Marchitar).
+- **Las Torres del Alba (tras el Conde):** al caer, el Conde se deshace en ceniza y los muros del foso se derrumban. Arriba esperan dos hermanos rivales, **Aurora** y **Vesper**: solo puedes derrotar a uno, porque al caer el otro lo rescata y se lo lleva a la Cumbre. Cada uno da una habilidad distinta (**Alas del Alba**: planear, u **Ojo de la Noche**: ver los secretos tras los muros agrietados). Un oráculo explica la elección antes de decidir. Al vencer a uno se abre el camino al cielo: una zona **sin jefes** (Cumbre del Alba, Jardín Colgante y Mazmorra de Nubes) hecha para explorar con todas las habilidades. Quien eligió a Aurora puede planear sobre los pinchos largos de la Cripta Olvidada y hasta un balcón lejano; quien eligió a Vesper ve la alcoba secreta de la Cumbre con dos cristales de vida.
+- **La Cueva del Abismo (tras vencer a Aurora o a Vesper):** se baja por la Grieta Sellada, bajo la Bodega, o, con las Alas, planeando sobre los pinchos largos de la Cripta Olvidada hasta un hueco que da paso a una caída libre por una cueva de lava. Abajo trabaja el **Herrero de la Cueva**, que imbuye tu arma con un poder elemental (Fuego, Hielo, Rayo o Veneno) con un menú que explica cada elección y cambia el color del ataque. Si le llevas el **Martillo Latente** (lo suelta el Verdugo Cubierto de Musgo, en las Celdas Cubiertas) se muda a un santuario secreto bajo la Cumbre del Alba y ofrece también los poderes de sombra (Sombra, Eclipse y Marchitar).
 - **Plataformas que aparecen y desaparecen:** la zona rosa (Torres del Alba) tiene puzles de tiempo: escalones que parpadean antes de desaparecer y que hay que cruzar con buen ritmo para llegar a cristales y gemas.
 - **Enemigos con nombre con habilidades propias:** por ejemplo, el Relojero Oxidado deja un rastro de veneno de 3 segundos y lanza nubes que se quedan 5 segundos en el aire.
 - **Enemigos invulnerables** (sierras de raíl y centinelas), enemigos que se endurecen por zona y **élites con nombre**: no retroceden al ser golpeados, tienen una habilidad propia (carga, orbes, terremoto, teletransporte con soplido que apaga antorchas, furia) y recompensa fija.
 - **Salas secretas de verdad:** lo que hay tras un muro agrietado no se ve (ni en el mapa ni por su brillo) hasta romperlo.
 - **Dos monedas:** las **almas** (◆) se ganan matando enemigos y compran objetos corrientes; las **gemas** (✦) se encuentran por el mapa y las sueltan jefes y élites, y compran mejoras permanentes (Colmillo de acero, Talismán de almas), el Fruto de sangre y el Amuleto. Los mercaderes amplían su mercancía según avanzas.
 - **Acto II antes del Conde:** dos segmentos con jefe, el **Archivo Prohibido** (Archimago Silente) y las **Catacumbas Reales** (Reina de Huesos). Sus sellos abren la puerta de la Sala del Trono.
-- **Viaje rápido temprano:** la Gran Hoguera de la Capilla lo desbloquea; al descansar en cualquier hoguera encendida eliges a cuál viajar.
+- **Viaje rápido temprano:** la hoguera grande de la Capilla (Nave Sur) lo desbloquea; al descansar en cualquier hoguera encendida eliges a cuál viajar.
 - **Progreso con sentido:** guardado solo al descansar en hogueras (si mueres, vuelves a tu último punto de control y pierdes lo conseguido desde entonces; el mundo vuelve a como estaba: los jefes reaparecen y los muros rotos se cierran), porcentaje de exploración, bestiario y diarios de historia.
 - **Todo el arte y la música se generan por código:** sprites y tiles en pixel art dibujados a partir de mapas de texto y una banda sonora procedural con WebAudio.
 - **Pensado para cualquier pantalla:** teclado, **mando de PlayStation/estándar**, **controles táctiles** con cruceta de arrastre y un **modo ligero** para televisores y dispositivos lentos.

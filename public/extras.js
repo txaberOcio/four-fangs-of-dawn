@@ -38,6 +38,15 @@ const ITEMS = [
   { id: 'fang', name: 'Colmillo de acero', price: 0, gems: 4, perm: 'dmg', max: 3, desc: '+1 de daño para siempre (hasta 3 veces; cada una cuesta más).' },
   { id: 'talis', name: 'Talismán de almas', price: 0, gems: 3, perm: 'souls', max: 2, desc: '+20% de almas de los enemigos para siempre (hasta 2 veces).' },
 ];
+// historia (docs/HISTORIA.md): escena de inicio (T1) y fin de la Zona 1 (T23)
+const STORY_INTRO = ['Antes del primer amanecer, dos hermanos se repartían el cielo: Aurora, Dama del Alba, y Vesper, Señor del Ocaso.',
+  'De su sangre nacieron cuatro colmillos. Vosotros. Cazabais para ellos, y con ellos la noche no tenía fin.',
+  'Pero el sol y la luna acabaron enfrentados. Ninguno quiso dejaros al otro: os arrancaron los poderes, los nombres... y os echaron del castillo.',
+  'Dejaron al Conde guardando las puertas, y el castillo se durmió en su propia sangre.',
+  'Siglos después, los muros se agrietan. Esta noche, las puertas ceden.',
+  'Volved, colmillos del Alba. Recuperad lo que es vuestro... y cobrad lo que os deben.'];
+const STORY_ZONE1_END = ['La Gran Hoguera arde sin leña. Más allá, el camino baja hacia tierras que el castillo ya no gobierna.', 'Habéis recuperado parte de lo que os quitaron. El resto está más lejos.'];
+const STORY_RING = 'Llevas el Anillo del Rey: la Reina Isolda está en algún lugar de ese camino.';
 // a quién hay que vencer para abrir cada puerta sellada (clave = gate de world.js)
 const GATE_BY = { bishop: 'al Obispo Caído', clock: 'al Guardián del Reloj', conde: 'al Conde', sellos: 'al Archimago y a la Reina (sus dos sellos)', alba: 'a Aurora o a Vesper', madre: 'a la Madre Moho' };
 // objetos que se usan con Q: las mejoras permanentes (perm) y el amuleto (se gasta solo al morir) no entran en el inventario de uso
@@ -97,29 +106,29 @@ const BESTIARY = {
   garg: { name: 'Gárgola de Piedra', text: 'Guardiana del primer umbral. Llora piedra y salta sobre quien se atreve a entrar. Su corazón guarda el Impulso.', tip: 'Salta sus ondas y golpéala tras su embestida.' },
   bishop: { name: 'Obispo Caído', text: 'Rezaba por el castillo hasta que la sangre le respondió. Se teletransporta y lanza oraciones en abanico. Guarda el Doble salto.', tip: 'Flota a baja altura: ataca mientras se materializa.' },
   clock: { name: 'Guardián del Reloj', text: 'Engranaje viviente que se protege con la luz. Guarda el Salto de pared.', tip: 'Apaga sus antorchas con {act} y atácalo a oscuras.' },
-  aurora: { name: 'Aurora, Dama del Alba', text: 'Hermana de Vesper y señora del Conde, vuela entre rayos de luz. Si cae, su hermano la rescata y huye. Premio: Alas del Alba.', tip: 'Esquiva la lluvia de rayos y sus picados; golpéala cuando baje.' },
-  vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora y señor del Conde, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y huye. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
+  aurora: { name: 'Aurora, Dama del Alba', text: 'Hermana de Vesper y señora del Conde, vuela entre rayos de luz. Si cae, su hermano la rescata y se la lleva a la Cumbre. Premio: Alas del Alba.', tip: 'Esquiva la lluvia de rayos y sus picados; golpéala cuando baje.' },
+  vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora y señor del Conde, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y se lo lleva a la Cumbre. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
   archon: { name: 'Archimago Silente', text: 'Guardián del sello de tinta. Entre sus libros flotan tormentas de luz y fantasmas que acuden a su llamada.', tip: 'Esquiva sus abanicos de orbes y la lluvia de rayos; cuando invoque ayuda, golpéalo sin parar.' },
-  reina: { name: 'Reina de Huesos', text: 'Guardiana del sello de hueso. Salta con todo su peso, embiste y llama a los esqueletos de la cripta.', tip: 'Vigila los pilares marcados en el suelo y no te quedes bajo sus saltos.' },
-  conde: { name: 'El Conde', text: 'Siervo de los hermanos del Alba y portero de su castillo. Rompe el suelo de su trono para enterrar a sus cazadores en el foso, y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
+  reina: { name: 'Reina de Huesos', text: 'Esposa del Conde y guardiana del sello de hueso que lo encierra. La llaman reina porque reina sobre los muertos. Salta, embiste y llama a los esqueletos de la cripta.', tip: 'Vigila los pilares marcados en el suelo y no te quedes bajo sus saltos.' },
+  conde: { name: 'El Conde', text: 'Siervo de los hermanos del Alba, que lo encerraron en el trono del castillo que él les entregó. Rompe el suelo para enterrar a sus cazadores en el foso y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
 };
 const PAGES = {
-  arch1: { title: 'Nota del Archimago', text: 'Los hermanos del Alba me pidieron guardar un sello de tinta. Lo escondí tras mil páginas y me quedé a vigilarlo. Los libros ya no responden; solo susurran mi nombre.' },
-  cat1: { title: 'Lamento de la Reina', text: 'Mi sello es de hueso porque los huesos no mienten. Me encerraron bajo la Mazmorra para guardarlo, y los muertos me hacen compañía. El Conde nunca bajó a verme.' },
-  corr: { title: 'Diario del Capitán', text: 'Cuando el Conde cerró las puertas ordené sellar el pasillo bajo la galería. Mis hombres se quedaron de pie, vacíos, esperando una orden que nunca llegó. Yo sigo vigilando.' },
+  arch1: { title: 'Nota del Archimago', text: 'Los hermanos del Alba me pidieron guardar un sello de tinta: mientras exista, el Conde no saldrá de su trono. Lo escondí tras mil páginas y me quedé a vigilarlo. Los libros ya no responden; solo susurran mi nombre.' },
+  cat1: { title: 'Lamento de la Reina', text: 'Mi sello es de hueso porque los huesos no mienten. Los hermanos me encerraron bajo la Mazmorra para que mi esposo no saliera de su trono. Los muertos me hacen compañía. El Conde nunca bajó a verme.' },
+  corr: { title: 'Diario del Capitán', text: 'Cuando el Conde abrió las puertas a los hermanos del Alba y las cerró a todos los demás, ordené sellar el pasillo bajo la galería. Mis hombres se quedaron de pie, vacíos, esperando una orden que nunca llegó. Yo sigo vigilando.' },
   lect: { title: 'Notas del Archivista', text: 'Los libros pidieron sangre y se la dimos. Ahora susurran. Escribí todo lo que dicen hasta que mis ojos se quedaron entre las páginas.' },
   caden: { title: 'Carta del Carcelero', text: 'Las cadenas ya no sujetan a nadie: el Conde soltó a los presos y nos encadenó a nosotros. Si subes a la Torre del Reloj, aprende el compás de las sierras: no se detienen jamás.' },
   naveP: { title: 'Plegaria del Obispo', text: 'Padre nuestro que estás en los cielos... responde al revés. Subo al Ábside cada noche para escucharle. Anoche contestó con mi propia voz.' },
-  galeria: { title: 'Cuaderno del Relojero', text: 'Los engranajes no descansan. Las sierras recorren su raíl y los centinelas mis pasillos. Construí el reloj para detener el tiempo; él me detuvo a mí.' },
+  galeria: { title: 'Cuaderno del Relojero', text: 'Los engranajes no descansan. Las sierras recorren su raíl y los centinelas mis pasillos. Construí el reloj para detener el tiempo; él me detuvo a mí. Mi Guardián vigila la Cámara; yo me oxido en la torre.' },
   pasR: { title: 'Última carta del Conde', text: 'Cuatro cazadores vendrán, con mi misma sangre y mi misma sed. Abriré el suelo bajo mi trono y los enterraré con mis siervos. Si fallo, mis señores del alba, Aurora y Vesper, no me lo perdonarán. Quizá, al fin, alguien me detenga.' },
 };
 PAGES.cielo1 = { title: 'Carta sin firmar', text: 'Hermano: si lees esto es que uno de los dos ha caído. Ni el sol ni la luna aguantan solos mucho tiempo. Te esperaré en la Cumbre, donde el viento aún huele a nosotros.' };
-PAGES.cumbre = { title: 'Diario del Vigía', text: 'Llevo años mirando el horizonte desde aquí. Antes eran dos luces, una al amanecer y otra al ocaso. Ahora solo veo una, y me parece más triste que la oscuridad.' };
+PAGES.cumbre = { title: 'Diario del Vigía', text: 'Llevo años mirando el horizonte desde aquí. Antes eran dos luces, una al amanecer y otra al ocaso, y se cruzaban cada día. Hace años que no se cruzan. Hoy solo veo una, y me parece más triste que la oscuridad.' };
 PAGES.fragua = { title: 'Notas del Herrero', text: 'Forjé la espada del Conde y las dagas de los hermanos del Alba. Cada elemento que domino me recuerda que yo solo ardo en esta cueva, lejos de todos. Si alguien me trae mi martillo, volveré a ver la luz.' };
-PAGES.rai = { title: 'Nota del Montacargas', text: 'Orden del Herrero: el ascensor solo baja a quien lleva cuentas pendientes con el Alba. Arriba el aire sabe a ceniza; aquí abajo, a tierra mojada. El musgo ya ha subido por el cable.' };
+PAGES.rai = { title: 'Nota del Montacargas', text: 'Orden del Alcaide: el ascensor solo baja a quien lleva cuentas pendientes con el Alba. Arriba el aire sabe a ceniza; aquí abajo, a tierra mojada. El musgo ya ha subido por el cable.' };
 PAGES.cel = { title: 'Registro de Reos', text: 'Reo 14: pidió ver el sol. Reo 15: pidió ver la luna. Reo 16: no pidió nada y fue el único que durmió sin miedo. El musgo lo abrazó primero.' };
 PAGES.rez = { title: 'Menú del último banquete', text: 'Sopa de raíces, pan de piedra y vino sin cosecha. Los carceleros comían de pie; los presos, de rodillas. Ya nadie se acuerda de quién era cada cual.' };
-PAGES.ant = { title: 'Última orden del Alcaide', text: 'Me dejaron las llaves con una sola orden: no abrir hasta que los hermanos vuelvan juntos. Nunca volvieron. Ahora el musgo me habla con la voz de los dos y ya no sé a cuál obedezco. Quien me venza no es mi enemigo: es mi relevo.' };
+PAGES.ant = { title: 'Última orden del Alcaide', text: 'Me dejaron las llaves con una sola orden: no abrir hasta que los hermanos vuelvan juntos. Nunca volvieron juntos. Ahora el musgo me habla con la voz de los dos y ya no sé a cuál obedezco. Quien me venza no es mi enemigo: es mi relevo.' };
 const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160, alcaide: 140, madre: 300, slug: 5, shroom: 6, vine: 8, pris: 10, moth: 7, magma: 9 };
 const NPC_DEFS = {
   merchant: { name: 'Mercader', tex: 'npc_merchant', shop: true, lines: [['Almas, almas... Las prefiero a las monedas. Mira lo que tengo.']] },
@@ -128,7 +137,7 @@ const NPC_DEFS = {
       'Las paredes agrietadas... ¡golpéalas, golpéalas! Detrás siempre hay algo que brilla.',
       'Bajo la Escalera de los Retratos hay una sala que no existe. Búscala a la izquierda, abajo del todo.',
       'Y hay un túnel tan bajo que solo lo cruza quien se arrodilla. ¡Abajo, abajo, usa {down}!',
-      'Dicen que dos sellos cierran la Sala del Trono: uno de tinta, sobre el Observatorio, y otro de hueso, bajo la Mazmorra de Hierro. ¡Sin ambos, el Conde no abre!',
+      'Dicen que dos sellos cierran la Sala del Trono: uno de tinta, sobre el Observatorio, y otro de hueso, bajo la Mazmorra de Hierro. ¡El Conde vive encerrado ahí!',
       'Ah, y el Guardián del Reloj: la luz lo protege como una armadura. ¡Apaga sus antorchas con {act} y atácalo a oscuras!'],
     ['¿Me has visto los ojos? Los dejé entre los libros.',
       'Las antorchas... ¡enciéndelas con {act}! Los fantasmas no ven en la luz. ¡Y los murciélagos la odian!'],
@@ -146,16 +155,16 @@ const NPC_DEFS = {
   oracle: { name: 'Oráculo del Alba', tex: 'npc_oracle', pick: (sc, pages, visits) => ((sc.progress.bosses.includes('aurora') || sc.progress.bosses.includes('vesper')) ? pages[2] : (visits === 1 ? pages[0] : pages[1])), lines: [
     ['Has llegado más alto que nadie... El Conde solo era el portero de los hermanos del Alba.',
       'Aquí viven dos hermanos rivales: AURORA, Dama del Alba, y VESPER, Señor del Ocaso. Los dos comparten el mismo emblema: media luna y medio sol.',
-      'Solo podréis derrotar a UNO. Cuando uno caiga, el otro acudirá, lo recogerá y huirá para siempre.',
+      'Solo podréis derrotar a UNO. Cuando uno caiga, el otro acudirá, lo recogerá y se lo llevará a la Cumbre. No volverá a luchar.',
       'Si SIGUES RECTO por la puerta del este de esta sala, te enfrentarás a AURORA. Su premio: las ALAS DEL ALBA. Mantén saltar en el aire y planearás para cruzar grandes abismos.',
-      'Si BAJAS por el hueco del centro del suelo, te enfrentarás a VESPER. Su premio: el OJO DE LA NOCHE. Verás los secretos tras los muros agrietados, tu luz crecerá y se te abrirá un santuario secreto de poderes de sombra.',
+      'Si BAJAS por el hueco del centro del suelo, te enfrentarás a VESPER. Su premio: el OJO DE LA NOCHE. Verás tras los muros agrietados y tu luz crecerá.',
       'Hay carteles en el suelo y en la pared que lo recuerdan. Elegid bien: la decisión no se puede deshacer. Aquí hay una hoguera por si queréis guardar antes.',
       'Cuando uno de los dos caiga, se abrirá la puerta este de la cámara de Vesper: el camino hacia el cielo.'],
     ['Dos hermanos, un solo emblema, una sola elección.',
       'RECTO por la puerta del este: AURORA, con las ALAS DEL ALBA (planear al mantener saltar).',
       'BAJANDO por el hueco del suelo: VESPER, con el OJO DE LA NOCHE (ves los secretos tras los muros agrietados y tu luz crece).',
       'Derrotar a uno hace que el otro se lo lleve. Luego el camino al cielo queda abierto.'],
-    ['El rival que sobrevivió se ha llevado a su hermano lejos. Algún día volveréis a verlos... en otras torres.',
+    ['El rival que sobrevivió se ha llevado a su hermano a la Cumbre y allí lo cuida. Algún día volveréis a verlos... en otras torres.',
       'El camino al cielo está abierto: baja a la cámara de Vesper y cruza su puerta este.'] ] },
   rivalA: { name: 'Aurora, Dama del Alba', tex: 'aurora', show: sc => sc.progress.bosses.includes('vesper') && !sc.progress.bosses.includes('aurora'), lines: [
     ['Me has quitado a mi hermano... y aun así sigo aquí. Lo cuido, lo oigo respirar. No vengo a luchar.',
@@ -284,7 +293,7 @@ const _hurt = CastleScene.prototype.hurt, _die = CastleScene.prototype.die, _res
 Object.assign(CastleScene.prototype, {
   // ---- inicio
   initExtras() {
-    this.element = ''; this.travel = false; this.travelOpen = false; this.imbueOpen = false; this.hammerState = 0; this.smithMet = false; this.quests = { anillo: 0 }; // hammerState: 0 sin martillo, 1 lo llevas, 2 entregado
+    this.element = ''; this.travel = false; this.travelOpen = false; this.imbueOpen = false; this.hammerState = 0; this.smithMet = false; this.quests = { anillo: 0, fin1: 0 }; // hammerState: 0 sin martillo, 1 lo llevas, 2 entregado
     this.buildAlbaDecor(); this.buildHelp();
     if (/[?&]dev=1/.test(location.search)) this.setupDev();
     const w = this.W;
@@ -332,7 +341,9 @@ Object.assign(CastleScene.prototype, {
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
     this.canAuto = !!saveMe || !saves[this.color]; // evita pisar una partida guardada de este vampiro en una partida nueva
+    const fresh = !saveMe && !(this.progress.bosses || []).length; // partida nueva: escena de inicio (T1 de docs/HISTORIA.md)
     if (saveMe) this.loadPersonal(saveMe);
+    this.startIntro(fresh); // partida nueva: historia sobre negro; siempre: controles hasta pulsar E
     saveMe = null;
     this.snap = this.captureState(); // punto de control inicial: al empezar o al cargar la partida
     const onRest = () => { if (this.isHost) this.restReset(); };
@@ -348,7 +359,7 @@ Object.assign(CastleScene.prototype, {
     this.gems = m.gems | 0; this.perm = { dmg: (m.perm && m.perm.dmg) | 0, souls: (m.perm && m.perm.souls) | 0, hp: (m.perm && m.perm.hp) | 0 };
     (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
-    this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.quests = { anillo: (m.quests && m.quests.anillo) | 0 }; this.syncNpcs();
+    this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.quests = { anillo: (m.quests && m.quests.anillo) | 0, fin1: (m.quests && m.quests.fin1) | 0 }; this.syncNpcs();
     if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     const oldFruit = this.inv.fruit | 0; this.inv.fruit = 0; this.inv.fang = 0; this.inv.talis = 0; // eran objetos de inventario en partidas antiguas
@@ -554,6 +565,7 @@ Object.assign(CastleScene.prototype, {
   // ---- entrada
   readInput(K_) {
     const jd = k => Phaser.Input.Keyboard.JustDown(k);
+    if (this.introLock) { const g0 = pollPad().edge || {}; if (jd(K_.E) || jd(K_.ENTER) || jd(K_.SPACE) || touchJust('interact') || touchJust('jump') || g0.interact || g0.jump) this.introNext(); return { J: {}, held: () => false }; }
     const J = {}; ['UP', 'DOWN', 'W', 'S', 'E', 'ENTER', 'ESC', 'SPACE', 'X', 'J', 'Z', 'C', 'K', 'SHIFT', 'Q', 'R', 'TAB', 'M', 'N', 'B'].forEach(n => { J[n] = jd(K_[n]); });
     const g = pollPad().edge || {};
     if (g.up) J.UP = true; if (g.down) J.DOWN = true; if (g.jump) J.ENTER = true; if (g.back) J.ESC = true;
@@ -709,7 +721,7 @@ Object.assign(CastleScene.prototype, {
     const W = this.W, box = document.createElement('div');
     box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#0a0612ee;color:#fff;font:13px Courier New,monospace;padding:10px;display:none;overflow:auto';
     box.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b>MODO DESARROLLO</b>' +
-      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devHammer">Dar el Martillo</button><button id="devShop">Tienda</button><button id="devSave">Guardar aquí</button><button id="devLoad">Cargar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button>' +
+      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devHammer">Dar el Martillo</button><button id="devShop">Tienda</button><button id="devSave">Guardar aquí</button><button id="devLoad">Cargar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button><select id="devZone" style="font:12px Courier New,monospace;padding:3px"></select>' +
       '<span id="devInfo" style="color:#ffd98a">Haz clic en el mapa para teletransportarte</span></div><canvas id="devMap" style="image-rendering:pixelated;cursor:crosshair;border:2px solid #ffb347"></canvas>';
     document.body.appendChild(box);
     box.querySelectorAll('button').forEach(b => { b.style.cssText = 'width:auto;margin:0;padding:4px 10px;font:12px Courier New,monospace;cursor:pointer'; });
@@ -741,6 +753,13 @@ Object.assign(CastleScene.prototype, {
     // guardar y cargar: guarda la partida (como al descansar, en la última hoguera) y recuerda el sitio exacto; cargar vuelve a ese estado y a ese sitio
     box.querySelector('#devSave').onclick = () => { const a = this.lastBonfire || this.altars[0]; this.savePersonal(a); this.devPos = { x: this.player.x, y: this.player.y }; try { localStorage.setItem('devPos_' + this.color, JSON.stringify(this.devPos)); } catch (e) { /* sin almacenamiento */ } toggle(); this.toast('Partida guardada aquí (modo desarrollo)'); };
     box.querySelector('#devLoad').onclick = () => { let pos = this.devPos; try { pos = pos || JSON.parse(localStorage.getItem('devPos_' + this.color) || 'null'); } catch (e) { /* ok */ } toggle(); this.revertToCheckpoint(); if (pos) { this.player.setPosition(pos.x, pos.y); this.player.body.setVelocity(0, 0); this.invuln = 2; } this.hp = this.maxHp; this.toast('Partida cargada (modo desarrollo)'); };
+    { // selector de zonas y salas: teletransporta a la sala elegida (agrupadas por zona y región; hoy solo existe la Zona 1)
+      const sel = box.querySelector('#devZone'); let html = '<option value="">Ir a zona / sala...</option>';
+      const zoneOf = a => a.zona || 1, groups = {};
+      W.areaList.filter(a => !a.interior).forEach(a => { const k = 'Zona ' + zoneOf(a) + ' · ' + (World.ZONES[a.z] || 'Otros'); (groups[k] = groups[k] || []).push(a); });
+      Object.keys(groups).forEach(k => { html += '<optgroup label="' + k + '">' + groups[k].map(a => '<option value="' + a.id + '">' + a.name + '</option>').join('') + '</optgroup>'; });
+      sel.innerHTML = html; sel.onchange = () => { if (sel.value) { this.devTeleport(sel.value); sel.value = ''; toggle(); } };
+    }
     box.querySelector('#devShop').onclick = () => { toggle(); this.curNpc = { area: 'dev' }; this.openShop(); }; // tienda de desarrollo: todos los objetos
     box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
     const orig = this.hurt; this.hurt = (d, x) => { if (this.devGod) return; return orig.call(this, d, x); };
@@ -1246,7 +1265,7 @@ Object.assign(CastleScene.prototype, {
     if (solo) this.bossGemsPaid = new Set(s.bg);
     this.souls = s.souls; this.inv = Object.assign({}, s.inv); this.wlv = s.wlv; this.maxHp = s.maxHp; this.gems = s.gems + bossGems; this.perm = Object.assign({}, s.perm); this.element = s.element; this.travel = s.travel; this.smithMet = s.met;
     Object.keys(this.abil).forEach(k => { this.abil[k] = !!s.abil[k]; });
-    this.hammerState = s.hammer; this.quests = Object.assign({ anillo: 0 }, s.quests);
+    this.hammerState = s.hammer; this.quests = Object.assign({ anillo: 0, fin1: 0 }, s.quests);
     if (solo) this.revertWorld(s.world);
     this.syncRelics(); this.applyProgress(this.progress, true); this.syncNpcs(); this.wallBroken();
     const after = JSON.stringify([this.abil, this.cryGot.size, this.forgeGot.size, this.gemGot.size, this.wlv, this.maxHp, this.element, this.perm, this.pagesGot.size, this.eliteGot.size, this.hammerState]);
@@ -1586,6 +1605,74 @@ Object.assign(CastleScene.prototype, {
     }
     this.showLines(n, q.anillo === 1 ? ['La Reina Isolda... más allá de La Gran Hoguera. No pierdas el anillo, cazador.', 'Cuando caiga el Conde, la puerta del este se abrirá. Yo no tengo fuerzas para cruzarla.'] : ['Le llevaste el anillo. Por primera vez en siglos, esta escalera no me parece tan fría.']);
     return true;
+  },
+  startIntro(fresh) { // pantalla negra con la historia (partida nueva) y luego los controles; el juego espera
+    this.introLock = true; this.physics.world.pause();
+    const D = 200, objs = this.introObjs = [];
+    const bg = this.add.rectangle(SW / 2, SH / 2, SW, SH, 0x000000, 1).setScrollFactor(0).setDepth(D); objs.push(bg);
+    this.introTxt = this.add.text(SW / 2, SH / 2 - 10, '', { fontSize: fsz('22px'), fontFamily: 'Courier New', color: '#ffe9c0', align: 'center', wordWrap: { width: SW - 160 }, lineSpacing: 8 }).setOrigin(0.5).setScrollFactor(0).setDepth(D + 1); objs.push(this.introTxt);
+    this.introHint = this.add.text(SW / 2, SH - 40, hintText('{act} / Espacio: continuar'), { fontSize: fsz('13px'), fontFamily: 'Courier New', color: '#8a7aa8' }).setOrigin(0.5).setScrollFactor(0).setDepth(D + 1); objs.push(this.introHint);
+    this.introLines = fresh ? ['FOUR FANGS OF DAWN\nLos cuatro colmillos del Alba'].concat(STORY_INTRO) : [];
+    this.introStep = -1; this.introNext();
+  },
+  introNext() { // siguiente frase; al acabar la historia, controles; con los controles, empezar
+    if (!this.introLock) return;
+    if (this.introTimer) { this.introTimer.remove(); this.introTimer = null; }
+    if (this.introPhase === 'controls') { this.endIntro(); return; }
+    this.introStep++;
+    if (this.introStep < this.introLines.length) {
+      const line = this.introLines[this.introStep];
+      this.introTxt.setText(line).setAlpha(0); this.tweens.add({ targets: this.introTxt, alpha: 1, duration: 700 });
+      this.introTimer = this.time.delayedCall(Math.max(3500, line.length * 60), () => this.introNext()); // pasa sola si no pulsas nada
+      return;
+    }
+    this.introPhase = 'controls'; this.introObjs.forEach(o => o.destroy()); this.introObjs = []; this.drawControls();
+  },
+  endIntro() {
+    (this.introObjs || []).forEach(o => o.destroy()); this.introObjs = [];
+    this.introLock = false; this.introPhase = null; this.physics.world.resume(); SFX.altar();
+  },
+  drawControls() { // pantalla de controles: teclas dibujadas y lo que hace cada una, hasta pulsar E
+    const D = 200, objs = this.introObjs, mode = inputMode();
+    const add = o => { objs.push(o.setScrollFactor(0).setDepth(D + 1)); return o; };
+    objs.push(this.add.rectangle(SW / 2, SH / 2, SW, SH, 0x05030a, 0.96).setScrollFactor(0).setDepth(D));
+    const txt = (x, y, t, size, col, ox = 0) => add(this.add.text(x, y, t, { fontSize: fsz(size), fontFamily: 'Courier New', color: col || '#ffe9c0', stroke: '#000', strokeThickness: 3 }).setOrigin(ox, 0.5));
+    txt(SW / 2, 44, 'CONTROLES', '26px', '#ffd98a', 0.5);
+    if (mode !== 'key') { // mando o pantalla táctil: lista sencilla
+      const lines = mode === 'pad' ? ['Cruceta o stick: moverse', '✕ saltar (mantén en el aire para planear)', '◻ atacar   ○ impulso', '△ interactuar: hogueras, antorchas, personas, puertas', 'Botones laterales: objetos · Select: mapa', '', 'Pulsa △ para empezar'] : ['Cruceta: moverse · ▲ saltar · ▼ agacharse', '» impulso · ⚔ atacar', 'E interactuar: hogueras, antorchas, personas, puertas', '', 'Toca E para empezar'];
+      lines.forEach((l, i) => txt(SW / 2, 120 + i * 40, l, '18px', i === lines.length - 1 ? '#7ae8ff' : null, 0.5));
+      return;
+    }
+    const g = add(this.add.graphics());
+    const key = (x, y, label, w = 44) => { // tecla dibujada
+      g.fillStyle(0x2a2238, 1).fillRoundedRect(x - w / 2, y - 22 + 4, w, 44, 7).fillStyle(0x4a3d66, 1).fillRoundedRect(x - w / 2, y - 22, w, 44, 7).lineStyle(2, 0xb9a9ff, 1).strokeRoundedRect(x - w / 2, y - 22, w, 44, 7);
+      txt(x, y - 1, label, label.length > 2 ? '14px' : '20px', '#ffffff', 0.5);
+    };
+    // flechas (a la izquierda)
+    const ax = 170, ay = 150;
+    key(ax, ay, '↑'); key(ax - 52, ay + 52, '←'); key(ax, ay + 52, '↓'); key(ax + 52, ay + 52, '→');
+    txt(ax, ay - 40, 'saltar', '15px', '#9fffb0', 0.5); txt(ax - 52, ay + 92, 'moverse', '15px', '#9fffb0', 0.5); txt(ax + 52, ay + 92, 'moverse', '15px', '#9fffb0', 0.5);
+    txt(ax, ay + 122, 'agacharse  (↓ + saltar: bajar', '13px', '#9fffb0', 0.5); txt(ax, ay + 140, 'de una plataforma)', '13px', '#9fffb0', 0.5);
+    txt(ax, ay + 172, 'En el aire, mantén saltar para', '12px', '#a99bd1', 0.5); txt(ax, ay + 188, 'planear (Alas del Alba)', '12px', '#a99bd1', 0.5);
+    // teclas de acción (a la derecha)
+    const rows = [['Espacio', 'saltar (igual que ↑)', 96], ['X', 'atacar'], ['C', 'impulso (cuando lo consigas)'], ['E', 'interactuar (hogueras, antorchas, hablar)'], ['Q', 'usar objeto'], ['R', 'cambiar de objeto'], ['M', 'mapa     B: bestiario y diarios'], ['H', 'ver todos los controles']];
+    rows.forEach(([k, what, w], i) => { const y = 100 + i * 54, x = 380; key(x + (w ? (w - 44) / 2 : 0), y, k, w || 44); txt(x + (w ? w - 10 : 40), y, what, '15px', null, 0); });
+    const go = txt(SW / 2, SH - 34, 'Pulsa E para empezar', '20px', '#7ae8ff', 0.5);
+    this.tweens.add({ targets: go, alpha: 0.35, duration: 700, yoyo: true, repeat: -1 });
+  },
+  storyScene(lines) { // historia: frases centradas sobre un fondo oscuro, una tras otra
+    if (!this.storyTxt) {
+      this.storyBg = this.add.rectangle(SW / 2, SH / 2, SW, 190, 0x000000, 0.72).setScrollFactor(0).setDepth(49);
+      this.storyTxt = this.add.text(SW / 2, SH / 2, '', { fontSize: fsz('19px'), fontFamily: 'Courier New', color: '#ffe9c0', align: 'center', wordWrap: { width: SW - 140 }, stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setScrollFactor(0).setDepth(50);
+    }
+    (this.storyTimers || []).forEach(t => t.remove()); this.storyTimers = [];
+    const show = (i) => { const on = i < lines.length; this.storyBg.setVisible(on); this.storyTxt.setVisible(on).setText(on ? lines[i] : ''); if (on) { this.storyTxt.setAlpha(0); this.tweens.add({ targets: this.storyTxt, alpha: 1, duration: 500 }); this.storyTimers.push(this.time.delayedCall(Math.max(3200, lines[i].length * 55), () => show(i + 1))); } };
+    show(0);
+  },
+  zoneEndCheck(ar) { // fin de la Zona 1 (T23): la primera vez que llegas a La Gran Hoguera tras vencer a la Madre Moho
+    if (ar.id !== 'gran' || this.quests.fin1 || !(this.progress.bosses || []).includes('madre')) return;
+    this.quests.fin1 = 1;
+    this.storyScene(STORY_ZONE1_END.concat(this.quests.anillo === 1 ? [STORY_RING] : [], ['FIN DE LA ZONA 1']));
   },
   giveHammer(texto) { // entrega el Martillo Latente al jugador (queda en el HUD hasta que se lo lleve al herrero)
     if (this.hammerState !== 0) return false; this.hammerState = 1; SFX.pick();

@@ -186,7 +186,7 @@
   E('cripta', 'bodega'); E('bodega', 'vest'); E('vest', 'salon'); E('salon', 'corr'); E('corr', 'foso');
   E('foso', 'cubil', 5); E('cubil', 'osario', 1); E('corr', 'tunel'); E('tunel', 'pozo'); // puerta de 1 tile: hay que agacharse
   E('hidden', 'escal', 3, { crack: true });
-  E('gbib', 'lect', 4); E('lect', 'archivo'); E('archivo', 'naveS', 3, { crack: true });
+  E('gbib', 'lect', 4); E('lect', 'archivo'); E('archivo', 'naveS'); // paso abierto (antes, muro agrietado)
   E('naveS', 'caden'); E('caden', 'calab', 3, { gate: 'bishop' }); E('calab', 'mazm'); // reja: se abre al caer el Obispo (así los Calabozos y la Reina quedan tras el Doble salto)
   E('abs', 'mir', 4); E('galeria', 'torre'); E('clkC', 'pasR', 6); E('pasR', 'throne', 5, { gate: 'sellos' }); // la puerta del trono se abre con los dos sellos
   S('archivo', 'escal'); S('escal', 'salon'); S('obs', 'gbib'); S('pozo', 'cubil'); S('calab', 'pozo');
