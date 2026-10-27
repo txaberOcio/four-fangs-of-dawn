@@ -1,0 +1,84 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1240" height="620" viewBox="0 0 1240 620" font-family="Arial, sans-serif">
+<defs><marker id="a" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#ffffff"/></marker>
+<marker id="b" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#7aff9a"/></marker></defs>
+<rect width="100%" height="100%" fill="#1b1b22"/>
+<text x="16" y="26" font-size="18" font-weight="bold" fill="#fff">Versión B (propuesta): «hub y atajos». Misma gente y mismos jefes, otra forma</text>
+<text x="16" y="46" font-size="12" fill="#bbb">Idea: una plaza central con tres salidas que se ven desde el principio. Cada ramal vuelve a la plaza con un atajo, para no recorrer lo mismo dos veces.</text>
+
+<!-- ascensor -->
+<rect x="20" y="70" width="34" height="470" fill="#11101a" stroke="#fff" stroke-width="2"/>
+<text x="26" y="300" font-size="12" fill="#fff" transform="rotate(-90 26 300)">ASCENSOR (desde La Gran Hoguera)</text>
+
+<!-- HUB -->
+<rect x="70" y="70" width="330" height="130" fill="#11101a" stroke="#ffb347" stroke-width="3"/>
+<text x="80" y="92" font-size="14" font-weight="bold" fill="#ffb347">PLAZA DEL PATÍBULO (hub)</text>
+<text x="80" y="112" font-size="11" fill="#ddd">Hoguera grande · cadalso en el centro</text>
+<text x="80" y="128" font-size="11" fill="#ddd">Se ven las tres salidas desde el principio:</text>
+<text x="80" y="144" font-size="11" fill="#ddd">← pozo izquierda · ↓ pozo central · → corredor a la puerta</text>
+<circle cx="360" cy="180" r="7" fill="#ff8a2a"/><text x="300" y="184" font-size="10" fill="#ff8a2a">hoguera</text>
+
+<!-- terraza + puerta -->
+<rect x="410" y="70" width="190" height="90" fill="#11101a" stroke="#ffb347" stroke-width="2"/>
+<text x="418" y="92" font-size="12" font-weight="bold" fill="#ffb347">Terraza de los Ahorcados</text>
+<text x="418" y="110" font-size="11" fill="#ddd">enemigos + plataformas</text>
+<rect x="610" y="70" width="40" height="90" fill="#ff2a2a" stroke="#ff2a2a"/>
+<text x="598" y="176" font-size="11" font-weight="bold" fill="#ff6a6a">PUERTA CON LLAVE</text>
+
+<!-- FUNCIONARIOS torre -->
+<rect x="660" y="70" width="230" height="90" fill="#11101a" stroke="#ff7a7a" stroke-width="2"/>
+<text x="668" y="92" font-size="12" font-weight="bold" fill="#ff7a7a">Antecámara de los Funcionarios</text>
+<rect x="660" y="170" width="230" height="80" fill="#11101a" stroke="#ff7a7a" stroke-width="2"/>
+<text x="668" y="192" font-size="12" font-weight="bold" fill="#ff7a7a">Retratos Cubiertos (muro que sangra)</text>
+<rect x="660" y="260" width="230" height="90" fill="#11101a" stroke="#ff7a7a" stroke-width="2"/>
+<text x="668" y="282" font-size="12" font-weight="bold" fill="#ff7a7a">Despacho del Chambelán (jefe)</text>
+<rect x="900" y="70" width="320" height="280" fill="#11101a" stroke="#ff7a7a" stroke-width="3"/>
+<text x="912" y="94" font-size="14" font-weight="bold" fill="#ff7a7a">SALÓN DE LOS DOS TRONOS</text>
+<text x="912" y="114" font-size="11" fill="#ddd">Cadalso y después Vigilia · hoguera y forja justo antes</text>
+
+<!-- CÁRCELES -->
+<rect x="70" y="230" width="140" height="90" fill="#11101a" stroke="#5fe0e0" stroke-width="2"/>
+<text x="78" y="252" font-size="12" font-weight="bold" fill="#5fe0e0">Casa del Mercader</text>
+<text x="78" y="270" font-size="11" fill="#ddd">tienda (bombas)</text>
+<rect x="70" y="330" width="330" height="80" fill="#11101a" stroke="#5fe0e0" stroke-width="2"/>
+<text x="78" y="352" font-size="12" font-weight="bold" fill="#5fe0e0">LA MILLA VERDE</text>
+<text x="78" y="370" font-size="11" fill="#ddd">pasillo de celdas, una por una</text>
+<rect x="70" y="420" width="330" height="120" fill="#11101a" stroke="#5fe0e0" stroke-width="3"/>
+<text x="78" y="442" font-size="12" font-weight="bold" fill="#5fe0e0">LAS CÁRCELES: celda de Lúa</text>
+<text x="78" y="460" font-size="11" fill="#ddd">Último Farero (jefe). Al vencerlo, Zaf abre la celda</text>
+<text x="78" y="476" font-size="11" fill="#ddd">y Lúa sale (escena con diálogo).</text>
+
+<!-- DESPENSA -->
+<rect x="430" y="230" width="260" height="90" fill="#11101a" stroke="#6fb0ff" stroke-width="2"/>
+<text x="438" y="252" font-size="12" font-weight="bold" fill="#6fb0ff">LA DESPENSA</text>
+<text x="438" y="270" font-size="11" fill="#ddd">hoguera · dos pozos abajo</text>
+<rect x="430" y="330" width="130" height="90" fill="#11101a" stroke="#6fb0ff" stroke-width="2"/>
+<text x="438" y="352" font-size="11" font-weight="bold" fill="#6fb0ff">Bodega</text>
+<rect x="570" y="330" width="120" height="90" fill="#11101a" stroke="#6fb0ff" stroke-width="2" stroke-dasharray="5,3"/>
+<text x="578" y="352" font-size="11" font-weight="bold" fill="#6fb0ff">SECRETO:</text>
+<text x="578" y="368" font-size="11" fill="#ddd">Conservera y</text>
+<text x="578" y="382" font-size="11" fill="#ddd">La Subastadora</text>
+
+<!-- CAPILLA -->
+<rect x="710" y="420" width="260" height="120" fill="#11101a" stroke="#ffe14a" stroke-width="3"/>
+<text x="718" y="442" font-size="12" font-weight="bold" fill="#ffe14a">ESCALERA DE LA CAPILLA</text>
+<text x="718" y="460" font-size="11" fill="#ddd">Capitán de Hierro (jefe): suelta la llave</text>
+<rect x="980" y="360" width="240" height="180" fill="#11101a" stroke="#ffe14a" stroke-width="2"/>
+<text x="988" y="382" font-size="12" font-weight="bold" fill="#ffe14a">CAPILLA DEL CUARTEL</text>
+<text x="988" y="400" font-size="11" fill="#ddd">Isolda · curandero · mercader · herrero</text>
+<text x="988" y="416" font-size="11" fill="#ddd">hoguera (la tienda mejor surtida)</text>
+
+<!-- flechas -->
+<g stroke="#fff" stroke-width="2.5" fill="none" marker-end="url(#a)">
+<path d="M54,110 L70,110"/><path d="M130,200 L130,230"/><path d="M300,200 L300,320 L300,330" /><path d="M300,200 L500,230"/><path d="M400,110 L410,110"/><path d="M600,110 L610,110"/><path d="M650,110 L660,110"/>
+<path d="M775,160 L775,170"/><path d="M775,250 L775,260"/><path d="M890,305 L900,305"/>
+<path d="M135,320 L135,330"/><path d="M135,410 L135,420"/><path d="M560,320 L560,330"/><path d="M630,320 L630,330"/>
+<path d="M690,275 L710,275 L710,420"/><path d="M970,480 L980,480"/>
+</g>
+<!-- atajos -->
+<g stroke="#7aff9a" stroke-width="3" fill="none" marker-end="url(#b)" stroke-dasharray="7,4">
+<path d="M1100,360 C1100,200 500,150 500,160"/>
+</g>
+<text x="760" y="338" font-size="12" font-weight="bold" fill="#7aff9a">ATAJO: de la Capilla vuelve directo a la Terraza (un solo sentido)</text>
+<text x="20" y="582" font-size="12" fill="#ddd">Orden: plaza → (libre) Milla Verde / Despensa / pasillo hasta la Capilla → Capitán = llave → puerta con llave → Funcionarios → Chambelán → Regentes.</text>
+<text x="20" y="602" font-size="12" fill="#ddd">Diferencia con la versión jugada: la plaza reparte desde el principio y los tres ramales vuelven por atajos; la torre de los Funcionarios sube hacia los Regentes en vez de bajar.</text>
+</svg>

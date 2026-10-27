@@ -208,11 +208,14 @@
   area('pm', 'Pozo del Mercader', 13, 5, 13, 2, 1, [['climb', 30, 4, 'norm', true], ['E', 'pris', 10, 16], ['E', 'gh', 40, 9], ['E', 'bat', 22, 6]]);
   area('milla', 'La Milla Verde', 13, 7, 13, 2, 1, [['E', 'pris', 14, 16], ['E', 'pris', 26, 16], ['E', 'gh', 38, 9], ['E', 'kn', 44, 16]]);
   area('carc', 'Las Cárceles', 13, 7, 14, 2, 1, [['climb', 20, 4, 'norm', true], ['cry', 6, 16], ['boss', 'farero', 38, 16]]);
+  // Versión B (hub y atajos): un pozo central une el corredor del Patíbulo con la Despensa y una escalera de caracol une la Terraza con la Capilla (se abre al caer el Capitán)
+  area('pasC', 'Pozo Central', 14, 12, 10, 3, 3, [['climb', 62, 4, 'norm', true], ['E', 'slug', 20, 52], ['E', 'gh', 40, 30], ['E', 'bat', 30, 14], ['E', 'moth', 56, 40]]);
+  area('atajo', 'Escalera de Caracol', 12, 16, 10, 2, 3, [['climb', 4, 4, 'norm', true], ['E', 'gh', 36, 30], ['E', 'bat', 30, 14]]);
   // Tramo amarillo: Pasillo, Galería, Escalera de la Capilla (jefe con la llave) y Capilla del Cuartel
   area('y1', 'Pasillo de las Velas', 12, 12, 14, 2, 1, [['tri', 'tl', 4], ['E', 'sk', 20, 16], ['E', 'kn', 34, 16], ['E', 'gh', 44, 9]]);
   area('y2', 'Galería de los Ex-votos', 12, 14, 14, 2, 1, [['B', 18, 15, 3, 2], ['P', 24, 11, 5], ['E', 'kn', 12, 16], ['E', 'sk', 30, 16], ['E', 'gh', 40, 9], ['E', 'bat', 26, 6]]);
   area('y3', 'Escalera de la Capilla', 12, 16, 14, 3, 1, [['climb', 34, 4, 'norm', true], ['boss', 'capitan', 56, 16]]);
-  area('cap', 'Capilla del Cuartel', 12, 16, 13, 3, 1, [['altar', 6, 16], ['npc', 'monk', 14, 16], ['npc', 'merchant', 22, 16], ['npc', 'isolda', 46, 16], ['npc', 'smith2', 56, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+  area('cap', 'Capilla del Cuartel', 12, 16, 13, 3, 1, [['climb', 10, 4, 'norm', true], ['altar', 6, 16], ['npc', 'monk', 14, 16], ['npc', 'merchant', 22, 16], ['npc', 'isolda', 46, 16], ['npc', 'smith2', 56, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
   // Tramo rojo: Dependencias de los Funcionarios y los Regentes
   area('dep1', 'Antecámara de los Funcionarios', 11, 19, 9, 3, 2, [['P', 1, 17, 14], ['P', 20, 28, 6], ['P', 32, 24, 6], ['P', 46, 28, 6], ['cry', 22, 27],
     ['E', 'kn', 20, 34], ['E', 'gh', 40, 20], ['E', 'sk', 60, 34], ['E', 'bat', 30, 10], ['E', 'gh', 66, 10]]);
@@ -250,6 +253,8 @@
   E('cellar', 'sec', 3, { crack: true }); E('cellar', 'y1'); // la Conservera es un secreto tras un muro agrietado
   S('mer', 'pm', 30, 4); E('pm', 'milla'); S('milla', 'carc', 20, 4);
   E('y1', 'y2'); E('y2', 'y3'); S('cap', 'y3', 34, 4, { gate: 'capitan' }); // la escalera de la Capilla se abre al caer el Capitán
+  S('pat4', 'pasC', 62, 4); E('desp', 'pasC'); // pozo central: del corredor del Patíbulo a la Despensa
+  S('pat5', 'atajo', 30, 4, { gate: 'capitan' }); S('atajo', 'cap', 10, 4); // atajo: de la Capilla de vuelta a la Terraza, sin desandar el camino (la trampilla de la Terraza se abre al caer el Capitán)
   S('dep1', 'dep2', 40, 4); S('dep2', 'dep3', 8, 4); S('dep3', 'dep4', 40, 4, { gate: 'chambelan' }); S('dep4', 'tronos', 8, 4);
 
   function climbOps(rw, rh, hx, hw, type) {
