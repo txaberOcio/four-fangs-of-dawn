@@ -130,6 +130,24 @@
     9: { // Calabozos Profundos (musgo)
       bg: ['p_shroom', 'p_shroom_violet', 'p_roots', 'p_cage', 'p_bones', 'p_stump', 'p_bramble', 'p_stocks'],
       wall: ['w_vines', 'w_chains', 'w_vines'], fg: ['b_barrel', 'b_jar', 'b_mushbox', 'b_sack'] },
+    10: { // Patíbulo Exterior
+      bg: ['p_bones', 'p_cage', 'p_stocks', 'p_candles_floor', 'p_rack', 'p_bench'],
+      wall: ['w_chains', 'w_bars', 'w_shield'], fg: ['b_barrel', 'b_crate', 'b_bucket', 'b_sack'] },
+    11: { // Dependencias de los Funcionarios
+      bg: ['p_desk', 'p_shelf', 'p_scrolls', 'p_lectern', 'p_column', 'p_candel'],
+      wall: ['w_painting', 'w_tapestry', 'w_map'], fg: ['b_books', 'b_crate', 'b_vase'] },
+    12: { // Capilla del Cuartel
+      bg: ['p_weaponrack', 'p_pew', 'p_altar_stone', 'p_banner', 'p_column', 'p_candel'],
+      wall: ['w_cross', 'w_shield', 'w_window'], fg: ['b_urn', 'b_censer', 'b_barrel', 'b_crate'] },
+    13: { // La Milla Verde (celdas)
+      bg: ['p_cage', 'p_bones', 'p_stocks', 'p_candles_floor', 'p_ironmaiden'],
+      wall: ['w_chains', 'w_bars', 'w_vines'], fg: ['b_bucket', 'b_jar', 'b_sack'] },
+    14: { // La Despensa
+      bg: ['p_table', 'p_banquet', 'p_shelf', 'p_cage', 'p_stocks', 'p_candel'],
+      wall: ['w_tapestry', 'w_bars', 'w_painting'], fg: ['b_jar', 'b_crate', 'b_sack', 'b_barrel', 'b_lantern'] },
+    15: { // Los Tronos
+      bg: ['p_throne', 'p_column', 'p_banner', 'p_candel', 'p_statue', 'p_carpet'],
+      wall: ['w_tapestry', 'w_shield', 'w_painting'], fg: ['b_urn', 'b_goblet', 'b_vase'] },
   };
 
   Object.assign(CastleScene.prototype, {

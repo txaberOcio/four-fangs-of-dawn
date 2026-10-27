@@ -2,6 +2,19 @@
 
 Resumen de lo que ha cambiado en el juego, de lo más nuevo a lo más antiguo. 
 
+## 0.5.0 (en desarrollo): Zona 2
+
+- **Segundo ascensor:** en La Gran Hoguera, el hueco del suelo se tapa con hierro hasta que cae la Madre Moho; debajo, el Pozo del Segundo Ascensor lleva a la Zona 2 (rótulo «ZONA 2» la primera vez). Las tapas en el suelo se dibujan con barrotes tumbados. `S()` de world.js admite ahora `{ gate: 'idJefe' }`.
+- **Zona 2 (24 salas nuevas):** Patíbulo Exterior, Escalera de Servicio, Casa del Mercader, La Despensa y su Bodega, Conservera Mayor (secreto, muro agrietado), La Milla Verde y las Cárceles, Pasillo y Galería de las velas, Escalera y Capilla del Cuartel, Dependencias de los Funcionarios y Salón de los Dos Tronos. El mundo pasa de 10 a 16 filas (`ROWS`) y hay 6 paletas, músicas y decorados nuevos (zonas 10 a 15). El validador alcanza todas las salas, cristales y gemas y el orden de jefes es correcto.
+- **Jefes nuevos:** Capitán de Hierro (da la llave: abre la puerta de los Funcionarios y la escalera de la Capilla), Último Farero (inmune a oscuras), La Subastadora, Chambelán Sin Rostro (abre el paso a los Regentes) y los dos Regentes, Cadalso y Vigilia (Vigilia no recibe daño hasta que cae Cadalso). **Provisional:** usan el dibujo y los ataques de jefes ya existentes; los sprites y patrones propios están pendientes.
+- **Mejora de estadística por hito:** Cor (Capitán) sed de sangre 0,40 a 0,50; Zaf (Farero) luz 1,8 a 2,0; Malak (Subastadora) almas 1,5 a 1,70; Matis (Chambelán) velocidad 0,82 a 0,88. Se calcula a partir de `progress.bosses` (nada nuevo en el guardado).
+- **Lúa:** la hermana de Zaf se une al grupo al caer el Último Farero y te sigue hasta el final. Su látigo mata enemigos débiles cercanos (vida base de 4 o menos, no élites ni jefes) y espera fuera de las salas de jefe. La simula el anfitrión y viaja en la instantánea de red.
+- **Reina Isolda** (Capilla del Cuartel): recibe el Anillo del Rey (de momento, 6 gemas de recompensa). Tiendas nuevas en la Casa del Mercader y en la Capilla.
+- **Charlas y pensamientos (todas las zonas):** `public/talks.js` (textos) y `public/charlas.js` (motor). Saltan una sola vez por partida (se guardan en `progress.talks`; el servidor evita duplicados): al entrar por primera vez en una zona, al lograr un objetivo, al ver un enemigo y al ver un lugar inalcanzable por ahora. En solitario salen como pensamiento y en cooperativo como charla de la pareja. Hay que reiniciar el servidor para que lo aplique.
+- **Nombres neutros:** Cor, Zaf, Malak y Matis en el selector y en las descripciones (sin género); se corrigen también los textos que hablaban de «cazador» o «Necios».
+- **Servidor:** límites de guardado ampliados (salas visitadas, hogueras, páginas, bestiario, cristales y gemas) y los jefes nuevos reconocidos.
+- **Pendiente:** enemigos y sprites propios de la Zona 2, patrones propios de los jefes, diarios y PNJ con diálogo de la zona, escena de rescate de Lúa y revisión jugando de la dificultad.
+
 ## 0.4.0
 
 - **Pinchos:** al pincharte vuelves al borde del foso por el lado por el que entraste, no a la última plataforma: las plataformas que tienen pinchos debajo ya no cuentan como punto seguro.

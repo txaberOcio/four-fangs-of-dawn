@@ -22,6 +22,12 @@ const Music = (() => {
     { root: 45, bpm: 66, pad: 'triangle', organ: true },    // Torres del Alba (la)
     { root: 36, bpm: 52, pad: 'sawtooth', drone: true },    // El Abismo (do)
     { root: 34, bpm: 46, pad: 'triangle', drone: true, drip: true }, // Calabozos Profundos (si bemol grave, lentísimo, colchón suave + goteo)
+    { root: 36, bpm: 60, pad: 'sawtooth', drone: true },    // 10 Patíbulo Exterior (viento y cuerdas)
+    { root: 41, bpm: 56, pad: 'triangle', organ: true },    // 11 Dependencias de los Funcionarios (vals lento)
+    { root: 38, bpm: 92, pad: 'sawtooth', tick: true },     // 12 Capilla del Cuartel (marcha)
+    { root: 35, bpm: 44, pad: 'triangle', drone: true, drip: true }, // 13 La Milla Verde (agua y goteo)
+    { root: 44, bpm: 78, pad: 'square', tick: true },       // 14 La Despensa (feria rota)
+    { root: 40, bpm: 60, pad: 'square', organ: true, royal: true }, // 15 Los Tronos (órgano de teatro apagado)
     { root: 43, bpm: 50, pad: 'triangle', calm: true },     // Calma: salas tranquilas y casas (sol mayor, lento, sin bajo grave y con campanas)
   ];
   const CALM = ZONES.length - 1;

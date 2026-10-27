@@ -10,15 +10,23 @@ const ZONE_PAL = [
   { base: '#a8708a', dark: '#6a3f58', light: '#e0a8b8', mortar: '#3a1e2c', bg: '#2c1626', bgd: '#201019', glow: '#ffd6a0' }, // Torres del Alba
   { base: '#5a463a', dark: '#35271f', light: '#8a6a52', mortar: '#1e1410', bg: '#1a100c', bgd: '#110a08', glow: '#ff7a2a' }, // El Abismo: cueva de roca y lava
   { base: '#3c5246', dark: '#26362e', light: '#587a64', mortar: '#111c16', bg: '#0f1a15', bgd: '#0a120f', glow: '#6dffd0', moss: '#3f7a3a', mossD: '#2a5428', mossL: '#8fd35a', root: '#5a4128', rootL: '#8a6a3a', fung: '#6dffd0', fung2: '#b48aff' }, // Calabozos Profundos: piedra verdosa, musgo, hongos
+  // Zona 2
+  { base: '#7a5f4a', dark: '#4a382b', light: '#a8896a', mortar: '#2a1d14', bg: '#241810', bgd: '#1a110b', glow: '#ffcf8a' }, // 10 Refugio de Isolda
+  { base: '#5a3f66', dark: '#3a2646', light: '#8a66a0', mortar: '#1e1226', bg: '#1c1124', bgd: '#140b1a', glow: '#d9a0ff' }, // 11 Jardín de las Rosas Negras
+  { base: '#6e5a56', dark: '#46383a', light: '#98807a', mortar: '#241a1a', bg: '#221a1a', bgd: '#181212', glow: '#ff8a6a' }, // 12 Cuartel Hueco
+  { base: '#34506a', dark: '#1f3348', light: '#5a82a6', mortar: '#0e1a26', bg: '#0c1620', bgd: '#08101a', glow: '#8ad8ff' }, // 13 Faro Ciego
+  { base: '#4a6a58', dark: '#2c4436', light: '#7ea08a', mortar: '#14221a', bg: '#12201a', bgd: '#0c1612', glow: '#b8ffc8' }, // 14 Mercado Hueco
+  { base: '#5a2a3a', dark: '#341822', light: '#8a4a5e', mortar: '#1c0c14', bg: '#1a0c12', bgd: '#12080d', glow: '#ff5a7a' }, // 15 Los Tronos
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
-const HERO_NAMES = { red: 'Vampiro carmesí', blue: 'Vampiro azul', green: 'Vampira esmeralda', purple: 'Vampira violeta' };
+const HERO_NAMES = { red: 'Cor Carmesí', blue: 'Zaf Azul', green: 'Malak Esmeralda', purple: 'Matis Violeta' };
+const HERO_REALNAMES = { red: 'Cor', blue: 'Zaf', green: 'Malak', purple: 'Matis' };
 
 const HERO_INFO = {
-  red: { weapon: 'Espada', passive: 'Sed de sangre', desc: 'Espada equilibrada. Pasiva: 40% de curarse al golpear (Azul y Violeta, 25%; la Esmeralda no se cura).' },
+  red: { weapon: 'Espada', passive: 'Sed de sangre', desc: 'Espada equilibrada. Pasiva: 40% de curarse al golpear (Zaf y Matis, 25%; Malak no se cura).' },
   blue: { weapon: 'Lanza', passive: 'Visión nocturna', desc: 'Lanza de gran alcance. Pasiva: ve mucho más lejos en la oscuridad. Desventajas: recibe más daño de los ataques a distancia y se mueve un poco más lento.' },
-  green: { weapon: 'Arco', passive: 'Cazadora de almas', desc: 'Dispara flechas a distancia. Pasiva: +50% de almas al matar. Sus flechas no empujan a los enemigos y no la curan. Desventaja: recibe +50% de daño y no rompe muros (necesita Bombas de la tienda).' },
+  green: { weapon: 'Arco', passive: 'Caza de almas', desc: 'Dispara flechas a distancia. Pasiva: +50% de almas al matar. Sus flechas no empujan a los enemigos ni curan. Desventaja: recibe +50% de daño y no rompe muros (necesita Bombas de la tienda).' },
   purple: { weapon: 'Guadaña', passive: 'Piel de sombra', desc: 'Guadaña lenta y muy dañina. Pasiva: +2 corazones de vida máxima. Desventaja: se mueve más lento (compensa con un gancho automático: si el salto se queda corto, se engancha al borde y sube).' },
 };
 const MAPS = {
@@ -240,8 +248,8 @@ function buildArt(scene) {
   const tx = scene.textures;
   if (tx.exists('tiles')) return;
   // Tileset: 6 zonas x 8 tipos
-  const tiles = tx.createCanvas('tiles', 80 * 32, 32); const tctx = tiles.getContext('2d');
-  for (let z = 0; z < 10; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
+  const tiles = tx.createCanvas('tiles', ZONE_PAL.length * 8 * 32, 32); const tctx = tiles.getContext('2d');
+  for (let z = 0; z < ZONE_PAL.length; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
   tiles.refresh();
 
   const makeMap = (key, mapName, pal, px) => {
@@ -271,6 +279,8 @@ function buildArt(scene) {
   makeMap('npc_oracle', 'npcMad', madPal('#ffe6b0', '#c9a0ff'), 1);
   makeMap('npc_smith', 'npcMad', madPal('#2a1a10', '#8a4a1a'), 1);
   makeMap('npc_watcher', 'npcMad', madPal('#b8d8ff', '#5a7aa8'), 1);
+  makeMap('npc_lua', 'npcMad', madPal('#7aa8ff', '#3a6ad9'), 1); // Lúa, la hermana de Zaf: pelo claro y ropa azul
+  makeMap('npc_isolda', 'npcMad', madPal('#2a1a2a', '#3a6a8a'), 1); // la Reina Isolda: pelo oscuro y manto azul
   makeMap('npc_king', 'npcMad', madPal('#ffd23b', '#8a1a2a'), 1); // el Rey Destronado: corona dorada y manto carmesí
   ['limo', 'preso', 'raiz', 'esporas', 'hongo', 'carcelero', 'driade', 'magma'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
   makeMap('npc_prisionero_musgo', 'npcMad', madPal('#3f7a3a', '#3a4a36'), 1);

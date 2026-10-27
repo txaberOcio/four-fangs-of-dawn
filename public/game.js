@@ -139,6 +139,13 @@ const EN = {
   pris: { tex: 'preso', sc: 3, body: [12, 15], hp: 6, dmg: 2, spd: 42, hb: [34, 44], kind: 'walk', rez: true, throws: true },
   alcaide: { tex: 'carcelero', sc: 4, body: [12, 15], hp: 36, dmg: 2, hb: [54, 62], kind: 'boss' },
   madre: { tex: 'driade', sc: 5, body: [14, 15], hp: 40, dmg: 2, hb: [64, 74], kind: 'boss' },
+  // Zona 2 (de momento con el dibujo de otros jefes; sprites propios pendientes)
+  capitan: { tex: 'carcelero', sc: 4, body: [12, 15], hp: 80, dmg: 2, hb: [54, 62], kind: 'boss' },
+  farero: { tex: 'archon', sc: 4, body: [10, 14], hp: 88, dmg: 2, hb: [40, 56], kind: 'boss' },
+  subastadora: { tex: 'reina', sc: 4, body: [12, 14], hp: 96, dmg: 2, hb: [50, 56], kind: 'boss' },
+  chambelan: { tex: 'bishop', sc: 4, body: [10, 14], hp: 72, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
+  cadalso: { tex: 'clock', sc: 4, body: [12, 15], hp: 104, dmg: 2, hb: [52, 60], kind: 'boss' },
+  vigilia: { tex: 'aurora', sc: 4, body: [10, 14], hp: 116, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   // enemigos invulnerables: solo se esquivan
   saw: { tex: 'saw', sc: 3, body: [12, 12], hp: 9999, dmg: 2, hb: [34, 34], kind: 'saw', inv: true },
   sentinel: { tex: 'sentinel', sc: 3, body: [12, 15], hp: 9999, dmg: 2, spd: 70, hb: [34, 44], kind: 'walk', inv: true, patrol: true },
@@ -175,7 +182,7 @@ const PR = {
 const OTHER_ROOM_DARK = 0.86; // cuánto se oscurecen las salas en las que no estás (0 = nada, 1 = negro)
 const NEAR_ROOM_DARK = 0.3; // salas vecinas con el paso abierto: se ven al 70 %
 const ROOM_FADE = 0.7; // segundos que tarda una sala en aclararse u oscurecerse al cambiar de sala
-const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
+const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7, 1.9, 2.2, 2.0, 2.1, 2.1, 1]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 
@@ -193,7 +200,7 @@ class CastleScene extends Phaser.Scene {
     this.bgLayer = bgMap.createLayer(0, bgMap.addTilesetImage('tiles', 'tiles', T, T, 0, 0), 0, 0).setDepth(-10);
     this.map = this.make.tilemap({ data: w.fg.map(r => r.slice()), tileWidth: T, tileHeight: T });
     this.fg = this.map.createLayer(0, this.map.addTilesetImage('tiles', 'tiles', T, T, 0, 0), 0, 0).setDepth(-5);
-    const solids = []; for (let z = 0; z < 10; z++) solids.push(z * 8 + K.SOLID, z * 8 + K.FLOOR, z * 8 + K.CRACK);
+    const solids = []; for (let z = 0; z < ZONE_PAL.length; z++) solids.push(z * 8 + K.SOLID, z * 8 + K.FLOOR, z * 8 + K.CRACK);
     this.fg.setCollision(solids);
     this.fg.forEachTile(t => { if (t.index >= 0 && t.index % 8 === K.ONEWAY) t.setCollision(false, false, true, false); });
     this.map.calculateFacesWithin(0, 0, w.Wt, w.Ht);
@@ -380,7 +387,7 @@ class CastleScene extends Phaser.Scene {
     on('progress', p => this.applyProgress(p, false));
     on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(gx, gy); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
     on('victory', v => { // el Conde cae, pero el castillo continúa: se despide y desaparece
-      this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Necios... esto no ha terminado.\nMis señores, Aurora y Vesper,\nme esperan más arriba, en las torres del alba.\nSeguidme... si os atrevéis.»\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
+      this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Esto no ha terminado.\nMis señores, Aurora y Vesper,\nme esperan más arriba, en las torres del alba.\nSeguidme... si os atrevéis.»\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
       SFX.pick(); this.won = true; this.cameras.main.shake(500, 0.008);
       this.time.delayedCall(8000, () => { this.centerTxt.setText(''); });
     });
@@ -405,6 +412,8 @@ class CastleScene extends Phaser.Scene {
     this.progress = p;
     if (false) for (const a in p.abilities) if (p.abilities[a]) { this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.' })[a], 6000); SFX.pick(); }
     this.syncRelics(); this.openGates(!silent);
+    if (this.recalcPassive) this.recalcPassive(silent); // mejoras de estadística de la Zona 2
+    if (this.talkOnProgress) this.talkOnProgress(silent); // charlas de objetivos (jefes)
     this.scenes = this.scenes || new Set();
     (p.bosses || []).forEach(id => { if (World.BOSSES[id] && World.BOSSES[id].rival && !this.scenes.has(id)) { this.scenes.add(id); if (!silent) this.albaScene(id); } });
     ['archon', 'reina'].forEach(id => { // al caer el Archimago o la Reina se rompe un sello del Trono: se enseña con una escena
@@ -423,7 +432,7 @@ class CastleScene extends Phaser.Scene {
       if (gt.crack) { gt.open = true; gt.tiles.forEach(t => { this.fg.removeTileAt(t.gx, t.gy); if (show) this.poof((t.gx + 0.5) * T, (t.gy + 0.5) * T, 5, 0xaaaaaa); }); this.wallBroken(); return; } // grietas que se abren solas
       gt.open = true; gt.tiles.forEach(t => { this.fg.removeTileAt(t.gx, t.gy); if (show) this.poof((t.gx + 0.5) * T, (t.gy + 0.5) * T, 3, 0xaaaaaa); });
       this.wallBroken();
-      if (show) { this.cameras.main.shake(900, 0.012); SFX.boss(); this.toast(gt.boss === 'alba' ? '¡Se abre el camino hacia el cielo! La puerta este de la cámara de Vesper ya está libre.' : (gt.boss === 'sellos' ? '¡Los dos sellos están rotos! La puerta de la Sala del Trono se abre.' : (gt.boss === 'madre' ? '¡La Madre Moho ha caído! Se abre el camino de salida hacia La Gran Hoguera.' : gt.boss === 'bishop' ? '¡El Obispo ha caído! La reja de las Cadenas se abre: ya puedes bajar a los Calabozos.' : gt.boss === 'clock' ? '¡El Guardián del Reloj ha caído! La puerta del Archivo Prohibido se abre. Allí te espera el Archimago, mucho más temible.' : '¡Los muros del foso se derrumban! Se abren dos caminos...')), 7000); }
+      if (show) { this.cameras.main.shake(900, 0.012); SFX.boss(); this.toast(gt.boss === 'alba' ? '¡Se abre el camino hacia el cielo! La puerta este de la cámara de Vesper ya está libre.' : (gt.boss === 'sellos' ? '¡Los dos sellos están rotos! La puerta de la Sala del Trono se abre.' : (gt.boss === 'madre' ? '¡La Madre Moho ha caído! Se abre el camino de salida hacia La Gran Hoguera y, allí, la tapa de hierro del ascensor cede: se puede bajar a la Zona 2.' : gt.boss === 'capitan' ? '¡El Capitán de Hierro ha caído! Su llave abre la puerta de los Funcionarios y la escalera de la Capilla.' : gt.boss === 'chambelan' ? '¡El Chambelán ha caído! Se abre el camino hacia los Regentes.' : gt.boss === 'bishop' ? '¡El Obispo ha caído! La reja de las Cadenas se abre: ya puedes bajar a los Calabozos.' : gt.boss === 'clock' ? '¡El Guardián del Reloj ha caído! La puerta del Archivo Prohibido se abre. Allí te espera el Archimago, mucho más temible.' : '¡Los muros del foso se derrumban! Se abren dos caminos...')), 7000); }
     });
   }
   albaScene(killed) { // al caer uno de los rivales, el otro acude, se lo lleva y huye
@@ -763,7 +772,7 @@ class CastleScene extends Phaser.Scene {
       const e = [], p = [];
       this.ents.forEach(en => e.push([en.id, en.type, Math.round(en.spr.x), Math.round(en.spr.y), en.hp, en.max, en.spr.flipX ? 1 : 0, (en.aggro ? 1 : 0) | (en.tele ? 2 : 0) | (en.shield ? 4 : 0) | (en.elite ? 8 : 0) | (en.melt ? 16 : 0), en.name || '']));
       this.projs.forEach(pr => p.push([pr.id, pr.type, Math.round(pr.spr.x), Math.round(pr.spr.y)]));
-      socket.volatile.emit('snap', { e, p, s: this.sealKey, f: this.floorState });
+      socket.volatile.emit('snap', { e, p, s: this.sealKey, f: this.floorState, l: this.luaState() });
     }
   }
 
@@ -954,6 +963,10 @@ class CastleScene extends Phaser.Scene {
     e.emptyT = 0;
     e.relightT = Math.max(0, (e.relightT || 0) - dt); e.fanCd = Math.max(0, (e.fanCd || 0) - dt);
     if (e.type === 'clock') e.shield = this.lightLevel(e.spr.x, e.spr.y) > 0.18; // inmune a la luz
+    if (e.type === 'farero') e.shield = this.lightLevel(e.spr.x, e.spr.y) <= 0.18; // al revés que el Guardián del Reloj: inmune a oscuras, hay que encender la luz
+    if (e.type === 'vigilia' && !this.progress.bosses.includes('cadalso')) { // Vigilia canta desde su atril y no se la puede dañar hasta que cae Cadalso
+      e.shield = true; e.tele = false; e.act = null; b.setVelocity(0, (a.hover - e.spr.y) * 2.5); return;
+    }
     const tg = tgs.reduce((m, t) => (Math.hypot(t.x - e.spr.x, t.y - e.spr.y) < Math.hypot(m.x - e.spr.x, m.y - e.spr.y) ? t : m), tgs[0]);
     const x = e.spr.x, y = e.spr.y, rage = e.hp < e.max * 0.5, dirT = Math.sign(tg.x - x) || 1;
     e.spr.setFlipX(tg.x < x);
@@ -996,6 +1009,13 @@ class CastleScene extends Phaser.Scene {
         if (e.type === 'alcaide') { const rg = e.hp < e.max * 0.5; if (rg && e.summonCd <= 0 && [...this.ents.values()].filter(x => x.summoned).length < 2) e.act = 'brood'; else { const o = ['whip', 'spores', 'burrow'].filter(x => x !== e.last); e.act = pick(o); } e.last = e.act; }
         if (e.type === 'madre') { const near = Math.hypot(tg.x - x, tg.y - y) < 150; if ((e.hp < e.max * 0.25 ? 2 : rage ? 1 : 0) > (e.special || 0)) { e.special = e.hp < e.max * 0.25 ? 2 : 1; e.act = 'cataclysm'; } else if (near && Math.random() < 0.6) e.act = 'slap'; else if (rage && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 3) e.act = 'brood'; else { const o = ['bloom', 'rootwave'].filter(q => q !== e.last); e.act = pick(o); } e.last = e.act; }
         if (e.type === 'clock') e.act = (e.relightT <= 0 && this.torchObjs.some(o => o.area === 'clkC' && !o.lit)) ? 'relight' : pick(['charge', 'slam', 'rain']);
+        // Zona 2 (patrones provisionales hechos con los ataques que ya existen; se afinan jugando)
+        if (e.type === 'capitan') e.act = pick(['charge', 'leap', 'charge', 'slam']);
+        if (e.type === 'farero') { const o = ['fan', 'rain', 'fan', 'charge'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'subastadora') { const o = ['fan', 'pillars', 'tele', 'leap'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'chambelan') { const o = ['ambush', 'fan', 'pillars', 'tele'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 ? 'summon' : pick(o); e.last = e.act; }
+        if (e.type === 'cadalso') e.act = pick(['charge', 'slam', 'leap', 'charge']);
+        if (e.type === 'vigilia') { const o = ['fan', 'tele', 'dive', 'rays', 'sweep'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'bishop') { e.summonCd -= 0; e.act = e.hp < e.max * 0.6 && e.summonCd <= 0 ? 'summon' : pick(['fan', 'tele', 'fan']); }
         if (e.type === 'conde') {
           const opts = ['ambush', 'pillars', 'dive', 'sweep', 'rain']; if (e.fanCd <= 0) opts.push('tele');
@@ -1179,6 +1199,7 @@ class CastleScene extends Phaser.Scene {
     });
     this.projs.forEach((p, id) => { if (!ps.has(id)) { if (p.type === 'shroomb') { this.shroomBurst(p.spr.x, p.spr.y); SFX.hit(); } p.spr.destroy(); this.projs.delete(id); } });
     this.sealKey = s.s; this.applySeal(s.s); this.applyFloorState(s.f || 0);
+    this.luaRecv(s.l);
   }
 
   // ===================================================== jugador
@@ -1195,7 +1216,7 @@ class CastleScene extends Phaser.Scene {
   }
   die() {
     this.dead = true; this.deadT = 2.8; this.hp = 0; this.player.setAlpha(0.2); this.player.body.setVelocity(0, 0); this.player.body.setAllowGravity(false);
-    this.poof(this.player.x, this.player.y, 12, 0xff4444); this.centerTxt.setText('Has caído...');
+    this.poof(this.player.x, this.player.y, 12, 0xff4444); this.centerTxt.setText('Has caído...'); this.talkOnExtra('death');
   }
   respawn() {
     this.dead = false; this.hp = this.maxHp; this.invuln = 2; this.player.setAlpha(1).setPosition(this.lastAltar.x, this.lastAltar.y - 21);
@@ -1213,7 +1234,9 @@ class CastleScene extends Phaser.Scene {
 
     // ---- zona actual y mapa
     const ar = this.W.areaOf(Math.floor(p.x / T), Math.floor(p.y / T));
-    if (ar && ar.id !== this.myArea) { this.myArea = ar.id; this.markVisited(ar); this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle();
+    if (ar && ar.id !== this.myArea) { const firstVisit = !!this.visited && !this.visited.has(ar.id); this.myArea = ar.id; this.markVisited(ar); this.talkOnArea(ar.id);
+      if (firstVisit && ar.id === 'asc2') { this.centerTxt.setText('ZONA 2\n\nMÁS ALLÁ DE LA GRAN HOGUERA'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 2')) this.centerTxt.setText(''); }); } // primer descenso al segundo mapa
+      this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle();
       const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
       if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche y el Santuario de las Sombras.', 9000); }
     this.mmT -= dt;
@@ -1249,9 +1272,11 @@ class CastleScene extends Phaser.Scene {
       this.projs.forEach(pr => { pr.spr.x += (pr.tx - pr.spr.x) * 0.5; pr.spr.y += (pr.ty - pr.spr.y) * 0.5; });
     }
     this.ents.forEach(e => { if (e.type === 'saw') e.spr.angle += 520 * dt; });
+    this.luaFrame(dt); // Lúa, la compañera de la Zona 2
+    this.talkUpdate(dt); // charlas y pensamientos
     let boss = null; this.sweepTwins();
     this.ents.forEach(e => { this.markFx(e, time); if (e.cfg.fearsome) this.fearsomeFx(e, time); if (e.boss && e.aggro) boss = e; if (e.boss) { if (e.tele) e.spr.setTint(0xff7777); else if (e.shield) e.spr.setTint(0x8fc8ff); else if (e.flash <= 0) e.spr.clearTint(); } });
-    this.bossBar.clear(); Music.setBossKind(boss ? (['aurora', 'archon', 'clock'].includes(boss.type) ? 1 : ['vesper', 'reina', 'conde'].includes(boss.type) ? 2 : 0) : 0); Music.setBoss(!!boss);
+    this.bossBar.clear(); Music.setBossKind(boss ? (['aurora', 'archon', 'clock', 'vigilia', 'farero', 'chambelan'].includes(boss.type) ? 1 : ['vesper', 'reina', 'conde', 'cadalso', 'capitan', 'subastadora'].includes(boss.type) ? 2 : 0) : 0); Music.setBoss(!!boss);
     if (boss) {
       this.bossBar.fillStyle(0x000000, 0.7).fillRect(SW / 2 - 202, SH - 56, 404, 14).fillStyle(boss.type === 'madre' && boss.melt ? 0x6a6a7a : boss.type === 'madre' && boss.shield ? 0x4a8fd0 : boss.type === 'madre' ? 0xffc83d : 0xcc2233, 1).fillRect(SW / 2 - 200, SH - 54, 400 * Math.max(0, boss.hp / boss.max), 10);
       if (boss.type === 'madre' && (boss.shield || boss.melt)) this.bossBar.lineStyle(2, 0x8fc8ff, 1).strokeRect(SW / 2 - 203, SH - 57, 406, 16); // marco azul: armadura de raíces
@@ -1320,7 +1345,7 @@ class CastleScene extends Phaser.Scene {
     this.crystals.forEach(c => {
       if (this.cryGot.has(c.id)) return;
       if (c.peek) c.spr.setVisible(this.peekOk(c) && !this.hiddenAt(c.x, c.y));
-      if (Math.abs(p.x - c.x) < 28 && Math.abs(p.y - c.y) < 36) { this.cryGot.add(c.id); c.spr.setVisible(false); this.maxHp++; this.hp = this.maxHp; this.toast('¡Cristal de vida! +1 corazón máximo'); SFX.pick(); this.autoSave(); }
+      if (Math.abs(p.x - c.x) < 28 && Math.abs(p.y - c.y) < 36) { this.cryGot.add(c.id); c.spr.setVisible(false); this.maxHp++; this.hp = this.maxHp; this.toast('¡Cristal de vida! +1 corazón máximo'); SFX.pick(); this.talkOnEvent('crystal', this.cryGot.size); this.autoSave(); }
     });
     Object.values(this.relics).forEach(r => {
       if (Math.abs(p.x - r.x) < 34 && Math.abs(p.y - r.y) < 44 && !r.taken) { r.taken = true; this.grantAbility(r.ability); }

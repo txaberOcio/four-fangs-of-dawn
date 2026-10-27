@@ -3,14 +3,14 @@
    (anchas, altas), llevar pasillos rellenos de roca y conectarse con puertas de distinto tamaño. */
 (function (root) {
   'use strict';
-  const T = 32, CW = 26, CH = 18, COLS = 22, ROWS = 10;
+  const T = 32, CW = 26, CH = 18, COLS = 22, ROWS = 16;
   const PHYS = {
     gravity: 900, speed: 165, jump: -470, djump: -420,
     dashSpeed: 560, dashTime: 0.18, dashCd: 0.5, // Impulso: unos 100 px (antes 0.25 s = 140 px)
     wjY: -430, wjX: 190, wjLock: 0.18, slide: 110, maxFall: 700,
     bodyW: 30, bodyH: 39,
   };
-  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos'];
+  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos', 'Patíbulo Exterior', 'Dependencias de los Funcionarios', 'Capilla del Cuartel', 'La Milla Verde', 'La Despensa', 'Los Tronos'];
   const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche', pound: 'Pisotón de Raíces' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
@@ -30,6 +30,13 @@
     alcaide: { name: 'Alcaide Verdín', hp: 36, drop: 'pound', reward: 'Pisotón de Raíces: en el aire, mantén abajo para caer en picado y romper los suelos de raíces' },
     madre: { name: 'La Madre Moho', hp: 40, drop: null },
     vesper: { name: 'Vesper, Señor del Ocaso', hp: 34, drop: 'eye', rival: 'aurora', reward: 'Ojo de la Noche: ves los secretos tras los muros agrietados y tu luz crece' },
+    // Zona 2: el Capitán da la llave de la puerta de los funcionarios; el Farero y la Subastadora guardan las historias de Zaf y Malak; los Regentes cierran la Parte 2
+    capitan: { name: 'Capitán de Hierro', hp: 80, drop: null },
+    farero: { name: 'Último Farero', hp: 88, drop: null },
+    subastadora: { name: 'La Subastadora', hp: 96, drop: null },
+    chambelan: { name: 'Chambelán Sin Rostro', hp: 72, drop: null },
+    cadalso: { name: 'Cadalso, el Verdugo Mudo', hp: 104, drop: null },
+    vigilia: { name: 'Vigilia, la Cantora de la Hondura', hp: 116, drop: null },
   };
 
   // ---------- Definición de áreas ----------
@@ -131,7 +138,8 @@
   // [sala, x, y] en coordenadas locales; cada gema reposa sobre una plataforma o el suelo
   const GEMS = [['hidden', 8, 16], ['lect', 6, 10], ['obs', 13, 2], ['osario', 36, 10], ['mazm', 36, 10],
     ['arch1', 22, 9], ['cat1', 14, 11], ['cielo1', 48, 4], ['mazC', 26, 2], ['santuario', 20, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['fragua', 6, 16],
-    ['cist', 25, 22], ['rez', 46, 4], ['tun', 47, 13]];
+    ['cist', 25, 22], ['rez', 46, 4], ['tun', 47, 13],
+    ['pat4', 30, 11], ['y2', 26, 10], ['cellar', 70, 16]]; // Zona 2
 
   // Casa del Mercader: se entra con E por la puerta de la casita de la Sala de los Rivales. 'interior': no sale en el mapa
   area('casaM', 'Casa del Mercader', 7, 12, 3, 1, 1, [['special'], ['interior'], ['calm'], ['door', 5, 'albaH', 33], ['npc', 'merchant', 17, 16], ['torch', 9, 11], ['torch', 21, 11],
@@ -178,6 +186,41 @@
     ['E', 'kn', 14, 16], ['E', 'sk', 26, 16], ['E', 'gh', 34, 8], ['E', 'sk', 46, 16], ['E', 'bat', 40, 6]]);
   area('cat2', 'Cripta de la Reina', 3, 8, 5, 2, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['climb', 38, 4, 'norm', true], ['boss', 'reina', 20, 16]]);
 
+  // ===== Zona 2 (Parte 2): se baja en el segundo ascensor de La Gran Hoguera (se abre al caer la Madre Moho) =====
+  // Patíbulo Exterior (z10) -> puerta con llave (cae el Capitán) -> Dependencias de los Funcionarios (z11) -> Regentes (z15)
+  area('asc2', 'Pozo del Segundo Ascensor', 10, 3, 9, 1, 1, [['calm'], ['lift', 18, 4]]);
+  area('pat1', 'Pie del Patíbulo', 10, 4, 9, 2, 1, [['altar', 8, 16], ['tri', 'tl', 4]]);
+  area('pat2', 'Plaza del Patíbulo', 10, 6, 9, 3, 1, [['tri', 'tl', 4], ['tri', 'tr', 4], ['P', 10, 13, 5], ['P', 18, 11, 5], ['P', 48, 13, 5], ['E', 'sk', 12, 16], ['E', 'kn', 46, 16], ['E', 'bat', 22, 7], ['E', 'gh', 62, 9]]);
+  area('pat3', 'Soga y Cuervos', 10, 9, 9, 3, 1, [['pit', 8, 70], ['P', 10, 14, 3], ['P', 16, 13, 3], ['P', 22, 12, 3], ['P', 28, 13, 3], ['P', 34, 14, 3], ['P', 40, 13, 3], ['P', 46, 12, 3], ['P', 52, 13, 3], ['P', 58, 14, 3], ['P', 64, 13, 3],
+    ['E', 'saw', 19, 9, { ax: 'v', r: 55, w: 1.4 }], ['E', 'saw', 49, 9, { ax: 'v', r: 55, w: 1.6 }], ['E', 'bat', 25, 6], ['E', 'bat', 43, 5], ['E', 'bat', 61, 7]]);
+  area('pat4', 'Galería de Jaulas', 10, 12, 9, 3, 1, [['tri', 'tl', 5], ['tri', 'tr', 5], ['B', 20, 15, 3, 2], ['B', 40, 14, 2, 3], ['P', 28, 12, 5], ['E', 'kn', 14, 16], ['E', 'sk', 32, 16], ['E', 'kn', 56, 16], ['E', 'gh', 46, 9], ['E', 'bat', 34, 6]]);
+  area('pat5', 'Terraza de los Ahorcados', 10, 15, 9, 3, 1, [['pit', 28, 46], ['P', 30, 14, 4], ['P', 36, 13, 4], ['P', 42, 14, 4], ['E', 'gh', 14, 9], ['E', 'gh', 60, 8], ['E', 'sk', 20, 16], ['E', 'sk', 66, 16], ['E', 'bat', 38, 6]]);
+  area('pat6', 'Antesala de los Funcionarios', 10, 18, 9, 1, 1, [['tri', 'tl', 3], ['tri', 'tr', 3], ['E', 'kn', 12, 16]]);
+  // Tramo gris azulado: Escalera de Servicio, Despensa, Bodega y Conservera (secreto)
+  area('alta', 'Escalera de Servicio', 14, 7, 10, 1, 3, [['climb', 4, 4, 'norm', true], ['E', 'sk', 20, 52], ['E', 'gh', 8, 30], ['E', 'bat', 16, 18]]);
+  area('mer', 'Casa del Mercader', 13, 5, 12, 2, 1, [['npc', 'merchant', 20, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+  area('pasD', 'Pasaje de la Despensa', 14, 8, 12, 1, 1, [['E', 'slug', 10, 16], ['E', 'shroom', 18, 16]]);
+  area('desp', 'La Despensa', 14, 9, 12, 3, 1, [['altar', 8, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+  area('cellar', 'Bodega de las Conservas', 14, 9, 13, 3, 2, [['climb', 12, 4, 'norm', true], ['climb', 62, 4, 'norm', true], ['P', 60, 17, 17],
+    ['E', 'slug', 20, 34], ['E', 'slug', 40, 34], ['E', 'shroom', 50, 34], ['E', 'pris', 34, 34], ['E', 'moth', 30, 10], ['E', 'gh', 48, 22]]);
+  area('sec', 'Conservera Mayor', 14, 12, 13, 2, 1, [['cry', 6, 16], ['boss', 'subastadora', 32, 16]]);
+  // Tramo azul claro: Pozo del Mercader, Milla Verde y Cárceles (Zaf libera a su hermana)
+  area('pm', 'Pozo del Mercader', 13, 5, 13, 2, 1, [['climb', 30, 4, 'norm', true], ['E', 'pris', 10, 16], ['E', 'gh', 40, 9], ['E', 'bat', 22, 6]]);
+  area('milla', 'La Milla Verde', 13, 7, 13, 2, 1, [['E', 'pris', 14, 16], ['E', 'pris', 26, 16], ['E', 'gh', 38, 9], ['E', 'kn', 44, 16]]);
+  area('carc', 'Las Cárceles', 13, 7, 14, 2, 1, [['climb', 20, 4, 'norm', true], ['cry', 6, 16], ['boss', 'farero', 38, 16]]);
+  // Tramo amarillo: Pasillo, Galería, Escalera de la Capilla (jefe con la llave) y Capilla del Cuartel
+  area('y1', 'Pasillo de las Velas', 12, 12, 14, 2, 1, [['tri', 'tl', 4], ['E', 'sk', 20, 16], ['E', 'kn', 34, 16], ['E', 'gh', 44, 9]]);
+  area('y2', 'Galería de los Ex-votos', 12, 14, 14, 2, 1, [['B', 18, 15, 3, 2], ['P', 24, 11, 5], ['E', 'kn', 12, 16], ['E', 'sk', 30, 16], ['E', 'gh', 40, 9], ['E', 'bat', 26, 6]]);
+  area('y3', 'Escalera de la Capilla', 12, 16, 14, 3, 1, [['climb', 34, 4, 'norm', true], ['boss', 'capitan', 56, 16]]);
+  area('cap', 'Capilla del Cuartel', 12, 16, 13, 3, 1, [['altar', 6, 16], ['npc', 'monk', 14, 16], ['npc', 'merchant', 22, 16], ['npc', 'isolda', 46, 16], ['npc', 'smith2', 56, 16], ['tri', 'tl', 4], ['tri', 'tr', 4]]);
+  // Tramo rojo: Dependencias de los Funcionarios y los Regentes
+  area('dep1', 'Antecámara de los Funcionarios', 11, 19, 9, 3, 2, [['P', 1, 17, 14], ['P', 20, 28, 6], ['P', 32, 24, 6], ['P', 46, 28, 6], ['cry', 22, 27],
+    ['E', 'kn', 20, 34], ['E', 'gh', 40, 20], ['E', 'sk', 60, 34], ['E', 'bat', 30, 10], ['E', 'gh', 66, 10]]);
+  area('dep2', 'Galería de los Retratos Cubiertos', 11, 19, 11, 2, 1, [['climb', 40, 4, 'norm', true], ['E', 'kn', 20, 16], ['E', 'gh', 30, 9], ['E', 'sk', 46, 16]]);
+  area('dep3', 'Despacho del Chambelán', 11, 19, 12, 2, 1, [['climb', 8, 4, 'norm', true], ['boss', 'chambelan', 28, 16]]);
+  area('dep4', 'Antesala de los Regentes', 15, 19, 13, 2, 1, [['altar', 6, 16], ['forge', 24, 16], ['climb', 40, 4, 'norm', true]]);
+  area('tronos', 'Salón de los Dos Tronos', 15, 19, 14, 3, 2, [['climb', 8, 4, 'norm', true], ['boss', 'cadalso', 52, 34], ['boss', 'vigilia', 24, 34]]);
+
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
   const E = (a, b, size = 3, o = {}) => LINKS.push({ t: 'E', a, b, size, ...o });
@@ -200,6 +243,14 @@
   E('pas1', 'pas2'); E('pas2', 'pas3'); E('pas3', 'pas4'); E('pas4', 'pas5'); E('pas5', 'madre', 3, { gate: 'madre' }); // el camino de salida se abre al caer la Madre Moho
   S('pas1', 'gran', 8, 4); // al final del camino se cae a La Gran Hoguera: de ahí no se puede volver subiendo
   S('naveP', 'naveS'); S('abs', 'naveP'); S('clkC', 'torre'); S('mir', 'galeria', 16, 4); S('torre', 'caden');
+  // Zona 2: el hueco del ascensor de La Gran Hoguera se tapa con hierro hasta que cae la Madre Moho
+  S('gran', 'asc2', 18, 4, { gate: 'madre' }); E('asc2', 'pat1');
+  E('pat1', 'pat2'); E('pat2', 'pat3'); E('pat3', 'pat4'); E('pat4', 'pat5'); E('pat5', 'pat6'); E('pat6', 'dep1', 3, { gate: 'capitan' }); // la puerta con llave se abre al caer el Capitán de Hierro
+  S('pat2', 'alta', 30, 4); E('mer', 'alta'); E('alta', 'pasD'); E('pasD', 'desp'); S('desp', 'cellar', 12, 4); S('desp', 'cellar', 62, 4);
+  E('cellar', 'sec', 3, { crack: true }); E('cellar', 'y1'); // la Conservera es un secreto tras un muro agrietado
+  S('mer', 'pm', 30, 4); E('pm', 'milla'); S('milla', 'carc', 20, 4);
+  E('y1', 'y2'); E('y2', 'y3'); S('cap', 'y3', 34, 4, { gate: 'capitan' }); // la escalera de la Capilla se abre al caer el Capitán
+  S('dep1', 'dep2', 40, 4); S('dep2', 'dep3', 8, 4); S('dep3', 'dep4', 40, 4, { gate: 'chambelan' }); S('dep4', 'tronos', 8, 4);
 
   function climbOps(rw, rh, hx, hw, type) {
     const ops = [], hc = Math.floor(hx + hw / 2);
@@ -265,6 +316,11 @@
         for (let i = 0; i < l.size; i++) {
           const gx = A.x0 + l.x + i, gyA = A.y0 + A.rh - 1, gyB = B.y0;
           if (gx < B.x0 + 1 || gx >= B.x0 + B.rw - 1) throw new Error('Hueco fuera de rango ' + l.a + '→' + l.b);
+          if (l.gate) { // tapa de hierro sobre el hueco: sólida hasta que cae el jefe indicado
+            fg[gyA][gx] = A.z * 8 + K.SOLID; fg[gyB][gx] = B.z * 8 + K.SOLID;
+            let g = world.gates.find(q => q.boss === l.gate && !q.crack); if (!g) world.gates.push(g = { boss: l.gate, tiles: [] });
+            g.tiles.push({ gx, gy: gyA }, { gx, gy: gyB }); continue;
+          }
           fg[gyA][gx] = -1; fg[gyB][gx] = -1;
           if (!l.roots) A.seal.push({ gx, gy: gyA }); B.seal.push({ gx, gy: gyB }); // la tapa de raíces ya es sólida: no se sella
           if (l.roots) { fg[gyA][gx] = A.z * 8 + K.CRACK; world.roots.add(gyA * Wt + gx); } // tapa de raíces sobre el hueco
@@ -350,6 +406,9 @@
     { bosses: ['rival'], gives: 'wings|eye' },
     { bosses: ['alcaide'], gives: 'pound' },
     { bosses: ['madre'] },
+    { bosses: ['capitan', 'farero', 'subastadora'] }, // Zona 2: el Capitán da la llave; el Farero (Cárceles) y la Subastadora (Conservera) son opcionales
+    { bosses: ['chambelan'] },
+    { bosses: ['cadalso', 'vigilia'] },
   ];
   const api = { build, T, COLS, ROWS, CW, CH, PHYS, K, ROCK, kind, isSolidKind, ZONES, ABILITIES, BOSSES, gateOpen, PROGRESSION };
   root.World = api;

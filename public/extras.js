@@ -18,8 +18,16 @@ const WEAPONS = {
 const PASSIVES = {
   red: { name: 'Sed de sangre', life: 0.40 },
   blue: { name: 'Visión nocturna', aura: 1.8, projPlus: 1, speed: 0.94 }, // desventajas: +1 daño de proyectiles y algo más lento
-  green: { name: 'Cazadora de almas', souls: 1.5, dmgTaken: 1.5, life: 0, noKnock: true },    // desventaja: +50% daño recibido y sin romper muros
+  green: { name: 'Caza de almas', souls: 1.5, dmgTaken: 1.5, life: 0, noKnock: true },    // desventaja: +50% daño recibido y sin romper muros
   purple: { name: 'Piel de sombra', hp: 2, speed: 0.82 },             // desventaja: más lento
+};
+// Zona 2: al caer el jefe de su tramo, cada vampiro gana una mejora de estadística (su colmillo despertando). No toca el daño ni el arma.
+// Se calcula a partir de progress.bosses (no se guarda nada) y se suma a una copia de PASSIVES.
+const PASSIVE_BONUS = {
+  purple: { boss: 'chambelan', key: 'speed', add: 0.06, msg: 'Tu paso gana ligereza: velocidad +7 %.' },
+  red: { boss: 'capitan', key: 'life', add: 0.10, msg: 'La sangre rinde más: sed de sangre del 40 % al 50 %.' },
+  blue: { boss: 'farero', key: 'aura', add: 0.20, msg: 'Ves un poco más lejos en la oscuridad: luz +11 %.' },
+  green: { boss: 'subastadora', key: 'souls', add: 0.20, msg: 'Cobras mejor: almas +13 %.' },
 };
 // catálogo de objetos; qué vende cada mercader y cuándo se define en SHOP_STOCK
 const ITEMS = [
@@ -39,12 +47,12 @@ const ITEMS = [
   { id: 'talis', name: 'Talismán de almas', price: 0, gems: 3, perm: 'souls', max: 2, desc: '+20% de almas de los enemigos para siempre (hasta 2 veces).' },
 ];
 // a quién hay que vencer para abrir cada puerta sellada (clave = gate de world.js)
-const GATE_BY = { bishop: 'al Obispo Caído', clock: 'al Guardián del Reloj', conde: 'al Conde', sellos: 'al Archimago y a la Reina (sus dos sellos)', alba: 'a Aurora o a Vesper', madre: 'a la Madre Moho' };
+const GATE_BY = { bishop: 'al Obispo Caído', clock: 'al Guardián del Reloj', conde: 'al Conde', sellos: 'al Archimago y a la Reina (sus dos sellos)', alba: 'a Aurora o a Vesper', madre: 'a la Madre Moho', capitan: 'al Capitán de Hierro', chambelan: 'al Chambelán Sin Rostro' };
 // objetos que se usan con Q: las mejoras permanentes (perm) y el amuleto (se gasta solo al morir) no entran en el inventario de uso
 const MOSS_SLOW = 0.85, MOSS_FIRE = 1.2; // Calabozos Profundos: el suelo de musgo frena al andar y sus enemigos reciben un 20 % más de daño de fuego
 const usableItem = it => !it.perm && it.id !== 'amu';
 // Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
-const GEMS_BOSS = { garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4 }; // gemas que suelta cada jefe la primera vez
+const GEMS_BOSS = { garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4, capitan: 4, farero: 5, subastadora: 6, chambelan: 4, cadalso: 5, vigilia: 8 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
 // [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
 // Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
@@ -53,10 +61,12 @@ const SHOP_STOCK = {
   vest: [['pot', 0], ['bomb', 1, 'green'], ['lamp', 1], ['talis', 2]],
   naveS: [['pot', 0], ['bomb', 0], ['lamp', 0], ['spd', 1], ['amu', 1], ['pot2', 2], ['ward', 2], ['str', 3]],
   casaM: [['pot', 0], ['pot2', 0], ['ward', 0], ['str', 0], ['spd', 0], ['rage', 0], ['tonic', 0], ['amu', 0], ['talis', 0], ['fruit', 0]],
-  asc: [['pot', 0], ['pot2', 0], ['bomb', 0], ['ward', 0], ['str', 0], ['rage', 0], ['amu', 0]]
+  asc: [['pot', 0], ['pot2', 0], ['bomb', 0], ['ward', 0], ['str', 0], ['rage', 0], ['amu', 0]],
+  mer: [['pot', 0], ['pot2', 0], ['bomb', 0], ['lamp', 0], ['ward', 0], ['str', 0], ['spd', 0], ['rage', 0], ['tonic', 0], ['amu', 0], ['talis', 0]], // Zona 2: las bombas están antes del secreto de la Conservera
+  cap: [['pot', 0], ['pot2', 0], ['bomb', 0], ['lamp', 0], ['ward', 0], ['str', 0], ['spd', 0], ['rage', 0], ['tonic', 0], ['amu', 0], ['talis', 0], ['fruit', 0]]
 };
 SHOP_STOCK.dev = ITEMS.map(i => [i.id, 0]); // tienda del panel de desarrollo (F2)
-const SHOP_ORDER = ['vest', 'naveS', 'casaM', 'asc'];
+const SHOP_ORDER = ['vest', 'naveS', 'casaM', 'asc', 'mer', 'cap'];
 // poderes elementales de la Forja de los Elementos: cambian el color del ataque y añaden un efecto
 const ELEMENTS = {
   fire: { name: 'Fuego', tint: 0xff7a2a, desc: 'quema al enemigo: daño extra durante 3 s', long: 'El filo arde. Cada golpe prende al enemigo: sufre 1 de daño cada 0,75 s durante 3 s (el fuego no se acumula, se renueva). Muy útil contra enemigos con mucha vida.' },
@@ -88,6 +98,12 @@ const BESTIARY = {
   vine: { name: 'Liana Estranguladora', text: 'Cuelga de una liana del techo, escupe espinas hacia quien se acerca y se deja caer sobre quien pasa justo debajo.', tip: 'Cuando se pone roja va a disparar: salta o apártate. Cruza corriendo si empieza a temblar encima de ti.' },
   pris: { name: 'Prisionero Mohoso', text: 'Un preso que el musgo no dejó morir. Cae al suelo la primera vez y se levanta con la mitad de vida.', tip: 'Quémalo, o remátalo con el Pisotón mientras está en el suelo.' },
   alcaide: { name: 'Alcaide Verdín', text: 'Antiguo compañero de armas del Conde. Guarda las llaves y obedece una orden que ya nadie recuerda. Guarda el Pisotón de Raíces.', tip: 'Cuando se hunde en el suelo es invulnerable: sal de las marcas y golpéalo cuando salga.' },
+  capitan: { name: 'Capitán de Hierro', text: 'Maestro de armas de la guardia. Cerró las puertas cuando se lo ordenaron y nunca preguntó quién. Guarda la llave de los Funcionarios.', tip: 'Embiste en línea recta: salta o esquiva el golpe y castígalo al frenar.' },
+  farero: { name: 'Último Farero', text: 'Cuidó el faro y a quienes crecieron a su sombra. Hoy es carcelero de lo que más quiso.', tip: 'Es invulnerable a oscuras: enciende las antorchas con {act} para poder dañarlo.' },
+  subastadora: { name: 'La Subastadora', text: 'Cobra almas por frascos, con la letra pequeña del Mercado. Guarda la Conservera Mayor.', tip: 'Marca el suelo antes de atacar: sal de las marcas y golpéala al reaparecer.' },
+  chambelan: { name: 'Chambelán Sin Rostro', text: 'Guardó las llaves de las puertas del castillo y las abrió desde dentro. Nadie recuerda su cara.', tip: 'Se teletransporta a tu espalda: no te quedes quieto cerca de él.' },
+  cadalso: { name: 'Cadalso, el Verdugo Mudo', text: 'Verdugo encadenado a su hacha. Se negó a ejecutar una sentencia y pagó con su lengua.', tip: 'Es lento pero aplasta: aléjate cuando levante el arma y ataca por detrás.' },
+  vigilia: { name: 'Vigilia, la Cantora de la Hondura', text: 'Su canto llamó a cuatro vampiros a la vez. Habla en rimas y tiene la boca cosida con plata.', tip: 'No se la puede dañar mientras Cadalso siga en pie. Después, cuidado con su canto.' },
   madre: { name: 'La Madre Moho', text: 'El corazón del musgo. No se mueve, pero su armadura de raíces solo cede ante un pisotón desde el aire.', tip: 'Cae sobre ella con el Pisotón para romper su armadura y golpéala mientras está aturdida.' },
   moth: { name: 'Polilla de esporas', text: 'Revolotea sobre los pasillos del musgo y deja caer nubes de esporas que te persiguen despacio. Las esporas arden al tocar el fuego.', tip: 'Mátala en el aire o cruza sus esporas con el impulso; una antorcha las hace estallar.' },
   magma: { name: 'Babosa de magma', text: 'Una babosa de roca fundida de la Cueva del Abismo. Deja un rastro de brasas por donde pasa.', tip: 'No pises sus brasas: salta por encima o golpéala desde lejos.' },
@@ -101,7 +117,7 @@ const BESTIARY = {
   vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora y señor del Conde, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y huye. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
   archon: { name: 'Archimago Silente', text: 'Guardián del sello de tinta. Entre sus libros flotan tormentas de luz y fantasmas que acuden a su llamada.', tip: 'Esquiva sus abanicos de orbes y la lluvia de rayos; cuando invoque ayuda, golpéalo sin parar.' },
   reina: { name: 'Reina de Huesos', text: 'Guardiana del sello de hueso. Salta con todo su peso, embiste y llama a los esqueletos de la cripta.', tip: 'Vigila los pilares marcados en el suelo y no te quedes bajo sus saltos.' },
-  conde: { name: 'El Conde', text: 'Siervo de los hermanos del Alba y portero de su castillo. Rompe el suelo de su trono para enterrar a sus cazadores en el foso, y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
+  conde: { name: 'El Conde', text: 'Siervo de los hermanos del Alba y portero de su castillo. Rompe el suelo de su trono para enterrar en el foso a quienes lo desafían, y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
 };
 const PAGES = {
   arch1: { title: 'Nota del Archimago', text: 'Los hermanos del Alba me pidieron guardar un sello de tinta. Lo escondí tras mil páginas y me quedé a vigilarlo. Los libros ya no responden; solo susurran mi nombre.' },
@@ -120,7 +136,7 @@ PAGES.rai = { title: 'Nota del Montacargas', text: 'Orden del Herrero: el ascens
 PAGES.cel = { title: 'Registro de Reos', text: 'Reo 14: pidió ver el sol. Reo 15: pidió ver la luna. Reo 16: no pidió nada y fue el único que durmió sin miedo. El musgo lo abrazó primero.' };
 PAGES.rez = { title: 'Menú del último banquete', text: 'Sopa de raíces, pan de piedra y vino sin cosecha. Los carceleros comían de pie; los presos, de rodillas. Ya nadie se acuerda de quién era cada cual.' };
 PAGES.ant = { title: 'Última orden del Alcaide', text: 'Me dejaron las llaves con una sola orden: no abrir hasta que los hermanos vuelvan juntos. Nunca volvieron. Ahora el musgo me habla con la voz de los dos y ya no sé a cuál obedezco. Quien me venza no es mi enemigo: es mi relevo.' };
-const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160, alcaide: 140, madre: 300, slug: 5, shroom: 6, vine: 8, pris: 10, moth: 7, magma: 9 };
+const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160, alcaide: 140, madre: 300, capitan: 200, farero: 220, subastadora: 320, chambelan: 180, cadalso: 400, vigilia: 500, slug: 5, shroom: 6, vine: 8, pris: 10, moth: 7, magma: 9 };
 const NPC_DEFS = {
   merchant: { name: 'Mercader', tex: 'npc_merchant', shop: true, lines: [['Almas, almas... Las prefiero a las monedas. Mira lo que tengo.']] },
   archivist: { name: 'Archivista Loco', tex: 'npc_archivist', lines: [
@@ -174,6 +190,8 @@ const NPC_DEFS = {
     ['¿Oyes las gotas? Cuentan los días que no pasan.'] ] },
   // El Rey Destronado (Escalera Real): da el Anillo del Rey para la Reina Isolda, que estará en la Zona 2 (quests.anillo: 0 sin empezar, 1 lo llevas, 2 entregado)
   king: { name: 'El Rey Destronado', tex: 'npc_king', talk: (sc, n) => sc.kingTalk(n), lines: [['...']] },
+  // La Reina Isolda (Capilla del Cuartel): aliada. Recibe el Anillo del Rey (quests.anillo 1 -> 2)
+  isolda: { name: 'Reina Isolda', tex: 'npc_isolda', talk: (sc, n) => sc.isoldaTalk(n), lines: [['...']] },
   watcher: { name: 'Vigía del Cielo', tex: 'npc_watcher', lines: [
     ['Habéis subido hasta la Cumbre del Alba. Aquí no hay jefes: es un lugar para explorar con todo lo que habéis aprendido.',
       'Dicen que quien venció a Vesper ve un tesoro tras un muro agrietado, al fondo de esta sala (dos cristales de vida), y que el suelo agrietado de aquí abajo guarda el Santuario de las Sombras.',
@@ -288,7 +306,7 @@ Object.assign(CastleScene.prototype, {
     this.buildAlbaDecor(); this.buildHelp();
     if (/[?&]dev=1/.test(location.search)) this.setupDev();
     const w = this.W;
-    this.wpn = WEAPONS[this.color] || WEAPONS.red; this.pas = PASSIVES[this.color] || {}; this.wlv = 1;
+    this.wpn = WEAPONS[this.color] || WEAPONS.red; this.pas = { ...(PASSIVES[this.color] || {}) }; this.wlv = 1; this.bonusOn = false; this.recalcPassive(true);
     this.maxHp = 5 + (this.pas.hp || 0); this.hp = this.maxHp;
     this.gems = 0; this.perm = { dmg: 0, souls: 0, hp: 0 }; this.gemGot = new Set(); this.bossGemsPaid = new Set(this.progress ? this.progress.bosses : []);
     this.souls = 0; this.inv = {}; ITEMS.forEach(i => { this.inv[i.id] = 0; }); this.ward = 0; this.selItem = 0; this.buffs = { spd: 0, str: 0, lamp: 0, rage: 0, tonic: 0 };
@@ -1044,7 +1062,7 @@ Object.assign(CastleScene.prototype, {
   },
   registerKill(type) { this.kills[type] = (this.kills[type] || 0) + 1; this.noteSeen(type); },
   noteSeen(type) {
-    if (this.seen.has(type)) return; this.seen.add(type);
+    if (this.seen.has(type)) return; this.seen.add(type); this.talkOnEnemy(type);
     if (BESTIARY[type]) this.toast('Bestiario: nuevo registro — ' + BESTIARY[type].name + '  (B para abrirlo)', 4500);
   },
   eliteReward(eid, reward) {
@@ -1113,6 +1131,7 @@ Object.assign(CastleScene.prototype, {
       if (Math.abs(p.x - f.x) < 30 && Math.abs(p.y - f.y) < 40) {
         this.forgeGot.add(f.id); f.spr.setVisible(false); f.glow.setVisible(false); SFX.pick(); this.poof(f.x, f.y, 10, 0xffd98a);
         if (this.wlv < 5) { this.wlv++; this.toast(`¡${this.wpn.name} mejorada! Nivel ${this.wlv}`, 4500); } else this.toast('Tu arma ya está al máximo.');
+        this.talkOnEvent('forge', this.forgeGot.size); // charla de la n-ésima mejora de arma
         this.autoSave();
       }
     });
@@ -1204,7 +1223,7 @@ Object.assign(CastleScene.prototype, {
   restAt(a) {
     this.resetBreakables();
     a.lit = true; this.bonfireLit.add(a.id); this.lastAltar = { x: a.x, y: a.y }; this.lastBonfire = a; this.canAuto = true; this.hp = this.maxHp; this.rebuildLights();
-    SFX.rest(); this.poof(a.x, a.y - 30, 10, 0xffb347);
+    SFX.rest(); this.poof(a.x, a.y - 30, 10, 0xffb347); this.talkOnExtra('bonfire');
     if (this.isHost) this.restReset(); else socket.emit('rest');
     const first = a.big && !this.travel; if (first) this.travel = true;
     this.savePersonal(a);
@@ -1518,8 +1537,13 @@ Object.assign(CastleScene.prototype, {
         const xs = gr.map(t => t.gx), ys = gr.map(t => t.gy), x0 = Math.min(...xs) * T, x1 = (Math.max(...xs) + 1) * T, y0 = Math.min(...ys) * T, y1 = (Math.max(...ys) + 1) * T, w = x1 - x0, h = y1 - y0, cx = (x0 + x1) / 2, cy = (y0 + y1) / 2;
         const g = this.add.graphics().setDepth(-4.9);
         g.fillStyle(0x140c16, 1).fillRect(x0, y0, w, h).fillStyle(0x3a2a20, 1).fillRect(x0 - 4, y0 - 8, w + 8, 8).fillRect(x0 - 4, y0, 4, h).fillRect(x1, y0, 4, h);
-        for (let x = x0 + 5; x < x1 - 2; x += 11) { g.fillStyle(0x5a5a6a, 1).fillRect(x, y0, 5, h); g.fillStyle(0x9a9aaa, 1).fillRect(x, y0, 2, h); g.fillStyle(0x5a5a6a, 1).fillTriangle(x - 1, y1, x + 6, y1, x + 2.5, y1 + 6); }
-        [y0 + h * 0.3, y0 + h * 0.7].forEach(y => g.fillStyle(0x4a4a58, 1).fillRect(x0, y - 3, w, 6));
+        if (w > h) { // tapa en el suelo (hueco de un ascensor o de una escalera): barrotes tumbados
+          for (let y = y0 + 3; y < y1 - 2; y += 10) { g.fillStyle(0x5a5a6a, 1).fillRect(x0, y, w, 5); g.fillStyle(0x9a9aaa, 1).fillRect(x0, y, w, 2); }
+          [x0 + w * 0.3, x0 + w * 0.7].forEach(x => g.fillStyle(0x4a4a58, 1).fillRect(x - 3, y0, 6, h));
+        } else {
+          for (let x = x0 + 5; x < x1 - 2; x += 11) { g.fillStyle(0x5a5a6a, 1).fillRect(x, y0, 5, h); g.fillStyle(0x9a9aaa, 1).fillRect(x, y0, 2, h); g.fillStyle(0x5a5a6a, 1).fillTriangle(x - 1, y1, x + 6, y1, x + 2.5, y1 + 6); }
+          [y0 + h * 0.3, y0 + h * 0.7].forEach(y => g.fillStyle(0x4a4a58, 1).fillRect(x0, y - 3, w, 6));
+        }
         g.fillStyle(0x5a1018, 1).fillCircle(cx, cy, 15).fillStyle(0xc8283a, 1).fillCircle(cx, cy, 12).fillStyle(0xff6a6a, 1).fillRect(cx - 2, cy - 8, 4, 16).fillRect(cx - 8, cy - 2, 16, 4);
         g.setVisible(!gt.open);
         this.sealDoors.push({ gate: gt, g, x: cx, y: cy, h });
@@ -1579,12 +1603,67 @@ Object.assign(CastleScene.prototype, {
     const q = this.quests;
     if (!q.anillo) {
       q.anillo = 1; SFX.pick();
-      this.showLines(n, ['¿Un cazador? Hace siglos que nadie baja por esta escalera... Soy el rey de este castillo. O lo era, hasta que el Conde abrió las puertas a los hermanos del Alba.',
+      this.showLines(n, ['¿Alguien por aquí? Hace siglos que nadie baja por esta escalera... Soy el rey de este castillo. O lo era, hasta que el Conde abrió las puertas a los hermanos del Alba.',
         'Mi esposa, la Reina Isolda, huyó antes del cerco. Dicen que cruzó más allá de La Gran Hoguera, a tierras que yo ya no pisaré.',
         'Llévale este anillo: es lo único que me dejaron. Dile que sigo aquí... y que la escalera aún huele a sus rosas.']);
       this.toast('Misión secundaria: lleva el Anillo del Rey a la Reina Isolda, más allá de La Gran Hoguera (Zona 2).', 8000); return true;
     }
-    this.showLines(n, q.anillo === 1 ? ['La Reina Isolda... más allá de La Gran Hoguera. No pierdas el anillo, cazador.', 'Cuando caiga el Conde, la puerta del este se abrirá. Yo no tengo fuerzas para cruzarla.'] : ['Le llevaste el anillo. Por primera vez en siglos, esta escalera no me parece tan fría.']);
+    this.showLines(n, q.anillo === 1 ? ['La Reina Isolda... más allá de La Gran Hoguera. No pierdas el anillo.', 'Cuando caiga el Conde, la puerta del este se abrirá. Yo no tengo fuerzas para cruzarla.'] : ['Le llevaste el anillo. Por primera vez en siglos, esta escalera no me parece tan fría.']);
+    return true;
+  },
+  recalcPassive(silent) { // aplica o quita la mejora de estadística de la Zona 2 según el jefe de su tramo
+    const b = PASSIVE_BONUS[this.color], base = PASSIVES[this.color]; if (!b || !base || !this.pas) return;
+    const on = !!(this.progress && (this.progress.bosses || []).includes(b.boss));
+    this.pas[b.key] = base[b.key] + (on ? b.add : 0);
+    if (on && !this.bonusOn && !silent && this.toast) this.toast(b.msg, 6000);
+    this.bonusOn = on;
+  },
+  // ---- Lúa: la hermana de Zaf. Se la libera en las Cárceles (cae el Último Farero) y acompaña al grupo hasta el final.
+  // La simula el anfitrión y viaja en la instantánea ('l'); todos la dibujan. Su látigo mata enemigos débiles cercanos (no élites ni jefes). No recibe daño.
+  luaOn() { return !!(this.progress && (this.progress.bosses || []).includes('farero')); },
+  luaWeak(e) { const c = EN[e.type]; return !!c && !e.dead && !e.boss && !e.elite && !c.inv && !e.shield && c.hp <= 4; },
+  luaFrame(dt) {
+    if (!this.luaOn()) { if (this.lua) { this.lua.spr.destroy(); this.lua.name.destroy(); this.lua = null; } return; }
+    if (!this.lua) {
+      const p = this.player, x = p.x - 44, y = p.y;
+      this.lua = { x, y, tx: x, ty: y, f: 0, cd: 1, whip: 0, seenWhip: 0, spr: this.add.image(x, y - 6, 'npc_lua').setScale(3).setDepth(5),
+        name: this.add.text(x, y - 40, 'Lúa', { fontSize: '11px', fontFamily: 'Courier New', color: '#9ad0ff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(27) };
+    }
+    const L = this.lua;
+    if (this.isHost) this.luaSim(dt); else { L.x += (L.tx - L.x) * 0.35; L.y += (L.ty - L.y) * 0.35; }
+    if (L.whip !== L.seenWhip) { L.seenWhip = L.whip; this.luaWhipFx(L.x, L.y, L.f ? -1 : 1); }
+    const hide = !!this.sealKey; // en las salas de jefe espera fuera
+    L.spr.setPosition(L.x, L.y - 6).setFlipX(!!L.f).setVisible(!hide); L.name.setPosition(L.x, L.y - 42).setVisible(!hide);
+  },
+  luaSim(dt) {
+    const L = this.lua, ts = this.targets(); if (!ts.length) return;
+    const t = ts.reduce((m, q) => (Math.hypot(q.x - L.x, q.y - L.y) < Math.hypot(m.x - L.x, m.y - L.y) ? q : m), ts[0]); // sigue al jugador más cercano
+    const gx = t.x - (t.x < L.x ? -44 : 44), gy = t.y, d = Math.hypot(t.x - L.x, t.y - L.y);
+    if (d > 520) { L.x = gx; L.y = gy; } else { const k = Math.min(1, dt * 3.5); L.x += (gx - L.x) * k; L.y += (gy - L.y) * k; } // si te alejas mucho, aparece a tu lado
+    L.f = t.x < L.x ? 1 : 0;
+    if (this.sealKey) return;
+    L.cd -= dt; if (L.cd > 0) return;
+    const near = [...this.ents.values()].filter(e => e.sim && this.luaWeak(e) && Math.hypot(e.spr.x - L.x, e.spr.y - L.y) < 150).sort((a, b) => Math.hypot(a.spr.x - L.x, a.spr.y - L.y) - Math.hypot(b.spr.x - L.x, b.spr.y - L.y)).slice(0, 2);
+    if (!near.length) { L.cd = 0.25; return; }
+    L.cd = 1.6; L.whip++; L.f = near[0].spr.x < L.x ? 1 : 0;
+    near.forEach(e => { this.poof(e.spr.x, e.spr.y, 4, 0x9ad0ff); this.damageEnt(e, 99, Math.sign(e.spr.x - L.x) || 1, t.id); });
+  },
+  luaWhipFx(x, y, dir) { // latigazo: una línea azul corta
+    const g = this.add.graphics().setDepth(12); g.lineStyle(3, 0x9ad0ff, 1).lineBetween(x, y - 6, x + dir * 130, y - 14);
+    this.tweens.add({ targets: g, alpha: 0, duration: 200, onComplete: () => g.destroy() }); SFX.hit();
+  },
+  luaState() { const L = this.lua; return L ? [Math.round(L.x), Math.round(L.y), L.f, L.whip] : null; },
+  luaRecv(s) { if (!this.lua || !s) return; const L = this.lua; L.tx = s[0]; L.ty = s[1]; L.f = s[2]; L.whip = s[3]; if (!L.got) { L.got = true; L.seenWhip = L.whip; L.x = L.tx; L.y = L.ty; } },
+  isoldaTalk(n) { // la Reina Isolda: recibe el Anillo del Rey (la recompensa está pendiente de decidir: de momento, gemas)
+    const q = this.quests;
+    if (q.anillo === 1) {
+      q.anillo = 2; this.addGems(6); SFX.pick(); this.autoSave(); this.talkOnEvent('ring');
+      this.showLines(n, ['Este anillo... lo reconozco aunque llevo siglos sin verlo. Está tibio, como cuando él lo llevaba.',
+        'Dile que sigo aquí, entre tanto hierro y tanta vela. Gracias por traérmelo. Toma: no es mucho, pero es lo que me queda.']);
+      this.toast('Has entregado el Anillo del Rey a la Reina Isolda. +6 gemas ✦', 7000); return true;
+    }
+    this.showLines(n, q.anillo === 2 ? ['El Rey sigue en su escalera, y yo aquí. Algún día nos veremos sin cadenas de por medio.', 'Seguid adelante: la puerta de los Funcionarios guarda más de lo que parece.']
+      : ['Soy Isolda. Antes tuve una corte; hoy tengo una capilla prestada y unas velas.', 'Si alguien baja por la escalera del castillo, que me traiga noticias del Rey.']);
     return true;
   },
   giveHammer(texto) { // entrega el Martillo Latente al jugador (queda en el HUD hasta que se lo lleve al herrero)
@@ -1593,7 +1672,7 @@ Object.assign(CastleScene.prototype, {
   },
   smithTalk(n) { // el herrero de la cueva: primera charla, entrega del Martillo Latente o menú de imbuir
     if (this.hammerState === 1) {
-      this.hammerState = 2; this.syncNpcs(); this.smithMet = true; SFX.pick();
+      this.hammerState = 2; this.syncNpcs(); this.smithMet = true; SFX.pick(); this.talkOnEvent('hammer');
       this.showLines(n, ['¡El Martillo Latente! Todavía late... lo siento caliente en las manos.', 'Con él puedo forjar el poder de las sombras, pero necesito un lugar oculto: me mudo al Santuario de las Sombras, bajo el suelo agrietado de la Cumbre del Alba.', 'Ven a verme allí: te imbuiré con cualquier poder que quieras.']);
       this.toast('El herrero se muda a su santuario secreto, bajo el suelo agrietado de la Cumbre del Alba', 7000); return true;
     }
