@@ -2,7 +2,7 @@
 
 Resumen de lo que ha cambiado en el juego, de lo más nuevo a lo más antiguo. 
 
-## 0.5.0 (en desarrollo): Zona 2
+## 0.6.0 (en desarrollo): Zona 2
 
 - **Segundo ascensor:** en La Gran Hoguera, el hueco del suelo se tapa con hierro hasta que cae la Madre Moho; debajo, el Pozo del Segundo Ascensor lleva a la Zona 2 (rótulo «ZONA 2» la primera vez). Las tapas en el suelo se dibujan con barrotes tumbados. `S()` de world.js admite ahora `{ gate: 'idJefe' }`.
 - **Zona 2 (24 salas nuevas):** Patíbulo Exterior, Escalera de Servicio, Casa del Mercader, La Despensa y su Bodega, Conservera Mayor (secreto, muro agrietado), La Milla Verde y las Cárceles, Pasillo y Galería de las velas, Escalera y Capilla del Cuartel, Dependencias de los Funcionarios y Salón de los Dos Tronos. El mundo pasa de 10 a 16 filas (`ROWS`) y hay 6 paletas, músicas y decorados nuevos (zonas 10 a 15). El validador alcanza todas las salas, cristales y gemas y el orden de jefes es correcto.
@@ -14,6 +14,13 @@ Resumen de lo que ha cambiado en el juego, de lo más nuevo a lo más antiguo.
 - **Nombres neutros:** Cor, Zaf, Malak y Matis en el selector y en las descripciones (sin género); se corrigen también los textos que hablaban de «cazador» o «Necios».
 - **Servidor:** límites de guardado ampliados (salas visitadas, hogueras, páginas, bestiario, cristales y gemas) y los jefes nuevos reconocidos.
 - **Pendiente:** enemigos y sprites propios de la Zona 2, patrones propios de los jefes, diarios y PNJ con diálogo de la zona, escena de rescate de Lúa y revisión jugando de la dificultad.
+## 0.5.0
+
+- **Archivo → Nave Sur:** el muro agrietado entre las dos salas desaparece; ahora es un paso abierto.
+- **Historia (docs/HISTORIA.md, hecha con el agente Narrador):** los cuatro vampiros son los colmillos que crearon y abandonaron los hermanos del Alba. Escena de inicio en las partidas nuevas, final de la Zona 1 al llegar a La Gran Hoguera tras la Madre Moho (con aviso del Anillo si lo llevas), el Conde muere al caer y el rival rescatado se queda en la Cumbre. Corregidos 17 textos que se contradecían (diarios, bestiario, Oráculo, escenas) y los README.
+- **Inicio:** en las partidas nuevas, la historia se cuenta sobre fondo negro antes de poder jugar (E o Espacio pasan de frase). Después, en todas las partidas, una pantalla de controles con las teclas dibujadas y lo que hace cada una; el juego espera hasta que pulsas E.
+- **Panel de desarrollo (F2):** selector de zona y sala para teletransportarse (agrupado por zona y región).
+- **Agente Narrador:** .claude/agents/narrador.md, para seguir inventando la historia con Claude Code.
 
 ## 0.4.0
 

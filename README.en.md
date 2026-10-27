@@ -2,7 +2,7 @@
 
 A gothic co-op metroidvania for 1–4 players, in pixel art, running straight in the browser.
 
-Four vampire hunters break into the Count's castle. Explore a connected map of 25+ zones, defeat bosses that grant new abilities and backtrack to open shortcuts and secrets. Play solo or with up to three friends, each from their own browser (PC, phone, TV browser or gamepad).
+Four vampires, the fangs the Dawn siblings made and abandoned, return to the castle to collect what they are owed. Explore a connected map of 25+ zones, defeat bosses that grant new abilities and backtrack to open shortcuts and secrets. Play solo or with up to three friends, each from their own browser (PC, phone, TV browser or gamepad).
 
 ## Quick start
 
