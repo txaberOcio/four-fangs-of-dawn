@@ -35,8 +35,8 @@
     farero: { name: 'Último Farero', hp: 88, drop: null },
     subastadora: { name: 'La Subastadora', hp: 96, drop: null },
     chambelan: { name: 'Chambelán Sin Rostro', hp: 72, drop: null },
-    cadalso: { name: 'Cadalso, el Verdugo Mudo', hp: 104, drop: null },
-    vigilia: { name: 'Vigilia, la Cantora de la Hondura', hp: 116, drop: null },
+    cadalso: { name: 'Cadalso, el Verdugo Mudo', hp: 72, drop: null },
+    vigilia: { name: 'Vigilia, la Cantora de la Hondura', hp: 80, drop: null },
   };
 
   // ---------- Definición de áreas ----------

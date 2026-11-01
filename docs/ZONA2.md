@@ -240,6 +240,8 @@ Para que el validador pruebe cada habilidad: el Patíbulo exige Doble salto y Sa
 
 ### 5.1 Jefes [PROPUESTA]
 
+> **Nota 01/11/2026 (decidido por Txaberocio):** los Regentes son un **jefe doble simultáneo**: Cadalso (72) y Vigilia (80) pelean a la vez, cada uno con su barra, y el jugador elige a cuál mata primero. Sustituye a los «dos combates seguidos» que describe el resto de este apartado.
+
 **Reparto.** No se necesitan cuatro jefes grandes: el **Capitán de Hierro** es el único jefe «mayor» del tramo, los otros tres son **mini-jefes** con una sola mecánica nueva cada uno, y los Regentes cierran la parte.
 
 **Vida.** Pensada para el daño con el que se llega: al final de la Zona 1 la espada y la lanza hacen 2, la guadaña 3 y el arco 1 con dos flechas por disparo (`WEAPONS`, nivel 3).

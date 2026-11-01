@@ -144,8 +144,8 @@ const EN = {
   farero: { tex: 'archon', sc: 4, body: [10, 14], hp: 88, dmg: 2, hb: [40, 56], kind: 'boss' },
   subastadora: { tex: 'reina', sc: 4, body: [12, 14], hp: 96, dmg: 2, hb: [50, 56], kind: 'boss' },
   chambelan: { tex: 'bishop', sc: 4, body: [10, 14], hp: 72, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
-  cadalso: { tex: 'clock', sc: 4, body: [12, 15], hp: 104, dmg: 2, hb: [52, 60], kind: 'boss' },
-  vigilia: { tex: 'aurora', sc: 4, body: [10, 14], hp: 116, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
+  cadalso: { tex: 'clock', sc: 4, body: [12, 15], hp: 72, dmg: 2, hb: [52, 60], kind: 'boss' },
+  vigilia: { tex: 'aurora', sc: 4, body: [10, 14], hp: 80, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   // enemigos invulnerables: solo se esquivan
   saw: { tex: 'saw', sc: 3, body: [12, 12], hp: 9999, dmg: 2, hb: [34, 34], kind: 'saw', inv: true },
   sentinel: { tex: 'sentinel', sc: 3, body: [12, 15], hp: 9999, dmg: 2, spd: 70, hb: [34, 44], kind: 'walk', inv: true, patrol: true },
@@ -274,6 +274,7 @@ class CastleScene extends Phaser.Scene {
     this.toastTxt = this.add.text(SW / 2, SH - 40, '', f('16px')).setOrigin(0.5).setScrollFactor(0).setDepth(30).setAlpha(0);
     this.bossBar = this.add.graphics().setScrollFactor(0).setDepth(30);
     this.bossName = this.add.text(SW / 2, SH - 70, '', f('14px', '#ff9a9a')).setOrigin(0.5).setScrollFactor(0).setDepth(30);
+    this.bossName2 = this.add.text(SW / 2, SH - 70, '', f('14px', '#ff9a9a')).setOrigin(0.5).setScrollFactor(0).setDepth(30); // segundo jefe de la sala (jefe doble)
     // minimapa con la forma real del castillo (lienzo 1 píxel = 1 tile)
     this.mmBg = this.add.rectangle(SW - 220, 6, 214, 106, 0x000000, 0.55).setOrigin(0).setScrollFactor(0).setDepth(29);
     this.mmImg = this.add.image(0, 0, 'mapcv').setOrigin(0).setScale(3).setScrollFactor(0).setDepth(30);
@@ -701,7 +702,9 @@ class CastleScene extends Phaser.Scene {
       if (!(World.BOSSES[e.type] && World.BOSSES[e.type].rival)) this.progress.bosses.push(e.type); // los rivales Aurora/Vesper esperan al servidor (solo puede caer uno)
       this.projs.forEach(p => p.spr.destroy()); this.projs.clear();
       this.ents.forEach(x => { if (x.summoned) { x.spr.destroy(); this.ents.delete(x.id); } });
-      this.sealKey = null; this.applySeal(null); this.syncRelics();
+      const otherBoss = [...this.ents.values()].some(x => x.boss && !x.dead && x.room === e.room); // jefe doble: la sala sigue sellada hasta que cae el segundo
+      if (!otherBoss) { this.sealKey = null; this.applySeal(null); }
+      this.syncRelics();
       this.cameras.main.shake(400, 0.01);
     }
   }
@@ -728,7 +731,8 @@ class CastleScene extends Phaser.Scene {
         this.createEnt(s.id, s.type, s.x, y, true, { room: cellKey(s.x, s.y - 1), home: { x: s.x, y }, opts: s.opts, zone: s.zone });
       });
       this.W.bosses.forEach(b => {
-        if (this.bossGone(b) || this.ents.has(b.id) || !active.has(cellKey(b.x, b.y - 1))) return;
+        const arR = this.W.areas[b.area], inRoom = this.targets().some(t => t.x > arR.x0 * T && t.x < (arR.x0 + arR.rw) * T && t.y > arR.y0 * T && t.y < (arR.y0 + arR.rh) * T); // salas de varias celdas (Dos Tronos): el jefe aparece en cuanto entras, aunque esté en otra celda
+        if (this.bossGone(b) || this.ents.has(b.id) || !(active.has(cellKey(b.x, b.y - 1)) || inRoom)) return;
         const cfg = EN[b.id];
         const arB = this.W.areas[b.area], floorB = (arB.y0 + arB.rh - 1) * T;
         const y = cfg.fly ? floorB - 66 : b.y - (cfg.body[1] * cfg.sc) / 2 - 1;
@@ -964,11 +968,9 @@ class CastleScene extends Phaser.Scene {
     e.relightT = Math.max(0, (e.relightT || 0) - dt); e.fanCd = Math.max(0, (e.fanCd || 0) - dt);
     if (e.type === 'clock') e.shield = this.lightLevel(e.spr.x, e.spr.y) > 0.18; // inmune a la luz
     if (e.type === 'farero') e.shield = this.lightLevel(e.spr.x, e.spr.y) <= 0.18; // al revés que el Guardián del Reloj: inmune a oscuras, hay que encender la luz
-    if (e.type === 'vigilia' && !this.progress.bosses.includes('cadalso')) { // Vigilia canta desde su atril y no se la puede dañar hasta que cae Cadalso
-      e.shield = true; e.tele = false; e.act = null; b.setVelocity(0, (a.hover - e.spr.y) * 2.5); return;
-    }
     const tg = tgs.reduce((m, t) => (Math.hypot(t.x - e.spr.x, t.y - e.spr.y) < Math.hypot(m.x - e.spr.x, m.y - e.spr.y) ? t : m), tgs[0]);
-    const x = e.spr.x, y = e.spr.y, rage = e.hp < e.max * 0.5, dirT = Math.sign(tg.x - x) || 1;
+    const partner = e.type === 'cadalso' ? 'vigilia' : e.type === 'vigilia' ? 'cadalso' : null; // jefe doble: si cae uno, el otro se enfurece
+    const x = e.spr.x, y = e.spr.y, rage = e.hp < e.max * 0.5 || !!(partner && this.progress.bosses.includes(partner)), dirT = Math.sign(tg.x - x) || 1;
     e.spr.setFlipX(tg.x < x);
     if (e.type === 'madre') { // armadura de raíces: solo el Pisotón la rompe (o 15 golpes normales)
       if (e.armor === undefined) { e.armor = tgs.length >= 3 ? 2 : 1; e.windowT = 0; }
@@ -1274,10 +1276,19 @@ class CastleScene extends Phaser.Scene {
     this.ents.forEach(e => { if (e.type === 'saw') e.spr.angle += 520 * dt; });
     this.luaFrame(dt); // Lúa, la compañera de la Zona 2
     this.talkUpdate(dt); // charlas y pensamientos
-    let boss = null; this.sweepTwins();
-    this.ents.forEach(e => { this.markFx(e, time); if (e.cfg.fearsome) this.fearsomeFx(e, time); if (e.boss && e.aggro) boss = e; if (e.boss) { if (e.tele) e.spr.setTint(0xff7777); else if (e.shield) e.spr.setTint(0x8fc8ff); else if (e.flash <= 0) e.spr.clearTint(); } });
+    let boss = null; const bosses = []; this.sweepTwins();
+    this.ents.forEach(e => { this.markFx(e, time); if (e.cfg.fearsome) this.fearsomeFx(e, time); if (e.boss && e.aggro) { boss = e; bosses.push(e); } if (e.boss) { if (e.tele) e.spr.setTint(0xff7777); else if (e.shield) e.spr.setTint(0x8fc8ff); else if (e.flash <= 0) e.spr.clearTint(); } });
     this.bossBar.clear(); Music.setBossKind(boss ? (['aurora', 'archon', 'clock', 'vigilia', 'farero', 'chambelan'].includes(boss.type) ? 1 : ['vesper', 'reina', 'conde', 'cadalso', 'capitan', 'subastadora'].includes(boss.type) ? 2 : 0) : 0); Music.setBoss(!!boss);
-    if (boss) {
+    this.bossName2.setText('');
+    if (bosses.length >= 2) { // jefe doble (los Regentes): cada uno con su barra y su nombre, a la vez, para poder elegir a cuál se mata primero
+      bosses.sort((p, q) => (p.type < q.type ? -1 : 1)); const pal = { cadalso: 0xd9822b, vigilia: 0xb06ad9 }, cs = [SW / 2 - 172, SW / 2 + 172];
+      bosses.slice(0, 2).forEach((bs, i) => {
+        const cx = cs[i], x0 = cx - 165; this.bossBar.fillStyle(0x000000, 0.7).fillRect(x0 - 2, SH - 56, 334, 14).fillStyle(pal[bs.type] || 0xcc2233, 1).fillRect(x0, SH - 54, 330 * Math.max(0, bs.hp / bs.max), 10);
+        const t = i ? this.bossName2 : this.bossName; t.setPosition(cx, SH - 70).setText(bs.name || '').setFontSize(fsz('13px'));
+      });
+      this.bossName.setFontSize(fsz('13px'));
+    } else if (boss) {
+      this.bossName.setPosition(SW / 2, SH - 70).setFontSize(fsz('14px'));
       this.bossBar.fillStyle(0x000000, 0.7).fillRect(SW / 2 - 202, SH - 56, 404, 14).fillStyle(boss.type === 'madre' && boss.melt ? 0x6a6a7a : boss.type === 'madre' && boss.shield ? 0x4a8fd0 : boss.type === 'madre' ? 0xffc83d : 0xcc2233, 1).fillRect(SW / 2 - 200, SH - 54, 400 * Math.max(0, boss.hp / boss.max), 10);
       if (boss.type === 'madre' && (boss.shield || boss.melt)) this.bossBar.lineStyle(2, 0x8fc8ff, 1).strokeRect(SW / 2 - 203, SH - 57, 406, 16); // marco azul: armadura de raíces
       this.bossName.setText((boss.name || '') + (boss.prize ? '  ·  premio: ' + boss.prize.split(':')[0] : '') + (boss.type === 'madre' ? (boss.melt ? '  ·  DILUIDA: intocable' : boss.shield ? '  ·  ARMADURA: rómpela con el Pisotón (en el aire, mantén ↓)' : '  ·  ¡SIN ARMADURA! ¡atácala!') : ''));
