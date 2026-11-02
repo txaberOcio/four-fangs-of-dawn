@@ -36,20 +36,20 @@ const HERO_INFO = {
   green: { weapon: 'Arco', passive: 'Caza de almas', desc: 'Dispara flechas a distancia. Pasiva: +50% de almas al matar. Sus flechas no empujan a los enemigos ni curan. Desventaja: recibe +50% de daño y no rompe muros (necesita Bombas de la tienda).' },
   purple: { weapon: 'Guadaña', passive: 'Piel de sombra', desc: 'Guadaña lenta y muy dañina. Pasiva: +2 corazones de vida máxima. Desventaja: se mueve más lento (compensa con un gancho automático: si el salto se queda corto, se engancha al borde y sube).' },
 };
-// Los cuatro vampiros: mismo cuerpo, distinta cabeza y arma (G acero, B madera, Y dorado, N azul). Cor: pelo de punta y espada a la espalda;
+// Los cuatro vampiros: mismo cuerpo, distinta cabeza y arma (G acero, B madera, Y dorado, N azul, P placa). Cor: pelo de punta y espada a la espalda;
 // Zaf: armadura plateada, pelo largo plateado y lanza de madera con detalles azules; Malak: delgada, con capucha verde oscuro y arco; Matis: armadura negra, pelo negro con flequillo sobre un ojo y una guadaña grande.
 const HERO_MAPS = {
   red: ['..H.HHHH.H.G', '..HHHHHHHH.G', '..HSSSSSSH.G', '..SRSSSSRS.G', '...SFSSFS..G', '.CCCSSSSCCCY', 'CCCCAAAACCCB',
     'CCCAAWWAACCC', 'CC.AAAAAA.CC', '...AAAAAA...', '...AA..AA...', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
-  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HSSSSSSH..', 'BHSRSSSSRSH.', 'BH.SFSSFS.H.', 'BHCCSSSSCCH.', 'BCCCAAAACCCC',
+  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HSSSSSSH..', 'BHSRSSSSRSH.', 'BH.SFSSFS.H.', 'BHPPSSSSPPH.', 'BCCCAAAACCCC',
     'BCCAAWWAACCC', 'BC.AAAAAA.CC', 'B..AAAAAA...', 'B..AA..AA...', 'B..AA..AA...', 'B..DD..DD...', 'N.DDD..DDD..'],
-  green: ['...CCCCCC...', '..CCCCCCCC..', '..CSSSSSSCB.', '..CRSSSSRC.B', '...SSCCSS..B', '..CCCSSCCC.B', '...CAAAAC..B',
-    '...CAWWAC..B', '...CAAAAC..B', '....AAAA...B', '...AA..AA.B.', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
+  green: ['...CCCCCC...', '..CCCCCCCC..', '..CSSSSSSCB.', '..CRSSSSRC.B', '...SSCCSS..B', '..CCCSSCCC.B', '..CCAAAACC.B',
+    '..CCAWWACC.B', '..CCAAAACC.B', '..C.AAAA.C.B', '...AA..AA.B.', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
   purple: ['...HHHHHGGGG', '..HHHHHHHHGG', '..HHHHSSSH.B', '..SHSSSSRS.B', '...SFSSFS..B', '.CCCSSSSCCCB', 'CCCCAAAACCCB',
     'CCCAAWWAACCB', 'CC.AAAAAA.CB', '...AAAAAA..B', '...AA..AA..B', '...AA..AA..B', '...DD..DD..B', '..DDD..DDD.B'],
 };
 const HERO_SCALE = { red: [3, 3], blue: [3, 3.3], green: [2.7, 3], purple: [3.4, 3] }; // [ancho, alto] con que se dibuja cada vampiro
-const HERO_LOOK = { red: { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b' }, blue: { H: '#cdd3ea', S: '#c4b8d6', R: '#7ad8ff', C: '#bcc6d8', A: '#7d889f' }, green: { H: '#16101c', S: '#e0e8dc', R: '#ffd23b', C: '#163f22' }, purple: { H: '#1a1226', S: '#cfc6e6', R: '#d9a0ff', C: '#2b2833', A: '#16141c', W: '#9a4ad9' } };
+const HERO_LOOK = { red: { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b' }, blue: { H: '#cdd3ea', S: '#c4b8d6', R: '#7ad8ff', C: '#3a6ad9', A: '#566178', P: '#98a3bb' }, green: { H: '#16101c', S: '#e0e8dc', R: '#ffd23b', C: '#163f22' }, purple: { H: '#1a1226', S: '#cfc6e6', R: '#d9a0ff', C: '#2b2833', A: '#16141c', W: '#9a4ad9' } };
 const MAPS = {
   hero: [
     '...HHHHHH...', '..HHHHHHHH..', '..HSSSSSSH..', '..SRSSSSRS..', '...SFSSFS...', '.CCCSSSSCCC.', 'CCCCAAAACCCC',
@@ -179,7 +179,7 @@ function drawMapCtx(ctx, map, pal, px, ox, oy) {
     ctx.fillStyle = pal[c] || '#fff'; ctx.fillRect(ox + x * px, oy + y * px, px, px);
   }
 }
-function heroPal(color, key) { return Object.assign({ H: '#16101c', S: '#e8e0f4', R: '#ff2b3b', F: '#ffffff', C: color, A: '#2a2540', D: '#120c18', W: '#c9c4e0', G: '#c9ced8', B: '#8a5a2a', Y: '#ffd23b', N: '#3a6ad9' }, HERO_LOOK[key] || {}); }
+function heroPal(color, key) { return Object.assign({ H: '#16101c', S: '#e8e0f4', R: '#ff2b3b', F: '#ffffff', C: color, A: '#2a2540', D: '#120c18', W: '#c9c4e0', G: '#c9ced8', B: '#8a5a2a', Y: '#ffd23b', N: '#3a6ad9', P: '#98a3bb' }, HERO_LOOK[key] || {}); }
 
 // Dibuja un héroe en un canvas DOM (para el lobby)
 function drawHeroCanvas(canvas, color) {
