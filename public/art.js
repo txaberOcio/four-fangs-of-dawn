@@ -44,7 +44,7 @@ const HERO_MAPS = {
   blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HSSSSSSH..', 'BHSRSSSSRSH.', 'BH.SFSSFS.H.', 'BHPPSSSSPPH.', 'BCCCAAAACCCC',
     'BCCAAWWAACCC', 'BC.AAAAAA.CC', 'B..AAAAAA...', 'B..AA..AA...', 'B..AA..AA...', 'B..DD..DD...', 'N.DDD..DDD..'],
   green: ['...CCCCCC...', '..CCCCCCCC..', '..CSSSSSSCB.', '..CRSSSSRC.B', '...SSCCSS..B', '..CCCSSCCC.B', '..CCAAAACC.B',
-    '..CCAWWACC.B', '..CCAAAACC.B', '..C.AAAA.C.B', '...AA..AA.B.', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
+    '..CCAWWACC.B', '..CCAAAACC.B', '..CCCCCCCC.B', '....AAAA..B.', '....AAAA....', '....DD.DD...', '...DDD.DDD..'],
   purple: ['...HHHHHGGGG', '..HHHHHHHHGG', '..HHHHSSSH.B', '..SHSSSSRS.B', '...SFSSFS..B', '.CCCSSSSCCCB', 'CCCCAAAACCCB',
     'CCCAAWWAACCB', 'CC.AAAAAA.CB', '...AAAAAA..B', '...AA..AA..B', '...AA..AA..B', '...DD..DD..B', '..DDD..DDD.B'],
 };
@@ -289,6 +289,7 @@ function buildArt(scene) {
   // fotogramas de caminar (piernas abiertas / juntas)
   const legsA = ['...AA...AA..', '..AA.....AA.', '..DD.....DD.', '.DDD....DDD.'], legsB = ['....AAAA....', '....AAAA....', '....DDDD....', '...DDDDDD...'];
   for (const col in HERO_COLORS) [['w1', legsA], ['w2', legsB]].forEach(([n, legs]) => {
+    if (col === 'green') legs = ['..CCCCCCCC..'].concat(legs.slice(1)); // Malak: la túnica baja un píxel más al andar, para que no se vea hueco entre las piernas
     const hm = HERO_MAPS[col], low = legs.map((row, i) => row.split('').map((ch, x) => ('BGYN'.includes(hm[10 + i][x]) ? hm[10 + i][x] : ch)).join('')); // el arma sigue a la vista al andar
     const c = tx.createCanvas('hero_' + col + '_' + n, 12, 14); drawMapCtx(c.getContext('2d'), hm.slice(0, 10).concat(low), heroPal(HERO_COLORS[col], col), 1, 0, 0); c.refresh();
   });
