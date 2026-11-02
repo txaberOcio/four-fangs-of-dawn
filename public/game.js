@@ -91,7 +91,8 @@ function renderLobby() {
     const taken = room.players.some(p => p.animal === a && p.name !== me);
     const b = document.createElement('button'); b.className = a === selColor ? 'sel' : ''; b.disabled = taken; b.title = HERO_NAMES[a];
     const c = document.createElement('canvas'); const hs = HERO_SCALE[a] || [3, 3]; c.style.cssText = 'width:' + (36 * hs[0] / 3) + 'px;height:' + (42 * hs[1] / 3) + 'px;image-rendering:pixelated'; drawHeroCanvas(c, a);
-    b.appendChild(c); b.onclick = () => socket.emit('setAnimal', a); box.appendChild(b);
+    const base = document.createElement('div'); base.style.cssText = 'height:48px;display:flex;align-items:flex-end;justify-content:center'; base.appendChild(c); // todos apoyados en la misma línea de suelo: el más alto sobresale por arriba
+    b.appendChild(base); b.onclick = () => socket.emit('setAnimal', a); box.appendChild(b);
   });
   $('abil').textContent = selColor ? HERO_NAMES[selColor] + '\n' + HERO_INFO[selColor].weapon + ' · ' + HERO_INFO[selColor].passive + '\n' + HERO_INFO[selColor].desc + '\n\n' + HERO_LORE[selColor] : '';
   $('bStart').classList.toggle('hidden', room.host !== socket.id);
