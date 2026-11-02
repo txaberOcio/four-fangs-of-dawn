@@ -81,7 +81,7 @@ function renderLobby() {
   const list = $('plist'); list.innerHTML = '';
   room.players.forEach(p => {
     const d = document.createElement('div'); d.className = 'pl';
-    const c = document.createElement('canvas'); drawHeroCanvas(c, p.animal); d.appendChild(c);
+    const c = document.createElement('canvas'); drawHeroCanvas(c, p.animal); const hs = HERO_SCALE[p.animal] || [3, 3]; c.style.width = (36 * hs[0] / 3) + 'px'; c.style.height = (36 * hs[1] / 3) + 'px'; d.appendChild(c); // cada vampiro con su silueta
     d.append(`${HERO_NAMES[p.animal] || p.name}${p.id === room.host ? ' ★' : ''}${p.name === me ? ' (tú)' : ''}`); // el nombre del vampiro, no el de la cuenta
     list.appendChild(d);
   });
@@ -90,7 +90,7 @@ function renderLobby() {
   COLOR_LIST.forEach(a => {
     const taken = room.players.some(p => p.animal === a && p.name !== me);
     const b = document.createElement('button'); b.className = a === selColor ? 'sel' : ''; b.disabled = taken; b.title = HERO_NAMES[a];
-    const c = document.createElement('canvas'); c.style.cssText = 'width:36px;height:42px;image-rendering:pixelated'; drawHeroCanvas(c, a);
+    const c = document.createElement('canvas'); const hs = HERO_SCALE[a] || [3, 3]; c.style.cssText = 'width:' + (36 * hs[0] / 3) + 'px;height:' + (42 * hs[1] / 3) + 'px;image-rendering:pixelated'; drawHeroCanvas(c, a);
     b.appendChild(c); b.onclick = () => socket.emit('setAnimal', a); box.appendChild(b);
   });
   $('abil').textContent = selColor ? HERO_NAMES[selColor] + '\n' + HERO_INFO[selColor].weapon + ' · ' + HERO_INFO[selColor].passive + '\n' + HERO_INFO[selColor].desc + '\n\n' + HERO_LORE[selColor] : '';
@@ -231,8 +231,8 @@ class CastleScene extends Phaser.Scene {
     this.color = mine ? mine.animal : 'red';
     const sp = w.spawnPoint;
     this.lastAltar = { x: sp.x + (room.players.indexOf(mine) - 1) * 24, y: sp.y };
-    this.player = this.physics.add.sprite(this.lastAltar.x, this.lastAltar.y - 21, 'hero_' + this.color).setScale(3).setDepth(8);
-    this.player.setSize(10, 13);
+    this.player = this.physics.add.sprite(this.lastAltar.x, this.lastAltar.y - 21, 'hero_' + this.color).setScale(HERO_SCALE[this.color][0], HERO_SCALE[this.color][1]).setDepth(8);
+    this.player.setSize(10, 13); this.heroBody(false); // el cuerpo físico es igual para todos aunque se dibujen con otra silueta
     this.player.body.setMaxVelocityY(P.maxFall);
     this.dropT = 0;
     this.physics.add.collider(this.player, this.fg, null, (pl, tile) => !(this.dropT > 0 && tile.index >= 0 && tile.index % 8 === K.ONEWAY), this);
@@ -372,7 +372,7 @@ class CastleScene extends Phaser.Scene {
       let r = this.remotes[s.id];
       if (!r) {
         const pl = room.players.find(p => p.id === s.id); if (!pl) return;
-        r = this.remotes[s.id] = { color: pl.animal, name: pl.name, spr: this.add.sprite(s.x, s.y, 'hero_' + pl.animal).setScale(3).setDepth(7),
+        r = this.remotes[s.id] = { color: pl.animal, name: pl.name, spr: this.add.sprite(s.x, s.y, 'hero_' + pl.animal).setScale(HERO_SCALE[pl.animal][0], HERO_SCALE[pl.animal][1]).setDepth(7),
           tag: this.add.text(0, 0, pl.name, { fontSize: '12px', fontFamily: 'Courier New', color: '#bde', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(9), tx: s.x, ty: s.y };
       }
       r.moving = Math.abs(s.x - r.tx) > 0.5; r.moveT = r.moving ? 0.2 : (r.moveT || 0);

@@ -588,8 +588,8 @@ Object.assign(CastleScene.prototype, {
   // ---- agacharse
   setCrouch(on) {
     if (this.crouching === on) return; this.crouching = on; const b = this.player.body;
-    if (on) { b.setSize(10, 8, false); b.setOffset(1, 5.5); this.player.setTexture('hero_' + this.color + '_crouch'); }
-    else { b.setSize(10, 13, false); b.setOffset(1, 0.5); this.player.setTexture('hero_' + this.color); }
+    if (on) { this.heroBody(true); this.player.setTexture('hero_' + this.color + '_crouch'); }
+    else { this.heroBody(false); this.player.setTexture('hero_' + this.color); }
     this.curTex = null;
   },
   canStand() {
@@ -1732,6 +1732,10 @@ Object.assign(CastleScene.prototype, {
   },
   luaState() { const L = this.lua; return L ? [Math.round(L.x), Math.round(L.y), L.f, L.whip] : null; },
   luaRecv(s) { if (!this.lua || !s) return; const L = this.lua; L.tx = s[0]; L.ty = s[1]; L.f = s[2]; L.whip = s[3]; if (!L.got) { L.got = true; L.seenWhip = L.whip; L.x = L.tx; L.y = L.ty; } },
+  heroBody(crouch) { // cuerpo físico de 30x39 px (24 agachado) para todos, sea cual sea la silueta con que se dibuja el vampiro
+    const [sx, sy] = HERO_SCALE[this.color] || [3, 3], b = this.player.body, w = 30 / sx, h = (crouch ? 24 : 39) / sy;
+    b.setSize(w, h, false); b.setOffset((12 - w) / 2, 13.5 - h);
+  },
   // iconos que el mapa (M) enseña: solo los de las mejoras compradas y solo en las salas que ya has visitado
   mapIconList() {
     const out = [], W = this.W, on = this.mapIcons || new Set(), vis = a => this.visited.has(a);
