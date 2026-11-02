@@ -2,7 +2,7 @@
 
 Resumen de lo que ha cambiado en el juego, de lo más nuevo a lo más antiguo. 
 
-## 0.6.0 (en desarrollo): Zona 2
+## 0.6.0: Zona 2
 
 - **Segundo ascensor:** en La Gran Hoguera, el hueco del suelo se tapa con hierro hasta que cae la Madre Moho; debajo, el Pozo del Segundo Ascensor lleva a la Zona 2 (rótulo «ZONA 2» la primera vez). Las tapas en el suelo se dibujan con barrotes tumbados. `S()` de world.js admite ahora `{ gate: 'idJefe' }`.
 - **Zona 2 (26 salas nuevas):** Patíbulo Exterior, Escalera de Servicio, Casa del Mercader, La Despensa y su Bodega, Conservera Mayor (secreto, muro agrietado), La Milla Verde y las Cárceles, Pasillo y Galería de las velas, Escalera y Capilla del Cuartel, Dependencias de los Funcionarios y Salón de los Dos Tronos. El mundo pasa de 10 a 16 filas (`ROWS`) y hay 6 paletas, músicas y decorados nuevos (zonas 10 a 15). El validador alcanza todas las salas, cristales y gemas y el orden de jefes es correcto.
