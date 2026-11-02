@@ -42,7 +42,7 @@ const HERO_BASE_ROWS = ['...HHHHHH...', '..HHHHHHHH..', '..HSSSSSSH..', '..SRSSS
 const HERO_MAPS = {
   red: ['..H.HHHH.H.G', '..HHHHHHHH.G', '..HSSSSSSH.G', '..SRSSSSRS.G', '...SFSSFS..G', '.CCCSSSSCCCY', 'CCCCAAAACCCB',
     'CCCAAWWAACCC', 'CC.AAAAAA.CC', '...AAAAAA...', '...AA..AA...', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
-  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HSSSSSSH..', 'BHSRSSSSRSH.', 'BHHHFSSFHHH.', 'BHHPSSSSPHH.', 'BCHHAAAAHHCC',
+  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HHSSSSHH..', 'BHSRSSSSRSH.', 'BHHHFSSFHHH.', 'BHHPSSSSPHH.', 'BCHHAAAAHHCC',
     'BCHHAWWAHHCC', 'BC.HAAAAH.CC', 'B..HAAAAH...', 'B..AA..AA...', 'B..AA..AA...', 'B..DD..DD...', 'N.DDD..DDD..'],
   green: ['...CCCCCC...', '..CCCCCCCC..', '..CSSSSSSCB.', '..CRSSSSRC.B', '...SSCCSS..B', '..CCCSSCCC.B', '..CCAAAACC.B',
     '..CCAWWACC.B', '..CCAAAACC.B', '..CCCCCCCC.B', '....AAAA..B.', '....AAAA....', '....DD.DD...', '...DDD.DDD..'],
