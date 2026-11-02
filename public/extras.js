@@ -645,10 +645,7 @@ Object.assign(CastleScene.prototype, {
     const speed = P.speed * (this.slowT > 0 ? 0.5 : 1) * (this.pas.speed || 1) * (this.buffs.spd > 0 ? 1.35 : 1) * (this.crouching ? 0.5 : 1) * (mossy ? MOSS_SLOW : 1);
     if (!this.crouching) { // caminar / saltar: fotogramas de piernas
       const moving = onFloor && dir !== 0 && this.dashT <= 0 && this.stun <= 0;
-      const key = 'hero_' + this.color + (moving ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : (!onFloor ? '_w2' : (((time / 550) | 0) % 2 ? '_i' : ''))) + (this.color === 'red' && this.atkT > 0 ? '_ns' : ''); // Cor sin la espada a la espalda mientras ataca
-      if (this.curTex !== key) { this.curTex = key; p.setTexture(key); }
-    } else if (this.color === 'red') { // agachado: también sin la espada a la espalda mientras ataca
-      const key = 'hero_red_crouch' + (this.atkT > 0 ? '_ns' : '');
+      const key = 'hero_' + this.color + (moving ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : (!onFloor ? '_w2' : (((time / 550) | 0) % 2 ? '_i' : '')));
       if (this.curTex !== key) { this.curTex = key; p.setTexture(key); }
     }
 
@@ -975,7 +972,7 @@ Object.assign(CastleScene.prototype, {
   startAttack() {
     const w = this.wstats(), p = this.player;
     this.atkCd = w.cd * (this.buffs.rage > 0 ? 0.6 : 1); SFX.swing();
-    if (this.wpn.kind === 'ranged') { this.atkT = 0.1; this.fireArrows(w); } else { this.atkT = this.wpn.act; this.swingHit.clear(); }
+    if (this.wpn.kind === 'ranged') { this.atkT = 0.1; this.fireArrows(w); this.bowRecoil(p, this.facing); } else { this.atkT = this.wpn.act; this.swingHit.clear(); }
     this.slashFx(p.x, p.y + (this.crouching ? 7 : 0), this.facing, this.color);
   },
   slashFx(x, y, dir, color) {
@@ -991,6 +988,9 @@ Object.assign(CastleScene.prototype, {
   swordSwing(x, y, dir, tint) { // Cor se saca la espada del hombro y da el tajo de arriba abajo
     const sw = this.add.image(x + dir * 6, y - 6, 'sword_swing').setScale(3.4).setOrigin(0.5, 0.88).setDepth(9).setTint(tint).setAngle(dir * -115);
     this.tweens.add({ targets: sw, angle: dir * 85, duration: 150, ease: 'Cubic.easeOut', onComplete: () => this.tweens.add({ targets: sw, alpha: 0, duration: 90, onComplete: () => sw.destroy() }) });
+  },
+  bowRecoil(spr, dir) { // al soltar la flecha, Malak se tambalea un poquito hacia atrás
+    this.tweens.add({ targets: spr, angle: -dir * 3, duration: 70, yoyo: true, ease: 'Sine.easeOut', onComplete: () => spr.setAngle(0) });
   },
   fireArrows(w) {
     const p = this.player, f = this.facing, dmg = w.dmg + this.dmgBonus();

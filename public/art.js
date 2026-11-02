@@ -38,6 +38,7 @@ const HERO_INFO = {
 };
 // Los cuatro vampiros: mismo cuerpo, distinta cabeza y arma (G acero, B madera, Y dorado, N azul, P placa). Cor: pelo de punta y espada a la espalda;
 // Zaf: armadura plateada, pelo largo plateado y lanza de madera con detalles azules; Malak: delgada, con capucha verde oscuro y arco; Matis: armadura negra, pelo negro con flequillo sobre un ojo y una guadaña grande.
+const HERO_BASE_ROWS = ['...HHHHHH...', '..HHHHHHHH..', '..HSSSSSSH..', '..SRSSSSRS..', '...SFSSFS...', '.CCCSSSSCCC.', 'CCCCAAAACCCC', 'CCCAAWWAACCC', 'CC.AAAAAA.CC', '...AAAAAA...', '...AA..AA...', '...AA..AA...', '...DD..DD...', '..DDD..DDD..']; // el cuerpo sin arma, para tapar los pixeles de arma
 const HERO_MAPS = {
   red: ['..H.HHHH.H.G', '..HHHHHHHH.G', '..HSSSSSSH.G', '..SRSSSSRS.G', '...SFSSFS..G', '.CCCSSSSCCCY', 'CCCCAAAACCCB',
     'CCCAAWWAACCC', 'CC.AAAAAA.CC', '...AAAAAA...', '...AA..AA...', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
@@ -48,6 +49,9 @@ const HERO_MAPS = {
   purple: ['...HHHHHGGGG', '..HHHHHHHHGG', '..HHHHSSSH.B', '..SHSSSSRS.B', '...SFSSFS..B', '.CCCSSSSCCCB', 'CCCCAAAACCCB',
     'CCCAAWWAACCB', 'CC.AAAAAA.CB', '...AAAAAA..B', '...AA..AA..B', '...AA..AA..B', '...DD..DD..B', '..DDD..DDD.B'],
 };
+// Para jugar, los vampiros van sin sus armas (solo Malak conserva el arco). Se quita cada pixel de arma dejando lo que había debajo en el dibujo base.
+const HERO_GAME_MAPS = {};
+for (const k in HERO_MAPS) HERO_GAME_MAPS[k] = k === 'green' ? HERO_MAPS[k] : HERO_MAPS[k].map((row, y) => row.split('').map((ch, x) => ('GBYN'.includes(ch) ? (HERO_BASE_ROWS[y][x]) : ch)).join(''));
 const HERO_SCALE = { red: [3, 3], blue: [3, 3.3], green: [2.7, 3], purple: [3.4, 3] }; // [ancho, alto] con que se dibuja cada vampiro
 const HERO_LOOK = { red: { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b' }, blue: { H: '#cdd3ea', S: '#c4b8d6', R: '#7ad8ff', C: '#3a6ad9', A: '#566178', P: '#98a3bb' }, green: { H: '#16101c', S: '#e0e8dc', R: '#ffd23b', C: '#163f22' }, purple: { H: '#1a1226', S: '#cfc6e6', R: '#d9a0ff', C: '#2b2833', A: '#16141c', W: '#9a4ad9' } };
 const MAPS = {
@@ -279,7 +283,7 @@ function buildArt(scene) {
     const m = MAPS[mapName]; const c = tx.createCanvas(key, m[0].length * px, m.length * px);
     drawMapCtx(c.getContext('2d'), m, pal, px, 0, 0); c.refresh();
   };
-  for (const col in HERO_COLORS) { MAPS['hero_' + col] = HERO_MAPS[col]; makeMap('hero_' + col, 'hero_' + col, heroPal(HERO_COLORS[col], col), 1); }
+  for (const col in HERO_COLORS) { MAPS['hero_' + col] = HERO_GAME_MAPS[col]; makeMap('hero_' + col, 'hero_' + col, heroPal(HERO_COLORS[col], col), 1); }
   ['sk', 'bat1', 'bat2', 'kn', 'gh', 'garg', 'bishop', 'clock', 'conde', 'altar', 'crystal', 'relic', 'heart'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
 
   // vampiros agachados (aplastados contra el suelo)
@@ -292,7 +296,7 @@ function buildArt(scene) {
   const legsA = ['...AA...AA..', '..AA.....AA.', '..DD.....DD.', '.DDD....DDD.'], legsB = ['....AAAA....', '....AAAA....', '....DDDD....', '...DDDDDD...'];
   for (const col in HERO_COLORS) [['w1', legsA], ['w2', legsB]].forEach(([n, legs]) => {
     if (col === 'green') legs = ['..CCCCCCCC..'].concat(legs.slice(1)); // Malak: la túnica baja un píxel más al andar, para que no se vea hueco entre las piernas
-    const hm = HERO_MAPS[col], low = legs.map((row, i) => row.split('').map((ch, x) => ('BGYN'.includes(hm[10 + i][x]) ? hm[10 + i][x] : ch)).join('')); // el arma sigue a la vista al andar
+    const hm = HERO_GAME_MAPS[col], low = legs.map((row, i) => row.split('').map((ch, x) => ('BGYN'.includes(hm[10 + i][x]) ? hm[10 + i][x] : ch)).join('')); // el arma sigue a la vista al andar
     const c = tx.createCanvas('hero_' + col + '_' + n, 12, 14); drawMapCtx(c.getContext('2d'), hm.slice(0, 10).concat(low), heroPal(HERO_COLORS[col], col), 1, 0, 0); c.refresh();
   });
   makeMap('npc_merchant', 'npcM', MAP_PAL.npcM, 1);
@@ -316,10 +320,6 @@ function buildArt(scene) {
     const src = tx.get('hero_' + col).getSourceImage(); const c = tx.createCanvas('hero_' + col + '_i', 12, 14); const g = c.getContext('2d');
     g.imageSmoothingEnabled = false; g.drawImage(src, 0, 8, 12, 6, 0, 8, 12, 6); g.drawImage(src, 0, 0, 12, 8, 0, 1, 12, 8); c.refresh();
   }
-  ['', '_w1', '_w2', '_i', '_crouch'].forEach(suf => { // Cor sin la espada a la espalda: se usa mientras la blande
-    const src = tx.get('hero_red' + suf).getSourceImage(), c = tx.createCanvas('hero_red' + suf + '_ns', 12, 14), g = c.getContext('2d');
-    g.drawImage(src, 0, 0); g.clearRect(11, suf === '_crouch' ? 5 : 0, 1, suf === '_crouch' ? 5 : 8); c.refresh();
-  });
   [['fang', '#e8e8f0', '#ffffff'], ['talis', '#7ad8ff', '#e0f7ff'], ['pot', '#ff3b5c', '#ffd0da'], ['pot2', '#b43bff', '#ecd0ff'], ['spd', '#3bd9ff', '#d0f6ff'], ['str', '#ff9a3b', '#ffe2c0'], ['lamp', '#ffe066', '#fffbe0'], ['ward', '#c9ced8', '#ffffff'], ['rage', '#d4ff3b', '#f6ffd0'], ['tonic', '#3bff9a', '#d0ffe6'], ['fruit', '#ff3bd9', '#ffd0f4']].forEach(([k, c, l]) => makeMap('it_' + k, 'bottle', { D: '#8a6a4a', C: c, L: l }, 1));
   // mejoras del mapa (se compran a los mercaderes): un pergamino de cada color
   [['map_fire', '#ffb347', '#fff0c0'], ['map_boss', '#e8e8f0', '#ffffff'], ['map_npc', '#9be37a', '#e4ffd8'], ['map_cry', '#ff7aa0', '#ffe0ea'], ['map_gem', '#5fd8ff', '#e0f8ff'], ['map_forge', '#ffd23b', '#fff6c0'], ['map_lift', '#ff6a6a', '#ffd8d8']].forEach(([k, c, l]) => makeMap('it_' + k, 'scroll', { D: '#8a6a4a', C: c, L: l }, 1));
