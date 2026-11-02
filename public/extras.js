@@ -1387,7 +1387,7 @@ Object.assign(CastleScene.prototype, {
   // ---- tienda (más mercancía según los jefes derrotados)
   shopStock() { return (this.curNpc && SHOP_STOCK[this.curNpc.area]) || SHOP_STOCK.vest; },
   shopItems() {
-    if (this.shopPage === 1) { const tier = SHOP_MAP_TIER[this.curNpc && this.curNpc.area] || 1; return MAP_UPGRADES.filter(u => u.tier <= tier); } // página de mapas: cada mercader vende 2 más que el anterior
+    if (this.shopPage === 1) { const tier = SHOP_MAP_TIER[this.curNpc && this.curNpc.area] || 1; return MAP_UPGRADES.filter(u => u.tier <= tier && !this.mapIcons.has(u.mapIcon)); } // página de mapas: cada mercader vende 2 más que el anterior; lo comprado ya no se ofrece en ninguna tienda
     const nb = this.progress.bosses.length;
     return this.shopStock().filter(([, need, color]) => nb >= need || color === this.color).map(([id]) => ITEMS.find(it => it.id === id));
   },
@@ -1407,7 +1407,10 @@ Object.assign(CastleScene.prototype, {
       row.on('pointerdown', () => { const k = this.shopItems().indexOf(it); if (k >= 0) { this.shopSel = k; this.buyItem(k); } });
       return { it, row, icon, nameT, ownT, priceT };
     });
-    this.shopTab = add(this.add.text(cx, cy - 213, '', f('13px', '#ffd98a')).setOrigin(0.5)).setInteractive(); this.shopTab.on('pointerdown', () => this.shopTogglePage());
+    const tabStyle = { fontSize: fsz('15px'), fontFamily: 'Courier New', color: '#ffffff', padding: { x: 12, y: 4 } };
+    this.tabItems = add(this.add.text(cx - 110, cy - 208, 'OBJETOS', tabStyle).setOrigin(0.5)).setInteractive(); this.tabItems.on('pointerdown', () => { if (this.shopPage) this.shopTogglePage(); });
+    this.tabMaps = add(this.add.text(cx + 10, cy - 208, 'MAPAS', tabStyle).setOrigin(0.5)).setInteractive(); this.tabMaps.on('pointerdown', () => { if (!this.shopPage) this.shopTogglePage(); });
+    this.shopTab = add(this.add.text(cx + 150, cy - 208, '', f('12px', '#a99bd1')).setOrigin(0.5));
     this.shopDesc = add(this.add.text(cx, cy + 190, '', f('13px', '#a99bd1')).setOrigin(0.5));
     this.shopMore = add(this.add.text(cx, cy + 212, '', f('12px', '#ffd98a')).setOrigin(0.5));
     add(this.add.text(cx, cy + 236, IS_TOUCH ? 'toca un objeto para comprarlo' : '↑↓ elegir · Enter/E comprar · Esc salir', f('12px', '#a99bd1')).setOrigin(0.5));
@@ -1415,13 +1418,17 @@ Object.assign(CastleScene.prototype, {
     close.on('pointerdown', () => this.closeUi());
     this.shopObjs.forEach(o => o.setVisible(false));
   },
-  shopTogglePage() { this.shopPage = this.shopPage ? 0 : 1; this.shopSel = 0; this.refreshShop(); SFX.hit(); },
+  mapStockLeft() { const tier = SHOP_MAP_TIER[this.curNpc && this.curNpc.area] || 1; return MAP_UPGRADES.filter(u => u.tier <= tier && !this.mapIcons.has(u.mapIcon)).length; }, // mapas que este mercader aún puede venderte
+  shopTogglePage() { if (!this.shopPage && !this.mapStockLeft()) return; this.shopPage = this.shopPage ? 0 : 1; this.shopSel = 0; this.refreshShop(); SFX.hit(); },
   openShop() {
-    this.shopOpen = true; this.shopSel = 0; this.shopPage = 0; this.shopObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false); this.refreshShop(); SFX.altar();
+    this.shopOpen = true; this.shopSel = 0; this.shopPage = 0;
+    if (!this.shopHinted) { this.shopHinted = true; this.toast('En la tienda hay una pestaña MAPAS (pulsa Tab): mejoras para ver hogueras, jefes, cristales y más en el mapa', 7000); } this.shopObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false); this.refreshShop(); SFX.altar();
   },
   refreshShop() {
+    if (this.shopPage && !this.mapStockLeft()) this.shopPage = 0; // ya has comprado todos los mapas de este mercader: vuelve a Objetos
     const list = this.shopItems(), cy = SH / 2;
     if (this.shopSel >= list.length) this.shopSel = 0;
+    const left = this.mapStockLeft(); this.tabMaps.setVisible(this.shopOpen && left > 0); this.tabItems.setVisible(this.shopOpen && left > 0); // sin mapas que vender, las pestañas desaparecen
     this.shopTitle.setText('MERCADER      almas: ' + this.souls + ' ◆     gemas: ' + this.gems + ' ✦');
     this.shopRows.forEach(r => {
       const idx = list.indexOf(r.it), vis = idx >= 0 && this.shopOpen;
@@ -1434,7 +1441,8 @@ Object.assign(CastleScene.prototype, {
       r.ownT.setText(it.mapIcon ? (maxed ? 'ya lo ves en el mapa' : 'mejora del mapa') : it.perm ? 'nivel ' + (this.perm[it.perm] | 0) + '/' + it.max : 'tienes ' + this.inv[it.id]);
       r.priceT.setText(maxed ? (it.mapIcon ? 'comprado' : 'máximo') : cost + (gem ? ' ✦' : ' ◆')).setColor(maxed ? '#9fffb0' : ((gem ? this.gems : this.souls) >= cost ? (gem ? '#7ae8ff' : '#d9b3ff') : '#ff7a7a'));
     });
-    this.shopTab.setText(this.shopPage ? 'Objetos   [ MAPAS ]   (' + (IS_TOUCH ? 'toca aquí' : 'Tab o ← →') + ' para cambiar)' : '[ OBJETOS ]   Mapas   (' + (IS_TOUCH ? 'toca aquí' : 'Tab o ← →') + ' para cambiar)');
+    this.tabItems.setBackgroundColor(this.shopPage ? '#2a1d4d' : '#7a4ad9'); this.tabMaps.setBackgroundColor(this.shopPage ? '#7a4ad9' : '#2a1d4d');
+    this.shopTab.setText(IS_TOUCH || !left ? '' : '(Tab o ← →)');
     this.shopDesc.setText(list[this.shopSel].desc);
     const nb = this.progress.bosses.length;
     const pend = this.shopStock().filter(([, need, color]) => nb < need && color !== this.color).map(s => s[1]);
@@ -1445,6 +1453,7 @@ Object.assign(CastleScene.prototype, {
   },
   shopKeys(J) {
     const n = this.shopItems().length;
+    if (n === 0) { if (J.TAB || J.LEFT || J.RIGHT || J.A || J.D) this.shopTogglePage(); if (J.ESC) this.closeUi(); return; }
     if (J.UP || J.W) { this.shopSel = (this.shopSel + n - 1) % n; this.refreshShop(); SFX.hit(); }
     if (J.DOWN || J.S) { this.shopSel = (this.shopSel + 1) % n; this.refreshShop(); SFX.hit(); }
     if (J.TAB || J.LEFT || J.RIGHT || J.A || J.D) this.shopTogglePage();
