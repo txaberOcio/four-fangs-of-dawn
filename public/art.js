@@ -20,7 +20,7 @@ const ZONE_PAL = [
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
-const HERO_NAMES = { red: 'Cor Carmesí', blue: 'Zaf Azul', green: 'Malak Esmeralda', purple: 'Matis Violeta' };
+const HERO_NAMES = { red: 'Cor', blue: 'Zaf', green: 'Malak', purple: 'Matis' }; // solo el nombre, sin el color
 const HERO_REALNAMES = { red: 'Cor', blue: 'Zaf', green: 'Malak', purple: 'Matis' };
 
 // una línea de historia de cada vampiro, para la pantalla de elegir personaje (docs/PERSONAJES.md)
