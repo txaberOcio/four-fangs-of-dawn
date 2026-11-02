@@ -988,7 +988,7 @@ class CastleScene extends Phaser.Scene {
       const mk = (vx, life) => { const pr = this.spawnProj('shock', x, sy - 10, vx, 0, life); if (onPlat) pr.ground = true; };
       mk(230, 1.4); mk(-230, 1.4); if (rage && n > 1) { mk(340, 1.2); mk(-340, 1.2); } this.cameras.main.shake(180, 0.006); };
     const fan = (cnt) => { const list = tgs.length >= 2 ? tgs.slice(0, 4) : [tg], c = Math.max(1, cnt - (list.length - 1)); list.forEach(tt => { const base = Math.atan2(tt.y - y, tt.x - x); for (let i = -c; i <= c; i++) { const an = base + i * 0.24; this.spawnProj('orb', x, y, Math.cos(an) * 200, Math.sin(an) * 200, 4); } }); }; // con 2 o más jugadores el abanico sale hacia cada uno (también a ambos lados)
-    const gear = () => this.spawnProj('gear', Phaser.Math.Between(a.x0 + 20, a.x1 - 20), a.y0 + 12, 0, 240, 3.5, 0);
+    const gear = () => this.spawnProj('gear', Phaser.Math.Between(a.x0 + 20, a.x1 - 20), a.y0 + 12, 0, 240, Math.max(3.5, (a.floor - a.y0 - 12) / 240 + 0.4), 0); // en salas altas (Dos Tronos) la vida del proyectil alcanza hasta el suelo
     const ring = (n, sp, off) => { for (let i = 0; i < n; i++) { const an = off + i * Math.PI * 2 / n, pr = this.spawnProj('spore', x, y - 10, Math.cos(an) * sp, Math.sin(an) * sp, 4); pr.brake = 1.0; } };
     const sporeFan = (n0) => { const list = tgs.length >= 2 ? tgs.slice(0, 4) : [tg], n = Math.max(2, n0 - (list.length - 1)); list.forEach(tt => { const base = Math.atan2(tt.y - y, tt.x - x) - 0.25; for (let i = 0; i < n; i++) { const an = base + (i - (n - 1) / 2) * 0.3, pr = this.spawnProj('spore', x, y - 30, Math.cos(an) * 260, Math.sin(an) * 260, 4.5); pr.brake = 0.75; pr.homing = 38; } }); }; // salen hacia el jugador y se paran lejos del jefe: así no arden junto a él
     const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'reina' ? 'sk' : e.type === 'alcaide' ? 'shroom' : e.type === 'madre' ? (i < 2 ? 'shroom' : 'slug') : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
@@ -1107,7 +1107,7 @@ class CastleScene extends Phaser.Scene {
       case 'rays': // lluvia de rayos de luz desde el techo
         b.setVelocity(0, 0);
         if (e.t < 0.7) e.tele = true;
-        else { e.tele = false; const tot = rage ? 14 : 9; if (e.t > 0.7 + e.n * 0.22 && e.n < tot) { const rx = e.n % 3 === 0 ? Phaser.Math.Clamp(tg.x, a.x0 + 20, a.x1 - 20) : Phaser.Math.Between(a.x0 + 20, a.x1 - 20); this.spawnProj('orb', rx, a.y0 + 14, 0, 240, 3.5); e.n++; } if (e.n >= tot && e.t > 0.7 + tot * 0.22 + 0.8) done(1.1); }
+        else { e.tele = false; const tot = rage ? 14 : 9; if (e.t > 0.7 + e.n * 0.22 && e.n < tot) { const rx = e.n % 3 === 0 ? Phaser.Math.Clamp(tg.x, a.x0 + 20, a.x1 - 20) : Phaser.Math.Between(a.x0 + 20, a.x1 - 20); this.spawnProj('orb', rx, a.y0 + 14, 0, 240, Math.max(3.5, (a.floor - a.y0 - 14) / 240 + 0.4)); e.n++; } if (e.n >= tot && e.t > 0.7 + tot * 0.22 + 0.8) done(1.1); }
         break;
       case 'whip': // Alcaide: latigazo
         b.setVelocityX(0);
