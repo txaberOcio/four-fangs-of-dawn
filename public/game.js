@@ -140,13 +140,13 @@ const EN = {
   pris: { tex: 'preso', sc: 3, body: [12, 15], hp: 6, dmg: 2, spd: 42, hb: [34, 44], kind: 'walk', rez: true, throws: true },
   alcaide: { tex: 'carcelero', sc: 4, body: [12, 15], hp: 36, dmg: 2, hb: [54, 62], kind: 'boss' },
   madre: { tex: 'driade', sc: 5, body: [14, 15], hp: 40, dmg: 2, hb: [64, 74], kind: 'boss' },
-  // Zona 2 (de momento con el dibujo de otros jefes; sprites propios pendientes)
-  capitan: { tex: 'carcelero', sc: 4, body: [12, 15], hp: 80, dmg: 2, hb: [54, 62], kind: 'boss' },
-  farero: { tex: 'archon', sc: 4, body: [10, 14], hp: 88, dmg: 2, hb: [40, 56], kind: 'boss' },
-  subastadora: { tex: 'reina', sc: 4, body: [12, 14], hp: 96, dmg: 2, hb: [50, 56], kind: 'boss' },
-  chambelan: { tex: 'bishop', sc: 4, body: [10, 14], hp: 72, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
-  cadalso: { tex: 'clock', sc: 4, body: [12, 15], hp: 72, dmg: 2, hb: [52, 60], kind: 'boss' },
-  vigilia: { tex: 'aurora', sc: 4, body: [10, 14], hp: 80, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
+  // Zona 2 (cada jefe con su dibujo propio)
+  capitan: { tex: 'capitan', sc: 4, body: [12, 15], hp: 80, dmg: 2, hb: [54, 62], kind: 'boss' },
+  farero: { tex: 'farero', sc: 4, body: [10, 14], hp: 88, dmg: 2, hb: [40, 56], kind: 'boss' },
+  subastadora: { tex: 'subastadora', sc: 4, body: [12, 14], hp: 96, dmg: 2, hb: [50, 56], kind: 'boss' },
+  chambelan: { tex: 'chambelan', sc: 4, body: [10, 14], hp: 72, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
+  cadalso: { tex: 'cadalso', sc: 4, body: [12, 15], hp: 72, dmg: 2, hb: [52, 60], kind: 'boss' },
+  vigilia: { tex: 'vigilia', sc: 4, body: [10, 14], hp: 80, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   // enemigos invulnerables: solo se esquivan
   saw: { tex: 'saw', sc: 3, body: [12, 12], hp: 9999, dmg: 2, hb: [34, 34], kind: 'saw', inv: true },
   sentinel: { tex: 'sentinel', sc: 3, body: [12, 15], hp: 9999, dmg: 2, spd: 70, hb: [34, 44], kind: 'walk', inv: true, patrol: true },
