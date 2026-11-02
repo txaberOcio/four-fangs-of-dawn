@@ -752,6 +752,13 @@ Object.assign(CastleScene.prototype, {
         g.fillStyle = k === -1 ? (a ? '#241a3a' : '#0a0612') : k === K.ONEWAY ? '#ffffff' : k === K.SPIKES ? '#ff4a4a' : k === K.CRACK ? '#ffcf6a' : (pal ? pal.light : '#444');
         g.fillRect(x, y, 1, 1);
       }
+      // calaveritas donde hay jefes (blancas si siguen vivos, grises si ya cayeron)
+      const SKULL = ['.XXXXX.', 'XXXXXXX', 'X.XXX.X', 'X.XXX.X', 'XXXXXXX', '.XXXXX.', '..X.X..'];
+      W.bosses.forEach(b => {
+        const bx = Math.floor(b.x / T), by = Math.floor(b.y / T) - 4, dead = (this.progress.bosses || []).includes(b.id);
+        g.fillStyle = 'rgba(0,0,0,0.75)'; g.fillRect(bx - 5, by - 5, 11, 11);
+        SKULL.forEach((row, ry) => { for (let rx = 0; rx < 7; rx++) if (row[rx] === 'X') { g.fillStyle = (ry === 2 || ry === 3) && (rx === 1 || rx === 5) ? '#000000' : (dead ? '#777777' : '#ffffff'); g.fillRect(bx - 3 + rx, by - 3 + ry, 1, 1); } });
+      });
       // dónde estás: borde de tu sala en cian y tu posición en magenta
       const px = Math.floor(this.player.x / T), py = Math.floor(this.player.y / T), here = W.areaOf(px, py);
       if (here) { g.strokeStyle = '#3bf0ff'; g.lineWidth = 2; g.strokeRect(here.x0 + 1, here.y0 + 1, here.rw - 2, here.rh - 2); }
@@ -761,7 +768,9 @@ Object.assign(CastleScene.prototype, {
       const s = scale(); cv.style.width = (W.Wt * s) + 'px'; cv.style.height = (W.Ht * s) + 'px';
     };
     const at = ev => { const r = cv.getBoundingClientRect(), s = r.width / W.Wt; return [Math.floor((ev.clientX - r.left) / s), Math.floor((ev.clientY - r.top) / s)]; };
-    cv.onmousemove = ev => { const [x, y] = at(ev), a = W.areaOf(x, y), here = W.areaOf(Math.floor(this.player.x / T), Math.floor(this.player.y / T)); info.textContent = (a ? a.name + ' (' + a.id + ')' : 'roca') + (here ? '   ·   estás en: ' + here.name : ''); };
+    cv.onmousemove = ev => { const [x, y] = at(ev), a = W.areaOf(x, y), here = W.areaOf(Math.floor(this.player.x / T), Math.floor(this.player.y / T));
+      const bs = W.bosses.find(b => Math.abs(Math.floor(b.x / T) - x) <= 5 && Math.abs(Math.floor(b.y / T) - 4 - y) <= 5); // al pasar sobre una calavera se dice qué jefe es
+      info.textContent = (bs ? '☠ ' + bs.name + (((this.progress.bosses || []).includes(bs.id)) ? ' (vencido)' : '') + '   ·   ' : '') + (a ? a.name + ' (' + a.id + ')' : 'roca') + (here ? '   ·   estás en: ' + here.name : ''); };
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
     box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
