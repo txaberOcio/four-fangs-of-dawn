@@ -277,11 +277,12 @@ class CastleScene extends Phaser.Scene {
     this.bossName = this.add.text(SW / 2, SH - 70, '', f('14px', '#ff9a9a')).setOrigin(0.5).setScrollFactor(0).setDepth(30);
     this.bossName2 = this.add.text(SW / 2, SH - 70, '', f('14px', '#ff9a9a')).setOrigin(0.5).setScrollFactor(0).setDepth(30); // segundo jefe de la sala (jefe doble)
     // minimapa con la forma real del castillo (lienzo 1 píxel = 1 tile)
-    this.mmBg = this.add.rectangle(SW - 220, 6, 214, 106, 0x000000, 0.55).setOrigin(0).setScrollFactor(0).setDepth(29);
+    this.mmBg = this.add.rectangle(SW - 220, 6, 214, 106, 0x0a0714, 0.7).setOrigin(0).setScrollFactor(0).setDepth(29).setStrokeStyle(2, 0xc8a15a);
     this.mmImg = this.add.image(0, 0, 'mapcv').setOrigin(0).setScale(3).setScrollFactor(0).setDepth(30);
     this.mmDots = this.add.graphics().setScrollFactor(0).setDepth(31);
     this.bigBg = this.add.rectangle(0, 0, SW, SH, 0x000000, 0.86).setOrigin(0).setScrollFactor(0).setDepth(39).setVisible(false);
     this.bigS = Math.min(3, Math.floor((SW - 52) / this.W.Wt * 10) / 10);
+    this.bigFrame = this.add.rectangle(22, 86, this.W.Wt * this.bigS + 8, this.W.Ht * this.bigS + 8, 0x0a0714, 0.9).setOrigin(0).setScrollFactor(0).setDepth(39.5).setStrokeStyle(3, 0xc8a15a).setVisible(false);
     this.bigImg = this.add.image(26, 90, 'mapcv').setOrigin(0).setScale(this.bigS).setScrollFactor(0).setDepth(40).setVisible(false);
     this.bigDots = this.add.graphics().setScrollFactor(0).setDepth(41);
     this.bigTitle = this.add.text(SW / 2, 40, 'MAPA DEL CASTILLO  (M para cerrar)', f('18px', '#ffd98a')).setOrigin(0.5).setScrollFactor(0).setDepth(41).setVisible(false);
@@ -330,11 +331,19 @@ class CastleScene extends Phaser.Scene {
   // los muros agrietados y las salas secretas cerradas se dibujan como pared normal
   paintMapArea(a) {
     if (a.interior) return; // el interior de las casas no sale en el mapa
-    const g = this.mapCtx, light = ZONE_PAL[a.z].light, D = this.fg.layer.data;
+    const g = this.mapCtx, P = ZONE_PAL[a.z], D = this.fg.layer.data;
+    const kind = (gx, gy) => { const c = D[gy] && D[gy][gx]; return c && c.index >= 0 ? c.index % 8 : -1; };
+    const wall = (gx, gy) => { const k = kind(gx, gy); return (k >= 0 && k !== K.ONEWAY && k !== K.SPIKES) || (k === -1 && this.hiddenAt((gx + 0.5) * T, (gy + 0.5) * T)); };
     for (let y = 0; y < a.rh; y++) for (let x = 0; x < a.rw; x++) {
-      const gx = a.x0 + x, gy = a.y0 + y, v = D[gy][gx] ? D[gy][gx].index : -1, k = v < 0 ? -1 : v % 8;
-      const hid = k === -1 && this.hiddenAt((gx + 0.5) * T, (gy + 0.5) * T);
-      g.fillStyle = hid ? light : k === -1 ? '#1b1530' : k === K.ONEWAY ? '#ffffff' : k === K.SPIKES ? '#ff4a4a' : light;
+      const gx = a.x0 + x, gy = a.y0 + y, k = kind(gx, gy), edge = x === 0 || y === 0 || x === a.rw - 1 || y === a.rh - 1;
+      let col;
+      if (k === K.ONEWAY) col = '#ffffff';
+      else if (k === K.SPIKES) col = '#ff4a4a';
+      else if (wall(gx, gy)) { // pared: borde claro donde toca el aire, relleno más oscuro por dentro
+        const open = !wall(gx - 1, gy) || !wall(gx + 1, gy) || !wall(gx, gy - 1) || !wall(gx, gy + 1);
+        col = open ? P.light : P.base;
+      } else col = edge ? P.dark : P.bg; // hueco: fondo teñido con el color de la zona
+      g.fillStyle = col;
       g.fillRect(gx, gy, 1, 1);
     }
   }
@@ -1247,7 +1256,7 @@ class CastleScene extends Phaser.Scene {
     if (this.mmT <= 0 || this.showMap) { this.mmT = 0.2; this.updateMaps(); }
     if (inp.mapPress) {
       this.showMap = !this.showMap;
-      [this.bigBg, this.bigImg, this.bigTitle, this.bigStats].forEach(o => o.setVisible(this.showMap));
+      [this.bigBg, this.bigFrame, this.bigImg, this.bigTitle, this.bigStats].forEach(o => o.setVisible(this.showMap));
       this.mapTitle();
       [this.mmBg, this.mmImg, this.mmDots].forEach(o => o.setVisible(!this.showMap));
       this.bigDots.clear(); this.updateMaps();
