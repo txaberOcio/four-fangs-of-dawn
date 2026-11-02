@@ -760,7 +760,8 @@ class CastleScene extends Phaser.Scene {
       Object.keys(this.cellIdle).forEach(k => { if (!active.has(k)) { this.cellIdle[k] += 0.4; if (this.cellIdle[k] > 10) { this.W.spawns.forEach(s => { if (cellKey(s.x, s.y - 1) === k) this.killed.delete(s.id); }); delete this.cellIdle[k]; } } });
     }
     // IA
-    [...this.ents.values()].forEach(e => { if (e.sim && !e.dead && !e.boss) { // borde de sala segura: el enemigo rebota y se aleja un rato (solo desaparece si ya estaba dentro)
+    [...this.ents.values()].forEach(e => { if (!e.spr.scene) return; // destruido a mitad de este bucle (un jefe cae o se reinicia y retira a sus invocados)
+      if (e.sim && !e.dead && !e.boss) { // borde de sala segura: el enemigo rebota y se aleja un rato (solo desaparece si ya estaba dentro)
         if (e.calmT > 0) e.calmT -= dt;
         if (this.safeAt(e.spr.x, e.spr.y)) { if (e.safeX === undefined) { this.poof(e.spr.x, e.spr.y, 4); e.spr.destroy(); this.ents.delete(e.id); return; } const bd = e.spr.body; e.spr.setPosition(e.safeX, e.safeY); bd.setVelocity(-bd.velocity.x, -bd.velocity.y); if (e.dir) e.dir = -e.dir; e.calmT = 1.6; }
         else { e.safeX = e.spr.x; e.safeY = e.spr.y; } }
@@ -1027,11 +1028,11 @@ class CastleScene extends Phaser.Scene {
           const o = ['lunge', 'volley', 'guard', 'charge'].filter(x => x !== e.last);
           e.act = e.hp < e.max * 0.6 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 2 ? 'order' : pick(o); e.last = e.act;
         }
-        if (e.type === 'farero') { const o = ['fan', 'rain', 'fan', 'charge'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
-        if (e.type === 'subastadora') { const o = ['fan', 'pillars', 'tele', 'leap'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
-        if (e.type === 'chambelan') { const o = ['ambush', 'fan', 'pillars', 'tele'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 ? 'summon' : pick(o); e.last = e.act; }
-        if (e.type === 'cadalso') e.act = pick(['charge', 'slam', 'leap', 'charge']);
-        if (e.type === 'vigilia') { const o = ['fan', 'tele', 'dive', 'rays', 'sweep'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'farero') { const o = ['beam', 'fog', 'rain', 'fan'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'subastadora') { const o = ['gavel', 'coins', 'tele', 'pillars'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 2 ? 'summon' : pick(o); e.last = e.act; }
+        if (e.type === 'chambelan') { const o = ['forms', 'ambush', 'tele', 'pillars'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 ? 'summon' : pick(o); e.last = e.act; }
+        if (e.type === 'cadalso') { const o = ['axe', 'stomp', 'charge', rage ? 'leap' : 'axe'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'vigilia') { const o = ['eyes', 'tele', 'dive', 'rays'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'bishop') { e.summonCd -= 0; e.act = e.hp < e.max * 0.6 && e.summonCd <= 0 ? 'summon' : pick(['fan', 'tele', 'fan']); }
         if (e.type === 'conde') {
           const opts = ['ambush', 'pillars', 'dive', 'sweep', 'rain']; if (e.fanCd <= 0) opts.push('tele');
@@ -1201,6 +1202,60 @@ class CastleScene extends Phaser.Scene {
         b.setVelocityX(0);
         if (e.t < 0.6) e.tele = true;
         else { e.tele = false; const cnt = rage ? 6 : 4; if (e.n < cnt && e.t > 0.6 + e.n * 0.3) { const an = Math.atan2(tg.y - y, tg.x - x); this.spawnProj('orb', x + Math.cos(an) * 30, y - 10, Math.cos(an) * 290, Math.sin(an) * 290, 3); e.n++; } else if (e.n >= cnt && e.t > 0.9 + cnt * 0.3) done(1.0); }
+        break;
+      case 'beam': { // Farero: el haz del faro gira como un abanico de luz
+        b.setVelocity(0, 0);
+        if (e.t < 0.9) { e.tele = true; e.dirT = dirT; }
+        else { e.tele = false; const N = rage ? 16 : 13, k = Math.floor((e.t - 0.9) / 0.1);
+          if (e.n <= k && e.n < N) { const an = e.dirT > 0 ? 0.35 - e.n * 0.17 : Math.PI - 0.35 + e.n * 0.17; this.spawnProj('orb', x, y - 14, Math.cos(an) * 240, Math.sin(an) * 240, 3); e.n++; }
+          else if (e.n >= N && e.t > 0.9 + N * 0.1 + 0.8) done(1.0); }
+        break; }
+      case 'fog': // Farero: niebla de sal que ralentiza y, mientras tanto, abanico de luz
+        b.setVelocity(0, 0);
+        if (e.t < 0.6) e.tele = true;
+        else if (!e.marked) { e.tele = false; e.marked = true; const xs = tgs.map(t => t.x); xs.push(Phaser.Math.Between(a.x0 + 60, a.x1 - 60), Phaser.Math.Between(a.x0 + 60, a.x1 - 60)); xs.forEach(px => { const sx = Phaser.Math.Clamp(px, a.x0 + 30, a.x1 - 30); this.spawnProj('slime', sx, this.surfaceBelow(sx, y, floorY) - 6, 0, 0, 5); }); }
+        else if (!e.fired && e.t > 1.1) { e.fired = true; fan(rage ? 3 : 2); }
+        else if (e.t > 1.9) { e.marked = false; e.fired = false; done(1.0); }
+        break;
+      case 'gavel': // Subastadora: se acerca y baja el martillo dos veces
+        if (e.t < 0.6) { e.tele = false; b.setVelocityX(Math.abs(tg.x - x) > 160 ? dirT * 220 : 0); e.dirT = dirT; }
+        else if (e.t < 1.2) { b.setVelocityX(0); e.tele = true; e.dirT = dirT; }
+        else if (e.n === 0) { e.tele = false; e.n = 1; this.spawnProj('lash', x + e.dirT * 100, y + 30, 0, 0, 0.25); this.cameras.main.shake(140, 0.005); }
+        else if (e.n === 1 && e.t > 1.6) { e.n = 2; this.spawnProj('lash', x + e.dirT * 240, y + 30, 0, 0, 0.25); if (rage) this.spawnProj('lash', x - e.dirT * 100, y + 30, 0, 0, 0.25); this.cameras.main.shake(160, 0.006); }
+        else if (e.n === 2 && e.t > 2.2) done(0.9);
+        break;
+      case 'coins': // Subastadora: ¡vendido! monedas marcadas que caen del techo
+        b.setVelocity(0, 0);
+        if (e.t < 0.5) e.tele = true;
+        else if (!e.marked) { e.tele = false; e.marked = true; e.pxs = tgs.map(t => Phaser.Math.Clamp(t.x, a.x0 + 30, a.x1 - 30)); for (let i = 0; i < (rage ? 5 : 3); i++) e.pxs.push(Phaser.Math.Between(a.x0 + 40, a.x1 - 40)); e.pxs.forEach(px => this.spawnProj('mark', px, this.surfaceBelow(px, floorY - 60, floorY) - 6, 0, 0, 0.9)); }
+        else if (!e.erupted && e.t > 1.4) { e.erupted = true; e.pxs.forEach(px => this.spawnProj('gear', px, a.y0 + 12, 0, 300, (floorY - a.y0) / 300 + 0.4, 0)); }
+        else if (e.t > 2.6) { e.marked = false; e.erupted = false; done(1.0); }
+        break;
+      case 'forms': { // Chambelán: muro de papeleo (orbes) que cae con un hueco
+        b.setVelocity(0, 0);
+        const wall = () => { const nOrb = Math.floor((a.x1 - a.x0 - 60) / 48), c = Math.floor((tg.x - (a.x0 + 30)) / 48) + Phaser.Math.Between(-4, 4), gap = Phaser.Math.Clamp(c - 1, 0, Math.max(0, nOrb - 3)); for (let i = 0; i < nOrb; i++) if (i < gap || i > gap + 2) this.spawnProj('orb', a.x0 + 30 + i * 48, a.y0 + 14, 0, 150, (floorY - a.y0) / 150 + 0.5); };
+        if (e.t < 0.8) e.tele = true;
+        else if (!e.fired) { e.tele = false; e.fired = true; wall(); }
+        else if (rage && e.n === 0 && e.t > 1.7) { e.n = 1; wall(); }
+        else if (e.t > (rage ? 2.6 : 1.9)) { e.fired = false; done(1.1); }
+        break; }
+      case 'axe': // Cadalso: hachazos en línea que avanzan hacia ti
+        b.setVelocityX(0);
+        if (e.t < 0.6) { e.tele = true; e.dirT = dirT; e.pxs = []; }
+        else { e.tele = false; const cnt = rage ? 5 : 3, k = Math.floor((e.t - 0.6) / 0.3);
+          if (e.n <= k && e.n < cnt) { const px = Phaser.Math.Clamp(x + e.dirT * (90 + e.n * 95), a.x0 + 30, a.x1 - 30), sy = this.surfaceBelow(px, y, floorY); this.spawnProj('mark', px, sy - 6, 0, 0, 0.5); e.pxs.push([px, sy, e.t + 0.5, false]); e.n++; }
+          e.pxs.forEach(p => { if (!p[3] && e.t >= p[2]) { p[3] = true; this.spawnProj('pillar', p[0], p[1] - 72, 0, 0, 0.5); this.cameras.main.shake(120, 0.005); } });
+          if (e.n >= cnt && e.pxs.every(p => p[3]) && e.t > 0.6 + cnt * 0.3 + 0.9) done(0.9); }
+        break;
+      case 'stomp': // Cadalso: golpe de tarima, ondas por el suelo
+        b.setVelocityX(0);
+        if (e.t < 0.7) e.tele = true; else if (!e.fired) { e.tele = false; e.fired = true; shock(2); } else if (e.t > 1.3) { e.fired = false; done(1.0); }
+        break;
+      case 'eyes': // Vigilia: ojos que te persiguen despacio
+        b.setVelocity(0, 0);
+        if (e.t < 0.6) e.tele = true;
+        else if (!e.fired) { e.tele = false; e.fired = true; const n = rage ? 5 : 3; for (let i = 0; i < n; i++) { const pr = this.spawnProj('orb', x + (i - (n - 1) / 2) * 40, y - 10, 0, 0, 4.5); pr.homing = 110; } }
+        else if (e.t > 1.3) { e.fired = false; done(1.0); }
         break;
       case 'order': // Capitán: ¡cierren filas! llama a dos soldados
         b.setVelocity(0, 0); e.tele = e.t < 0.8;
