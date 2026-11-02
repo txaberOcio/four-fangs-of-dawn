@@ -141,7 +141,7 @@ const EN = {
   alcaide: { tex: 'carcelero', sc: 4, body: [12, 15], hp: 36, dmg: 2, hb: [54, 62], kind: 'boss' },
   madre: { tex: 'driade', sc: 5, body: [14, 15], hp: 40, dmg: 2, hb: [64, 74], kind: 'boss' },
   // Zona 2 (cada jefe con su dibujo propio)
-  capitan: { tex: 'capitan', sc: 4, body: [12, 15], hp: 80, dmg: 2, hb: [54, 62], kind: 'boss' },
+  capitan: { tex: 'capitan', sc: 4, body: [12, 15], hp: 80, dmg: 2, hb: [54, 62], kind: 'boss', shielded: true },
   farero: { tex: 'farero', sc: 4, body: [10, 14], hp: 88, dmg: 2, hb: [40, 56], kind: 'boss' },
   subastadora: { tex: 'subastadora', sc: 4, body: [12, 14], hp: 96, dmg: 2, hb: [50, 56], kind: 'boss' },
   chambelan: { tex: 'chambelan', sc: 4, body: [10, 14], hp: 72, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
@@ -1002,7 +1002,7 @@ class CastleScene extends Phaser.Scene {
     const gear = () => this.spawnProj('gear', Phaser.Math.Between(a.x0 + 20, a.x1 - 20), a.y0 + 12, 0, 240, Math.max(3.5, (a.floor - a.y0 - 12) / 240 + 0.4), 0); // en salas altas (Dos Tronos) la vida del proyectil alcanza hasta el suelo
     const ring = (n, sp, off) => { for (let i = 0; i < n; i++) { const an = off + i * Math.PI * 2 / n, pr = this.spawnProj('spore', x, y - 10, Math.cos(an) * sp, Math.sin(an) * sp, 4); pr.brake = 1.0; } };
     const sporeFan = (n0) => { const list = tgs.length >= 2 ? tgs.slice(0, 4) : [tg], n = Math.max(2, n0 - (list.length - 1)); list.forEach(tt => { const base = Math.atan2(tt.y - y, tt.x - x) - 0.25; for (let i = 0; i < n; i++) { const an = base + (i - (n - 1) / 2) * 0.3, pr = this.spawnProj('spore', x, y - 30, Math.cos(an) * 260, Math.sin(an) * 260, 4.5); pr.brake = 0.75; pr.homing = 38; } }); }; // salen hacia el jugador y se paran lejos del jefe: así no arden junto a él
-    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'reina' ? 'sk' : e.type === 'alcaide' ? 'shroom' : e.type === 'madre' ? (i < 2 ? 'shroom' : 'slug') : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
+    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'reina' || e.type === 'capitan' ? 'sk' : e.type === 'alcaide' ? 'shroom' : e.type === 'madre' ? (i < 2 ? 'shroom' : 'slug') : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
 
     if (!e.act) {
       e.cd -= dt;
@@ -1023,7 +1023,10 @@ class CastleScene extends Phaser.Scene {
         if (e.type === 'madre') { const near = Math.hypot(tg.x - x, tg.y - y) < 150; if ((e.hp < e.max * 0.25 ? 2 : rage ? 1 : 0) > (e.special || 0)) { e.special = e.hp < e.max * 0.25 ? 2 : 1; e.act = 'cataclysm'; } else if (near && Math.random() < 0.6) e.act = 'slap'; else if (rage && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 3) e.act = 'brood'; else { const o = ['bloom', 'rootwave'].filter(q => q !== e.last); e.act = pick(o); } e.last = e.act; }
         if (e.type === 'clock') e.act = (e.relightT <= 0 && this.torchObjs.some(o => o.area === 'clkC' && !o.lit)) ? 'relight' : pick(['charge', 'slam', 'rain']);
         // Zona 2 (patrones provisionales hechos con los ataques que ya existen; se afinan jugando)
-        if (e.type === 'capitan') e.act = pick(['charge', 'leap', 'charge', 'slam']);
+        if (e.type === 'capitan') { // disciplina militar: estocada doble, guardia con contraataque, saetas, carga de escudo y llamada a filas
+          const o = ['lunge', 'volley', 'guard', 'charge'].filter(x => x !== e.last);
+          e.act = e.hp < e.max * 0.6 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 2 ? 'order' : pick(o); e.last = e.act;
+        }
         if (e.type === 'farero') { const o = ['fan', 'rain', 'fan', 'charge'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'subastadora') { const o = ['fan', 'pillars', 'tele', 'leap'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'chambelan') { const o = ['ambush', 'fan', 'pillars', 'tele'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 ? 'summon' : pick(o); e.last = e.act; }
@@ -1040,7 +1043,7 @@ class CastleScene extends Phaser.Scene {
       return;
     }
     e.t += dt;
-    const done = (cd) => { if (e.type === 'madre' && e.armor > 0) { e.act = 'melt'; e.t = 0; e.tele = false; e.dest = undefined; } else { e.act = null; e.cd = cd * (rage ? 0.65 : 1); e.tele = false; } }; // la Madre Moho siempre se diluye y cambia de sitio tras atacar
+    const done = (cd) => { if (e.type === 'capitan') e.shield = false; if (e.type === 'madre' && e.armor > 0) { e.act = 'melt'; e.t = 0; e.tele = false; e.dest = undefined; } else { e.act = null; e.cd = cd * (rage ? 0.65 : 1); e.tele = false; } }; // la Madre Moho siempre se diluye y cambia de sitio tras atacar
     switch (e.act) {
       case 'leap':
         if (e.t < 0.5) { b.setVelocityX(0); e.tele = true; }
@@ -1181,6 +1184,27 @@ class CastleScene extends Phaser.Scene {
       case 'slap': // Madre: zarpazo a los que se pegan a ella
         b.setVelocity(0, 0);
         if (e.t < 0.5) e.tele = true; else if (!e.fired) { e.tele = false; for (const s2 of [-1, 1]) this.spawnProj('lash', x + s2 * 100, y + 30, 0, 0, 0.25); e.fired = true; this.cameras.main.shake(140, 0.005); } else if (e.t > 1.1) { e.fired = false; done(0.9); }
+        break;
+      case 'lunge': // Capitán: estocada en dos tiempos (ráfaga baja y, tras una pausa, otra alta)
+        if (e.t < 0.55) { b.setVelocityX(0); e.tele = true; e.dirT = dirT; }
+        else if (e.n === 0) { e.tele = false; b.setVelocityX(e.dirT * 520); if (e.t > 0.75 || b.blocked.left || b.blocked.right) { b.setVelocityX(0); this.spawnProj('shock', x + e.dirT * 30, y + 14, e.dirT * 360, 0, 0.7); this.cameras.main.shake(120, 0.005); e.n = 1; e.t = 0.75; } }
+        else if (e.n === 1) { b.setVelocityX(0); e.tele = e.t > 0.95; if (e.t > 1.3) { e.tele = false; this.spawnProj('shock', x + e.dirT * 30, y - 24, e.dirT * 420, 0, 0.8); if (rage) this.spawnProj('shock', x + e.dirT * 30, y + 14, e.dirT * 420, 0, 0.8); this.cameras.main.shake(120, 0.005); e.n = 2; e.t = 1.3; } }
+        else if (e.t > 1.8) done(0.9);
+        break;
+      case 'guard': // Capitán: guardia de hierro (escudo azul, no se le puede dañar) avanzando y contraataque
+        if (e.t < 1.7) { e.shield = true; e.tele = false; b.setVelocityX(dirT * 80); }
+        else if (e.t < 2.1) { e.shield = false; e.tele = true; b.setVelocityX(0); e.dirT = dirT; }
+        else if (!e.fired) { e.tele = false; e.fired = true; this.spawnProj('shock', x + e.dirT * 30, y + 14, e.dirT * 400, 0, 0.9); this.spawnProj('shock', x + e.dirT * 30, y - 24, e.dirT * 400, 0, 0.9); this.cameras.main.shake(160, 0.006); }
+        else if (e.t > 2.8) { e.fired = false; done(0.9); }
+        break;
+      case 'volley': // Capitán: descarga de saetas apuntadas
+        b.setVelocityX(0);
+        if (e.t < 0.6) e.tele = true;
+        else { e.tele = false; const cnt = rage ? 6 : 4; if (e.n < cnt && e.t > 0.6 + e.n * 0.3) { const an = Math.atan2(tg.y - y, tg.x - x); this.spawnProj('orb', x + Math.cos(an) * 30, y - 10, Math.cos(an) * 290, Math.sin(an) * 290, 3); e.n++; } else if (e.n >= cnt && e.t > 0.9 + cnt * 0.3) done(1.0); }
+        break;
+      case 'order': // Capitán: ¡cierren filas! llama a dos soldados
+        b.setVelocity(0, 0); e.tele = e.t < 0.8;
+        if (e.t > 0.8) { summon(2); e.summonCd = 18; done(1.2); }
         break;
       case 'summon':
         b.setVelocity(0, 0); e.tele = e.t < 0.6;
