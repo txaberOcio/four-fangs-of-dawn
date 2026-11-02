@@ -378,7 +378,7 @@ class CastleScene extends Phaser.Scene {
       r.moving = Math.abs(s.x - r.tx) > 0.5; r.moveT = r.moving ? 0.2 : (r.moveT || 0);
       r.tx = s.x; r.ty = s.y; r.spr.setFlipX(!!s.f); r.dead = !!s.dead; r.hp = s.hp; r.crouch = !!s.c;
       r.spr.setAlpha(s.dead ? 0.2 : (s.d ? 0.5 : 1)); 
-      if (s.a && !r.a) this.slashFx(r.spr.x, r.spr.y, s.f ? -1 : 1, r.color);
+      if (s.a && !r.a) { this.slashFx(r.spr.x, r.spr.y, s.f ? -1 : 1, r.color); r.atkV = 0.25; }
       r.a = !!s.a;
       { const ar = this.W.areaOf(Math.floor(s.x / T), Math.floor(s.y / T)); if (ar) this.markVisited(ar); }
     });
@@ -1264,7 +1264,8 @@ class CastleScene extends Phaser.Scene {
     Object.values(this.remotes).forEach(r => {
       r.spr.x += (r.tx - r.spr.x) * 0.35; r.spr.y += (r.ty - r.spr.y) * 0.35; r.tag.setPosition(r.spr.x, r.spr.y - 34);
       r.moveT = Math.max(0, (r.moveT || 0) - dt);
-      const key = 'hero_' + r.color + (r.crouch ? '_crouch' : (r.moveT > 0 ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : ''));
+      const key = 'hero_' + r.color + (r.crouch ? '_crouch' : (r.moveT > 0 ? (((time / 120) | 0) % 2 ? '_w1' : '_w2') : '')) + (r.color === 'red' && r.atkV > 0 ? '_ns' : '');
+      r.atkV = Math.max(0, (r.atkV || 0) - dt);
       if (r.curTex !== key) { r.curTex = key; r.spr.setTexture(key); }
     });
 
