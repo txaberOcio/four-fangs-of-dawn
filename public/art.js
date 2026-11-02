@@ -42,7 +42,7 @@ const HERO_BASE_ROWS = ['...HHHHHH...', '..HHHHHHHH..', '..HSSSSSSH..', '..SRSSS
 const HERO_MAPS = {
   red: ['..H.HHHH.H.G', '..HHHHHHHH.G', '..HSSSSSSH.G', '..SRSSSSRS.G', '...SFSSFS..G', '.CCCSSSSCCCY', 'CCCCAAAACCCB',
     'CCCAAWWAACCC', 'CC.AAAAAA.CC', '...AAAAAA...', '...AA..AA...', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
-  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HSSSSSSH..', 'BHSRSSSSRSH.', 'BHHSFSSFSHH.', 'BHHPSSSSPHH.', 'BCHHAAAAHHCC',
+  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HHSSSSHH..', 'BHHHRSSRHHH.', 'BHHHFSSFHHH.', 'BHHPSSSSPHH.', 'BCHHAAAAHHCC',
     'BCHHAWWAHHCC', 'BC.HAAAAH.CC', 'B..HAAAAH...', 'B..AA..AA...', 'B..AA..AA...', 'B..DD..DD...', 'N.DDD..DDD..'],
   green: ['...CCCCCC...', '..CCCCCCCC..', '..CSSSSSSCB.', '..CRSSSSRC.B', '...SSCCSS..B', '..CCCSSCCC.B', '..CCAAAACC.B',
     '..CCAWWACC.B', '..CCAAAACC.B', '..CCCCCCCC.B', '....AAAA..B.', '....AAAA....', '....DD.DD...', '...DDD.DDD..'],
@@ -53,7 +53,7 @@ const HERO_MAPS = {
 const HERO_GAME_MAPS = {};
 for (const k in HERO_MAPS) HERO_GAME_MAPS[k] = k === 'green' ? HERO_MAPS[k] : HERO_MAPS[k].map((row, y) => row.split('').map((ch, x) => ('GBYN'.includes(ch) ? (HERO_BASE_ROWS[y][x]) : ch)).join(''));
 const HERO_SCALE = { red: [3, 3], blue: [3, 3.3], green: [2.7, 3], purple: [3.4, 3] }; // [ancho, alto] con que se dibuja cada vampiro
-const HERO_LOOK = { red: { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b' }, blue: { H: '#f4f4fc', S: '#c4b8d6', R: '#7ad8ff', C: '#3a6ad9', A: '#566178', P: '#98a3bb' }, green: { H: '#16101c', S: '#e0e8dc', R: '#ffd23b', C: '#163f22' }, purple: { H: '#1a1226', S: '#cfc6e6', R: '#d9a0ff', C: '#2b2833', A: '#16141c', W: '#9a4ad9' } };
+const HERO_LOOK = { red: { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b' }, blue: { H: '#f4f4fc', S: '#c4b8d6', R: '#2a6db0', C: '#3a6ad9', A: '#566178', P: '#98a3bb' }, green: { H: '#16101c', S: '#e0e8dc', R: '#ffd23b', C: '#163f22' }, purple: { H: '#1a1226', S: '#cfc6e6', R: '#d9a0ff', C: '#2b2833', A: '#16141c', W: '#9a4ad9' } };
 const MAPS = {
   hero: [
     '...HHHHHH...', '..HHHHHHHH..', '..HSSSSSSH..', '..SRSSSSRS..', '...SFSSFS...', '.CCCSSSSCCC.', 'CCCCAAAACCCC',
