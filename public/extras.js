@@ -1397,7 +1397,8 @@ Object.assign(CastleScene.prototype, {
     this.shopObjs = [];
     const add = o => { o.setScrollFactor(0).setDepth(60); this.shopObjs.push(o); return o; };
     add(this.add.rectangle(cx, cy, 600, 506, 0x140c22, 0.97).setStrokeStyle(4, 0xffb347));
-    this.shopTitle = add(this.add.text(cx, cy - 230, '', f('18px', '#ffd98a')).setOrigin(0.5));
+    this.shopTitle = add(this.add.text(cx, cy - 232, '', f('18px', '#ffd98a')).setOrigin(0.5));
+    add(this.add.rectangle(cx, cy - 187, 560, 2, 0x7a4ad9, 1)); // línea bajo las pestañas
     this.shopRows = ITEMS.concat(MAP_UPGRADES).map(it => {
       const row = add(this.add.rectangle(cx, cy, 560, 32, 0x2a1d4d, 1)).setInteractive();
       const icon = add(this.add.image(cx - 262, cy, 'it_' + it.id).setScale(1.8));
@@ -1408,11 +1409,11 @@ Object.assign(CastleScene.prototype, {
       return { it, row, icon, nameT, ownT, priceT };
     });
     const tabStyle = { fontSize: fsz('15px'), fontFamily: 'Courier New', color: '#ffffff', padding: { x: 12, y: 4 } };
-    this.tabItems = add(this.add.text(cx - 110, cy - 208, 'OBJETOS', tabStyle).setOrigin(0.5)).setInteractive(); this.tabItems.on('pointerdown', () => { if (this.shopPage) this.shopTogglePage(); });
-    this.tabMaps = add(this.add.text(cx + 10, cy - 208, 'MAPAS', tabStyle).setOrigin(0.5)).setInteractive(); this.tabMaps.on('pointerdown', () => { if (!this.shopPage) this.shopTogglePage(); });
-    this.shopTab = add(this.add.text(cx + 150, cy - 208, '', f('12px', '#a99bd1')).setOrigin(0.5));
-    this.shopDesc = add(this.add.text(cx, cy + 190, '', f('13px', '#a99bd1')).setOrigin(0.5));
-    this.shopMore = add(this.add.text(cx, cy + 212, '', f('12px', '#ffd98a')).setOrigin(0.5));
+    this.tabItems = add(this.add.text(cx - 235, cy - 204, 'OBJETOS', tabStyle).setOrigin(0, 0.5)).setInteractive(); this.tabItems.on('pointerdown', () => { if (this.shopPage) this.shopTogglePage(); });
+    this.tabMaps = add(this.add.text(cx - 128, cy - 204, 'MAPAS', tabStyle).setOrigin(0, 0.5)).setInteractive(); this.tabMaps.on('pointerdown', () => { if (!this.shopPage) this.shopTogglePage(); });
+    this.shopTab = add(this.add.text(cx + 280, cy - 204, '', f('12px', '#a99bd1')).setOrigin(1, 0.5));
+    this.shopDesc = add(this.add.text(cx, cy + 196, '', f('13px', '#a99bd1')).setOrigin(0.5));
+    this.shopMore = add(this.add.text(cx, cy + 216, '', f('12px', '#ffd98a')).setOrigin(0.5));
     add(this.add.text(cx, cy + 236, IS_TOUCH ? 'toca un objeto para comprarlo' : '↑↓ elegir · Enter/E comprar · Esc salir', f('12px', '#a99bd1')).setOrigin(0.5));
     const close = add(this.add.text(cx + 280, cy - 238, '✕', f('22px', '#ff8a8a')).setOrigin(0.5)).setInteractive();
     close.on('pointerdown', () => this.closeUi());
@@ -1434,7 +1435,7 @@ Object.assign(CastleScene.prototype, {
       const idx = list.indexOf(r.it), vis = idx >= 0 && this.shopOpen;
       [r.row, r.icon, r.nameT, r.ownT, r.priceT].forEach(o => o.setVisible(vis));
       if (!vis) return;
-      const step = list.length > 11 ? 27 : 31, y = cy - 195 + idx * step; // con muchos objetos (tienda de F2) las filas se juntan
+      const step = list.length > 11 ? 27 : 31, y = cy - 165 + idx * step; // con muchos objetos (tienda de F2) las filas se juntan
       [r.row, r.icon, r.nameT, r.ownT, r.priceT].forEach(o => o.setY(y)); r.row.setDisplaySize(560, step - 1);
       r.row.setFillStyle(idx === this.shopSel ? 0x5a3a9a : 0x2a1d4d, 1);
       const it = r.it, gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price, maxed = it.mapIcon ? this.mapIcons.has(it.mapIcon) : it.perm && (this.perm[it.perm] | 0) >= it.max;
