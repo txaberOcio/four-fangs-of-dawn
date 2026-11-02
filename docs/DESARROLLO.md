@@ -103,6 +103,8 @@ Añade `?dev=1` a la dirección del juego, por ejemplo <http://localhost:3000/?d
 - **Haz clic en cualquier sala del mapa** para teletransportarte al sitio más cercano donde puedas estar de pie. Al pasar el ratón se muestra el nombre de la sala.
 - **Invulnerable**: botón que activa o desactiva el daño (verde = invulnerable).
 - **Dar todas las habilidades** (Impulso, Doble salto, Salto de pared, Alas del Alba y Ojo de la Noche), **Curar** y **Matar jefes (hasta el Conde)**, que abre los muros del foso y las Torres del Alba.
+- **+1000 almas** (para comprar las mejoras del mapa), **+20 gemas**, **Tienda** (todos los objetos, con la pestaña Mapas) y **Tienda de mapas** (abre directamente la pestaña Mapas).
+- **Iconos del mapa:** casillas arriba con el icono de cada cosa (jefes, hogueras, personajes y tiendas, cristales, gemas, forjas, ascensores) para elegir cuáles se ven; por defecto salen todos y se recuerda la elección. Al pasar el ratón por un icono dice qué es.
 
 Sin `?dev=1` el menú no existe, así que los jugadores normales no lo ven. F2 (o el botón Cerrar) lo cierra.
 

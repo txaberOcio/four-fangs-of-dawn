@@ -16,7 +16,9 @@ Then open <http://localhost:3000>. On Windows there is also an installer (`FourF
 ## Highlights
 
 - Online co-op with 4-letter room codes, drop-in joining and host migration.
-- Four vampires with their own weapon, passive and drawback.
+- Four vampires (Cor, Zaf, Malak and Matis) with their own look, weapon, passive and drawback.
+- A second area below the castle with a double boss fight, a companion who follows you to the end, and talk between the vampires (or thoughts when playing alone).
+- A map that you upgrade: icons for bonfires, bosses, characters, crystals, gems, forges and lifts are bought from the merchants.
 - Boss fights with their own attack patterns, elites with named abilities, shops, secret rooms and an elemental forge.
 - Save points at bonfires; dying sends you back to your last one.
 - Options panel (key **O**): music and effects volume, text size and a visual aid for enemy projectiles.

@@ -2,6 +2,8 @@
 
 *Documento-guía para quien programe la Zona 2 (la «Parte 2» del juego). Redactado el 27/10/2026 a partir de `public/world.js`, `public/game.js`, `public/extras.js`, `public/art.js`, `public/music.js`, `public/decor.js`, `server/index.js`, `scripts/validate.js`, `scripts/recorrido.js` y `docs/ZONA1.md`. El lore y los textos de las charlas están en [PERSONAJES.md](PERSONAJES.md). **El mapa es el que dibujó Txaber** (sección 4).*
 
+> **Estado a 02/11/2026 (versión 0.6.0).** Implementado y jugable: el ascensor de La Gran Hoguera, las 26 salas del mapa dibujado por Txaberocio (ver [MAPA-ZONA2.svg](MAPA-ZONA2.svg)), la llave del Capitán, los jefes (Capitán, Farero, Subastadora, Chambelán y el jefe doble Cadalso y Vigilia, simultáneos, cada uno con su barra), las mejoras de estadística por jefe, Lúa como compañera con látigo, la Reina Isolda, las tiendas, el sistema de charlas y pensamientos de todas las zonas (`public/talks.js` y `public/charlas.js`), las mejoras del mapa que se compran, los pensamientos ante puertas cerradas y los nombres Cor, Zaf, Malak y Matis. **Pendiente:** sprites y ataques propios de los jefes nuevos (hoy usan los de otros jefes), enemigos y diarios propios de la zona, la escena de rescate de Lúa y la de cierre de la Parte 2, la zona 3, y afinar la dificultad jugando. Donde este documento y el juego discrepen (las cuatro sendas separadas, las cuatro tapas del refugio, los combates seguidos), manda el juego: el mapa final es el de Txaberocio.
+
 **Estado de lo que dice este documento:**
 
 - **[COMPROBADO]**: lo he leído en el código y es así hoy.

@@ -37,11 +37,14 @@ Cuatro vampiros, los colmillos que los hermanos del Alba crearon y abandonaron, 
 
   | Vampiro | Arma | Pasiva | Desventaja |
   |---|---|---|---|
-  | Carmesí | Espada | Sed de sangre: cura el 40 % de los golpes | — |
-  | Azul | Lanza (largo alcance) | Visión nocturna | Más daño de los proyectiles y algo más lento |
-  | Esmeralda | Arco | Cazadora de almas (+50 % de almas) | +50 % de daño recibido y no rompe muros sin bombas |
-  | Violeta | Guadaña | Piel de sombra (+2 corazones) | Se mueve más lento (lo compensa con un **gancho automático** al borde si el salto se queda corto) |
+  | Cor | Espada | Sed de sangre: cura el 40 % de los golpes | — |
+  | Zaf | Lanza (largo alcance) | Visión nocturna | Más daño de los proyectiles y algo más lento |
+  | Malak | Arco | Caza de almas (+50 % de almas) | +50 % de daño recibido y no rompe muros sin bombas |
+  | Matis | Guadaña | Piel de sombra (+2 corazones) | Se mueve más lento (lo compensa con un **gancho automático** al borde si el salto se queda corto) |
 
+- **Zona 2 (tras la Madre Moho):** un segundo ascensor en La Gran Hoguera baja a más de 25 salas nuevas: el Patíbulo Exterior, la Despensa, la Milla Verde y las Cárceles, la Capilla del Cuartel y las Dependencias de los Funcionarios. El Capitán de Hierro guarda la llave de la puerta de los Funcionarios, y la parte acaba con un **jefe doble**, Cadalso y Vigilia, que pelean a la vez, cada uno con su barra de vida, y puedes elegir a cuál matar primero. Al vencer al Último Farero se libera a **Lúa**, la hermana de Zaf, que te sigue hasta el final y mata con su látigo a los enemigos débiles.
+- **Historia y charlas:** cada vampiro tiene su pasado y su objetivo (se ven al elegirlo). Al pasar por una zona por primera vez, lograr un objetivo, ver un enemigo o ver un lugar inalcanzable, hablan entre ellos en cooperativo y piensan en voz alta en solitario. Al tocar una puerta cerrada, el vampiro piensa qué podría abrirla.
+- **Mapa que se compra:** el mapa muestra hogueras, jefes, personajes, cristales, gemas, forjas y ascensores solo si compras las mejoras correspondientes a los mercaderes (pestaña MAPAS de la tienda; cada mercader vende 2 más que el anterior).
 - **Metroidvania de verdad:** Impulso, Doble salto y Salto de pared abren zonas y atajos nuevos. Cada vampiro conquista sus propios poderes y tiene su propia partida guardada.
 - **Oscuridad y luz como mecánica:** las antorchas se encienden y apagan (`E`) y su estado se comparte. Los fantasmas no ven a quien está bajo la luz, los murciélagos huyen de ella y el Guardián del Reloj es invulnerable mientras haya luz.
 - **Jefes con mecánicas propias**, incluida la pelea final, donde el suelo del trono se derrumba y todos caen a un foso con escombros.

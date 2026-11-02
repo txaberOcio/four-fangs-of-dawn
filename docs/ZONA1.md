@@ -16,7 +16,7 @@ Este documento define el **recorrido previsto**, qué abre cada jefe, qué desv�
 | 5 | **Aurora o Vesper** (solo uno) | Alas del Alba u Ojo de la Noche | La puerta al cielo y la puerta de la Grieta Sellada (Cueva del Abismo) | Torres del Alba: **tramo tranquilo** (sin enemigos, música de calma) con la **Casa del Mercader** | — |
 | 6 | **Alcaide Verdín** (Sala del Alcaide) | Pisotón de Raíces | La tapa de raíces hacia la Madre Moho; las losas de la Veta de Ceniza | Cielo, Cumbre, Santuario y Calabozos Profundos (mercader en el Pozo del Ascensor) | Jardín Colgante (gema), Mazmorra de Nubes (cristal y gema), Celdas Cubiertas (cristal y élite con el **Martillo Latente**), Cueva del Abismo por la Grieta Sellada (Herrero, Forja de los Elementos, gema) |
 | 7 | **La Madre Moho** (Corazón del Musgo) | — | La puerta oeste: el camino de salida | — | — |
-| 8 | *(fin)* **La Gran Hoguera** | **Mejora de daño de la Zona 1** (Antesala del Abismo) | Se llega cayendo: no hay vuelta por ahí | Camino de salida (5 salas, hoguera en la Veta de Ceniza) | — |
+| 8 | *(fin de la Zona 1; desde 0.6.0 hay aquí un ascensor, tapado con hierro hasta que cae la Madre Moho, que baja a la Zona 2: ver [ZONA2.md](ZONA2.md))* **La Gran Hoguera** | **Mejora de daño de la Zona 1** (Antesala del Abismo) | Se llega cayendo: no hay vuelta por ahí | Camino de salida (5 salas, hoguera en la Veta de Ceniza) | — |
 
 ```mermaid
 flowchart TD
