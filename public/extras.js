@@ -757,7 +757,7 @@ Object.assign(CastleScene.prototype, {
     const W = this.W, box = document.createElement('div');
     box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#0a0612ee;color:#fff;font:13px Courier New,monospace;padding:10px;display:none;overflow:auto';
     box.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b>MODO DESARROLLO</b>' +
-      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devHammer">Dar el Martillo</button><button id="devShop">Tienda</button><button id="devSave">Guardar aquí</button><button id="devLoad">Cargar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button><select id="devZone" style="font:12px Courier New,monospace;padding:3px"></select>' +
+      '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devSouls">+1000 almas</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devHammer">Dar el Martillo</button><button id="devShop">Tienda</button><button id="devMaps">Tienda de mapas</button><button id="devSave">Guardar aquí</button><button id="devLoad">Cargar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button><select id="devZone" style="font:12px Courier New,monospace;padding:3px"></select>' +
       '<span id="devInfo" style="color:#ffd98a">Haz clic en el mapa para teletransportarte</span></div><div id="devIcons" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:8px"></div><canvas id="devMap" style="image-rendering:pixelated;cursor:crosshair;border:2px solid #ffb347"></canvas>';
     document.body.appendChild(box);
     box.querySelectorAll('button').forEach(b => { b.style.cssText = 'width:auto;margin:0;padding:4px 10px;font:12px Courier New,monospace;cursor:pointer'; });
@@ -811,6 +811,7 @@ Object.assign(CastleScene.prototype, {
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
     box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
+    box.querySelector('#devSouls').onclick = () => { this.souls += 1000; SFX.pick(); this.toast('+1000 almas (modo desarrollo): ' + this.souls + ' en total'); };
     box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
     box.querySelector('#devHammer').onclick = () => { this.giveHammer(); };
@@ -824,6 +825,7 @@ Object.assign(CastleScene.prototype, {
       Object.keys(groups).forEach(k => { html += '<optgroup label="' + k + '">' + groups[k].map(a => '<option value="' + a.id + '">' + a.name + '</option>').join('') + '</optgroup>'; });
       sel.innerHTML = html; sel.onchange = () => { if (sel.value) { this.devTeleport(sel.value); sel.value = ''; toggle(); } };
     }
+    box.querySelector('#devMaps').onclick = () => { toggle(); this.curNpc = { area: 'dev' }; this.openShop(); this.shopPage = 1; this.refreshShop(); }; // tienda de desarrollo, directa a las mejoras del mapa
     box.querySelector('#devShop').onclick = () => { toggle(); this.curNpc = { area: 'dev' }; this.openShop(); }; // tienda de desarrollo: todos los objetos
     box.querySelector('#devBoss').onclick = () => { ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde'].forEach(b => { if (!this.progress.bosses.includes(b)) { this.progress.bosses.push(b); socket.emit('bossDead', b); } }); this.applyProgress(this.progress, true); draw(); };
     const orig = this.hurt; this.hurt = (d, x) => { if (this.devGod) return; return orig.call(this, d, x); };
