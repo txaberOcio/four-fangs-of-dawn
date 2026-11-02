@@ -102,6 +102,7 @@ const MAPS = {
   npcMad: [
     '.H.HHHHHH.H.', 'HHHHHHHHHHHH', '.HHSSSSSSHH.', '.HSWWSSWWSH.', '.HSWDSSDWSH.', '.HSSSSSSSSH.', '..SSMMMMSS..',
     '..TTTTTTTT..', '.TTTTTTTTTT.', 'TTT.TTTT.TTT', '.T..TTTT..T.', '....TT.TT...', '....TT.TT...', '...DDD.DDD..'],
+  scroll: ['.DDDDDDDD.', 'DCCCCCCCCD', 'DCLLLLLLCD', 'DCCCCCCCCD', 'DCLLLLLLCD', 'DCCCCCCCCD', 'DCLLLLLLCD', 'DCCCCCCCCD', '.DDDDDDDD.'], // pergamino de las mejoras del mapa
   bottle: ['....DD....', '....DD....', '...DDDD...', '....CC....', '...CCCC...', '..CCLLCC..', '.CCCLLCCC.', '.CCCCCCCC.', '.CCCCCCCC.', '.CCCCCCCC.', '..CCCCCC..', '...DDDD...'],
   amulet: ['...DDDD...', '..D....D..', '..D....D..', '...DDDD...', '....DD....', '...GGGG...', '..GGWWGG..', '..GWRRWG..', '..GWRRWG..', '..GGWWGG..', '...GGGG...', '....GG....'],
   hammer: ['..HHHHH...', '.HHHHHHH..', '.HHHHHHH..', '..HHHHH.S.', '......SS..', '.....SS...', '....SS....', '...SS.....', '..SS......', '.SS.......'],
@@ -291,6 +292,8 @@ function buildArt(scene) {
     g.imageSmoothingEnabled = false; g.drawImage(src, 0, 8, 12, 6, 0, 8, 12, 6); g.drawImage(src, 0, 0, 12, 8, 0, 1, 12, 8); c.refresh();
   }
   [['fang', '#e8e8f0', '#ffffff'], ['talis', '#7ad8ff', '#e0f7ff'], ['pot', '#ff3b5c', '#ffd0da'], ['pot2', '#b43bff', '#ecd0ff'], ['spd', '#3bd9ff', '#d0f6ff'], ['str', '#ff9a3b', '#ffe2c0'], ['lamp', '#ffe066', '#fffbe0'], ['ward', '#c9ced8', '#ffffff'], ['rage', '#d4ff3b', '#f6ffd0'], ['tonic', '#3bff9a', '#d0ffe6'], ['fruit', '#ff3bd9', '#ffd0f4']].forEach(([k, c, l]) => makeMap('it_' + k, 'bottle', { D: '#8a6a4a', C: c, L: l }, 1));
+  // mejoras del mapa (se compran a los mercaderes): un pergamino de cada color
+  [['map_fire', '#ffb347', '#fff0c0'], ['map_boss', '#e8e8f0', '#ffffff'], ['map_npc', '#9be37a', '#e4ffd8'], ['map_cry', '#ff7aa0', '#ffe0ea'], ['map_gem', '#5fd8ff', '#e0f8ff'], ['map_forge', '#ffd23b', '#fff6c0'], ['map_lift', '#ff6a6a', '#ffd8d8']].forEach(([k, c, l]) => makeMap('it_' + k, 'scroll', { D: '#8a6a4a', C: c, L: l }, 1));
   makeMap('it_amu', 'amulet', MAP_PAL.amulet, 1);
   makeMap('forge', 'hammer', MAP_PAL.hammer, 1);
   makeMap('soul', 'soul', MAP_PAL.soul, 1);

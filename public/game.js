@@ -342,10 +342,12 @@ class CastleScene extends Phaser.Scene {
     if (this.showMap) {
       const g = this.bigDots; g.clear();
       const W = this.W, mx = x => 26 + x * this.bigS, my = y => 90 + y * this.bigS;
-      W.altars.forEach(a => { if (this.visited.has(a.area)) g.fillStyle(0xffd23b, 1).fillRect(mx(a.x / T) - 2, my(a.y / T) - 3, 4, 4); });
       if (this.objective && ((this.time.now >> 8) & 1)) g.fillStyle(0x6bff8a, 1).fillRect(mx(this.objective.x / T) - 4, my(this.objective.y / T) - 4, 8, 8);
-      W.bosses.forEach(b => { if (this.visited.has(b.area) && !this.bossGone(b)) g.fillStyle(0xff3b3b, 1).fillRect(mx(b.x / T) - 3, my(b.y / T) - 6, 6, 6); });
-      W.crystals.forEach(c => { if (this.visited.has(c.area) && !this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y) && (!c.peek || c.peeked)) g.fillStyle(0xff7aa0, 1).fillRect(mx(c.x / T) - 1, my(c.y / T) - 1, 3, 3); });
+      this.mapIconList().forEach(i => { // iconos de las mejoras del mapa que has comprado
+        const rows = MAP_PATTERNS[i.k], cx = Math.round(mx(i.x)), cy = Math.round(my(i.y)), col = parseInt(i.col.slice(1), 16);
+        g.fillStyle(0x000000, 0.75).fillRect(cx - 4, cy - 4, 9, 9);
+        rows.forEach((row, ry) => { for (let rx = 0; rx < 7; rx++) if (row[rx] !== '.') g.fillStyle(row[rx] === 'o' ? 0x000000 : col, 1).fillRect(cx - 3 + rx, cy - 3 + ry, 1, 1); });
+      });
       Object.values(this.remotes).forEach(r => g.fillStyle(parseInt(HERO_COLORS[r.color].slice(1), 16), 1).fillRect(mx(r.spr.x / T) - 2, my(r.spr.y / T) - 2, 5, 5));
       if ((this.time.now >> 8) & 1) g.fillStyle(0xffffff, 1).fillRect(mx(tx) - 2, my(ty) - 2, 5, 5);
       return;
@@ -356,9 +358,8 @@ class CastleScene extends Phaser.Scene {
     const g = this.mmDots; g.clear();
     const mx = x => SW - 216 + (x - cx0) * 3, my = y => 8 + (y - cy0) * 3;
     const inWin = (x, y) => x >= cx0 && x < cx0 + 70 && y >= cy0 && y < cy0 + 34;
-    this.W.altars.forEach(a => { if (this.visited.has(a.area) && inWin(a.x / T, a.y / T)) g.fillStyle(0xffd23b, 1).fillRect(mx(a.x / T) - 1, my(a.y / T) - 2, 3, 3); });
     if (this.objective && inWin(this.objective.x / T, this.objective.y / T) && ((this.time.now >> 8) & 1)) g.fillStyle(0x6bff8a, 1).fillRect(mx(this.objective.x / T) - 2, my(this.objective.y / T) - 2, 5, 5);
-    this.W.bosses.forEach(b => { if (this.visited.has(b.area) && !this.bossGone(b) && inWin(b.x / T, b.y / T)) g.fillStyle(0xff3b3b, 1).fillRect(mx(b.x / T) - 2, my(b.y / T) - 3, 4, 4); });
+    this.mapIconList().forEach(i => { if (inWin(i.x, i.y)) g.fillStyle(parseInt(i.col.slice(1), 16), 1).fillRect(mx(i.x) - 1, my(i.y) - 1, 3, 3); }); // mejoras del mapa: puntos de colores en el mapa pequeño
     Object.values(this.remotes).forEach(r => { const x = r.spr.x / T, y = r.spr.y / T; if (inWin(x, y)) g.fillStyle(parseInt(HERO_COLORS[r.color].slice(1), 16), 1).fillRect(mx(x) - 1, my(y) - 1, 3, 3); });
     if ((this.time.now >> 8) & 1) g.fillStyle(0xffffff, 1).fillRect(mx(tx) - 1, my(ty) - 1, 3, 3);
   }

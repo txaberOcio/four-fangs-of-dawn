@@ -75,6 +75,24 @@ const SHOP_STOCK = {
   cap: [['pot', 0], ['pot2', 0], ['bomb', 0], ['lamp', 0], ['ward', 0], ['str', 0], ['spd', 0], ['rage', 0], ['tonic', 0], ['amu', 0], ['talis', 0], ['fruit', 0]]
 };
 SHOP_STOCK.dev = ITEMS.map(i => [i.id, 0]); // tienda del panel de desarrollo (F2)
+// Mejoras del mapa: los iconos que el mapa (M) enseña solo se ven si los compras. Cada mercader vende 2 más que el anterior (1, 3, 5, 7).
+// tier = primer mercader que la vende; clave = el icono que activa (los mismos que las casillas del panel F2)
+const MAP_UPGRADES = [
+  { id: 'map_fire', mapIcon: 'fire', tier: 1, price: 250, name: 'Brasas del Alba', desc: 'Las hogueras que has encontrado se marcan en el mapa.', lore: 'Un puñado de brasas del Alba, que siempre apuntan a la lumbre más cercana.' },
+  { id: 'map_boss', mapIcon: 'boss', tier: 2, price: 500, name: 'Cuaderno del Verdugo', desc: 'Anota en el mapa dónde yace cada jefe que has visto.', lore: 'Un verdugo lleva la cuenta de a quién le toca.' },
+  { id: 'map_npc', mapIcon: 'npc', tier: 2, price: 650, name: 'Registro del Chambelán', desc: 'Marca en el mapa a los personajes y mercaderes que has conocido.', lore: 'El Chambelán sabía el nombre de todos, hasta que perdió el suyo.' },
+  { id: 'map_cry', mapIcon: 'cry', tier: 3, price: 800, name: 'Lente de Sangre', desc: 'Marca los cristales de vida que te quedan por coger en las salas que has visitado.', lore: 'Un cristal pulido con sangre ve lo que late dentro de la piedra.' },
+  { id: 'map_gem', mapIcon: 'gem', tier: 3, price: 1000, name: 'Ojo del Tasador', desc: 'Marca las gemas que quedan por coger en las salas que has visitado.', lore: 'El tasador del Mercado huele una gema a tres salas de distancia.' },
+  { id: 'map_forge', mapIcon: 'forge', tier: 4, price: 1250, name: 'Plano del Herrero', desc: 'Marca las forjas de arma que todavía no has usado.', lore: 'El Herrero dibujó dónde están sus yunques antes de perder el martillo.' },
+  { id: 'map_lift', mapIcon: 'lift', tier: 4, price: 1500, name: 'Cadenas del Montacargas', desc: 'Marca los ascensores en el mapa.', lore: 'Quien tira de las cadenas sabe adónde bajan.' },
+];
+const SHOP_MAP_TIER = { vest: 1, naveS: 2, casaM: 3, asc: 4, mer: 4, cap: 4, dev: 4 }; // hasta qué mejoras del mapa vende cada mercader
+// dibujos de los iconos del mapa (7x7); el mismo juego los usa en el mapa (M) y en el panel de desarrollo (F2)
+const MAP_PATTERNS = {
+  boss: ['.XXXXX.', 'XXXXXXX', 'XoXXXoX', 'XoXXXoX', 'XXXXXXX', '.XXXXX.', '..X.X..'], fire: ['...X...', '..XX...', '..XXX..', '.XXXXX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.'], cry: ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
+  npc: ['..XXX..', '..XXX..', '...X...', '.XXXXX.', 'X.XXX.X', '..X.X..', '.XX.XX.'], forge: ['XXXXXXX', '.XXXXX.', '..XXX..', '..XXX..', '.XXXXX.', 'XXXXXXX', '.......'], lift: ['...X...', '..XXX..', '.XXXXX.', '...X...', '.XXXXX.', '..XXX..', '...X...'] };
+MAP_PATTERNS.gem = MAP_PATTERNS.cry;
+const MAP_COLORS = { boss: '#ffffff', fire: '#ffb347', npc: '#9be37a', cry: '#ff7aa0', gem: '#5fd8ff', forge: '#ffd23b', lift: '#ff6a6a' };
 const SHOP_ORDER = ['vest', 'naveS', 'casaM', 'asc', 'mer', 'cap'];
 // poderes elementales de la Forja de los Elementos: cambian el color del ataque y añaden un efecto
 const ELEMENTS = {
@@ -320,7 +338,7 @@ Object.assign(CastleScene.prototype, {
     this.gems = 0; this.perm = { dmg: 0, souls: 0, hp: 0 }; this.gemGot = new Set(); this.bossGemsPaid = new Set(this.progress ? this.progress.bosses : []);
     this.souls = 0; this.inv = {}; ITEMS.forEach(i => { this.inv[i.id] = 0; }); this.ward = 0; this.selItem = 0; this.buffs = { spd: 0, str: 0, lamp: 0, rage: 0, tonic: 0 };
     this.crouching = false; this.arrows = []; this.forgeGot = new Set(); this.shopOpen = false; this.dlg = null; this.shopSel = 0;
-    this.kills = {}; this.seen = new Set(); this.eliteGot = new Set(); this.pagesGot = new Set(); this.bookOpen = false; this.bookSel = 0; this.expT = 0;
+    this.kills = {}; this.mapIcons = new Set(); this.shopPage = 0; this.seen = new Set(); this.eliteGot = new Set(); this.pagesGot = new Set(); this.bookOpen = false; this.bookSel = 0; this.expT = 0;
     this.pageObjs = w.pages.map(pg => {
       const spr = this.add.image(pg.x, pg.y, 'page').setScale(2.4).setDepth(2);
       const glow = this.add.image(pg.x, pg.y, 'glow').setScale(0.9).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.45).setDepth(1).setVisible(!LITE);
@@ -373,7 +391,7 @@ Object.assign(CastleScene.prototype, {
   },
   // Recupera los datos personales de la partida guardada
   loadPersonal(m) {
-    this.travel = !!m.travel; this.element = ELEMENTS[m.el] ? m.el : '';
+    this.travel = !!m.travel; this.element = ELEMENTS[m.el] ? m.el : ''; this.mapIcons = new Set((m.mapi || []).filter(k => MAP_PATTERNS[k]));
     this.gems = m.gems | 0; this.perm = { dmg: (m.perm && m.perm.dmg) | 0, souls: (m.perm && m.perm.souls) | 0, hp: (m.perm && m.perm.hp) | 0 };
     (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
@@ -584,7 +602,7 @@ Object.assign(CastleScene.prototype, {
   readInput(K_) {
     const jd = k => Phaser.Input.Keyboard.JustDown(k);
     if (this.introLock) { const g0 = pollPad().edge || {}; if (jd(K_.E) || jd(K_.ENTER) || jd(K_.SPACE) || touchJust('interact') || touchJust('jump') || g0.interact || g0.jump) this.introNext(); return { J: {}, held: () => false }; }
-    const J = {}; ['UP', 'DOWN', 'W', 'S', 'E', 'ENTER', 'ESC', 'SPACE', 'X', 'J', 'Z', 'C', 'K', 'SHIFT', 'Q', 'R', 'TAB', 'M', 'N', 'B'].forEach(n => { J[n] = jd(K_[n]); });
+    const J = {}; ['UP', 'DOWN', 'W', 'S', 'E', 'ENTER', 'ESC', 'SPACE', 'X', 'J', 'Z', 'C', 'K', 'SHIFT', 'Q', 'R', 'TAB', 'M', 'N', 'B', 'LEFT', 'RIGHT', 'A', 'D'].forEach(n => { J[n] = jd(K_[n]); });
     const g = pollPad().edge || {};
     if (g.up) J.UP = true; if (g.down) J.DOWN = true; if (g.jump) J.ENTER = true; if (g.back) J.ESC = true;
     return { J, held: (...ks) => ks.some(k => k.isDown),
@@ -769,8 +787,7 @@ Object.assign(CastleScene.prototype, {
         rows.forEach((row, ry) => { for (let rx = 0; rx < 7; rx++) if (row[rx] !== '.') { g.fillStyle = row[rx] === 'o' ? '#000000' : col; g.fillRect(gx - 3 + rx, gy - 3 + ry, 1, 1); } });
         pts.push({ x: gx, y: gy, label });
       };
-      const SKULL = ['.XXXXX.', 'XXXXXXX', 'XoXXXoX', 'XoXXXoX', 'XXXXXXX', '.XXXXX.', '..X.X..'], FLAME = ['...X...', '..XX...', '..XXX..', '.XXXXX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.'], DIAMOND = ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
-      const PERSON = ['..XXX..', '..XXX..', '...X...', '.XXXXX.', 'X.XXX.X', '..X.X..', '.XX.XX.'], ANVIL = ['XXXXXXX', '.XXXXX.', '..XXX..', '..XXX..', '.XXXXX.', 'XXXXXXX', '.......'], ARROWS = ['...X...', '..XXX..', '.XXXXX.', '...X...', '.XXXXX.', '..XXX..', '...X...'];
+      const SKULL = MAP_PATTERNS.boss, FLAME = MAP_PATTERNS.fire, DIAMOND = MAP_PATTERNS.cry, PERSON = MAP_PATTERNS.npc, ANVIL = MAP_PATTERNS.forge, ARROWS = MAP_PATTERNS.lift;
       const doneB = id => (this.progress.bosses || []).includes(id);
       if (ON.boss) W.bosses.forEach(b => stamp(SKULL, Math.floor(b.x / T), Math.floor(b.y / T) - 4, doneB(b.id) ? '#777777' : '#ffffff', '☠ ' + b.name + (doneB(b.id) ? ' (vencido)' : '')));
       if (ON.fire) W.altars.forEach(a => stamp(FLAME, Math.floor(a.x / T), Math.floor(a.y / T) - 4, this.bonfireLit && this.bonfireLit.has(a.id) ? '#ffb347' : '#a0642a', '🔥 Hoguera' + (a.big ? ' grande' : '')));
@@ -1288,13 +1305,13 @@ Object.assign(CastleScene.prototype, {
   savePersonal(a) {
     this.snap = this.captureState(); // nuevo punto de control: lo guardado al descansar en la hoguera
     socket.emit('save', { souls: this.souls, inv: this.inv, wlv: this.wlv, maxHp: this.maxHp, cry: [...this.cryGot], forge: [...this.forgeGot],
-      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: [...this.gemGot], perm: this.perm, bg: [...this.bossGemsPaid], hammer: this.hammerState, met: this.smithMet, quests: this.quests });
+      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: [...this.gemGot], perm: this.perm, bg: [...this.bossGemsPaid], hammer: this.hammerState, met: this.smithMet, quests: this.quests, mapi: [...this.mapIcons] });
   },
 
   // ---- punto de control: lo conseguido desde el último descanso en una hoguera se pierde al morir
   captureState() {
     return { souls: this.souls, inv: Object.assign({}, this.inv), wlv: this.wlv, maxHp: this.maxHp, abil: Object.assign({}, this.abil), cry: [...this.cryGot], forge: [...this.forgeGot], gem: [...this.gemGot], gems: this.gems,
-      perm: Object.assign({}, this.perm), element: this.element, travel: this.travel, hammer: this.hammerState, met: this.smithMet, quests: Object.assign({}, this.quests), elite: [...this.eliteGot], pages: [...this.pagesGot], bg: [...this.bossGemsPaid],
+      perm: Object.assign({}, this.perm), element: this.element, travel: this.travel, hammer: this.hammerState, met: this.smithMet, quests: Object.assign({}, this.quests), mapi: [...this.mapIcons], elite: [...this.eliteGot], pages: [...this.pagesGot], bg: [...this.bossGemsPaid],
       world: JSON.parse(JSON.stringify({ bosses: this.progress.bosses || [], broken: this.progress.broken || [], torches: this.progress.torches || {} })) };
   },
   revertToCheckpoint() {
@@ -1313,7 +1330,7 @@ Object.assign(CastleScene.prototype, {
     if (solo) this.bossGemsPaid = new Set(s.bg);
     this.souls = s.souls; this.inv = Object.assign({}, s.inv); this.wlv = s.wlv; this.maxHp = s.maxHp; this.gems = s.gems + bossGems; this.perm = Object.assign({}, s.perm); this.element = s.element; this.travel = s.travel; this.smithMet = s.met;
     Object.keys(this.abil).forEach(k => { this.abil[k] = !!s.abil[k]; });
-    this.hammerState = s.hammer; this.quests = Object.assign({ anillo: 0, fin1: 0 }, s.quests);
+    this.hammerState = s.hammer; this.quests = Object.assign({ anillo: 0, fin1: 0 }, s.quests); this.mapIcons = new Set(s.mapi || []);
     if (solo) this.revertWorld(s.world);
     this.syncRelics(); this.applyProgress(this.progress, true); this.syncNpcs(); this.wallBroken();
     const after = JSON.stringify([this.abil, this.cryGot.size, this.forgeGot.size, this.gemGot.size, this.wlv, this.maxHp, this.element, this.perm, this.pagesGot.size, this.eliteGot.size, this.hammerState]);
@@ -1365,6 +1382,7 @@ Object.assign(CastleScene.prototype, {
   // ---- tienda (más mercancía según los jefes derrotados)
   shopStock() { return (this.curNpc && SHOP_STOCK[this.curNpc.area]) || SHOP_STOCK.vest; },
   shopItems() {
+    if (this.shopPage === 1) { const tier = SHOP_MAP_TIER[this.curNpc && this.curNpc.area] || 1; return MAP_UPGRADES.filter(u => u.tier <= tier); } // página de mapas: cada mercader vende 2 más que el anterior
     const nb = this.progress.bosses.length;
     return this.shopStock().filter(([, need, color]) => nb >= need || color === this.color).map(([id]) => ITEMS.find(it => it.id === id));
   },
@@ -1375,7 +1393,7 @@ Object.assign(CastleScene.prototype, {
     const add = o => { o.setScrollFactor(0).setDepth(60); this.shopObjs.push(o); return o; };
     add(this.add.rectangle(cx, cy, 600, 506, 0x140c22, 0.97).setStrokeStyle(4, 0xffb347));
     this.shopTitle = add(this.add.text(cx, cy - 230, '', f('18px', '#ffd98a')).setOrigin(0.5));
-    this.shopRows = ITEMS.map(it => {
+    this.shopRows = ITEMS.concat(MAP_UPGRADES).map(it => {
       const row = add(this.add.rectangle(cx, cy, 560, 32, 0x2a1d4d, 1)).setInteractive();
       const icon = add(this.add.image(cx - 262, cy, 'it_' + it.id).setScale(1.8));
       const nameT = add(this.add.text(cx - 238, cy, it.name, f('14px')).setOrigin(0, 0.5));
@@ -1384,6 +1402,7 @@ Object.assign(CastleScene.prototype, {
       row.on('pointerdown', () => { const k = this.shopItems().indexOf(it); if (k >= 0) { this.shopSel = k; this.buyItem(k); } });
       return { it, row, icon, nameT, ownT, priceT };
     });
+    this.shopTab = add(this.add.text(cx, cy - 213, '', f('13px', '#ffd98a')).setOrigin(0.5)).setInteractive(); this.shopTab.on('pointerdown', () => this.shopTogglePage());
     this.shopDesc = add(this.add.text(cx, cy + 190, '', f('13px', '#a99bd1')).setOrigin(0.5));
     this.shopMore = add(this.add.text(cx, cy + 212, '', f('12px', '#ffd98a')).setOrigin(0.5));
     add(this.add.text(cx, cy + 236, IS_TOUCH ? 'toca un objeto para comprarlo' : '↑↓ elegir · Enter/E comprar · Esc salir', f('12px', '#a99bd1')).setOrigin(0.5));
@@ -1391,8 +1410,9 @@ Object.assign(CastleScene.prototype, {
     close.on('pointerdown', () => this.closeUi());
     this.shopObjs.forEach(o => o.setVisible(false));
   },
+  shopTogglePage() { this.shopPage = this.shopPage ? 0 : 1; this.shopSel = 0; this.refreshShop(); SFX.hit(); },
   openShop() {
-    this.shopOpen = true; this.shopSel = 0; this.shopObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false); this.refreshShop(); SFX.altar();
+    this.shopOpen = true; this.shopSel = 0; this.shopPage = 0; this.shopObjs.forEach(o => o.setVisible(true)); this.promptTxt.setVisible(false); this.refreshShop(); SFX.altar();
   },
   refreshShop() {
     const list = this.shopItems(), cy = SH / 2;
@@ -1405,27 +1425,35 @@ Object.assign(CastleScene.prototype, {
       const step = list.length > 11 ? 27 : 31, y = cy - 195 + idx * step; // con muchos objetos (tienda de F2) las filas se juntan
       [r.row, r.icon, r.nameT, r.ownT, r.priceT].forEach(o => o.setY(y)); r.row.setDisplaySize(560, step - 1);
       r.row.setFillStyle(idx === this.shopSel ? 0x5a3a9a : 0x2a1d4d, 1);
-      const it = r.it, gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price, maxed = it.perm && (this.perm[it.perm] | 0) >= it.max;
-      r.ownT.setText(it.perm ? 'nivel ' + (this.perm[it.perm] | 0) + '/' + it.max : 'tienes ' + this.inv[it.id]);
-      r.priceT.setText(maxed ? 'máximo' : cost + (gem ? ' ✦' : ' ◆')).setColor(maxed ? '#9fffb0' : ((gem ? this.gems : this.souls) >= cost ? (gem ? '#7ae8ff' : '#d9b3ff') : '#ff7a7a'));
+      const it = r.it, gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price, maxed = it.mapIcon ? this.mapIcons.has(it.mapIcon) : it.perm && (this.perm[it.perm] | 0) >= it.max;
+      r.ownT.setText(it.mapIcon ? (maxed ? 'ya lo ves en el mapa' : 'mejora del mapa') : it.perm ? 'nivel ' + (this.perm[it.perm] | 0) + '/' + it.max : 'tienes ' + this.inv[it.id]);
+      r.priceT.setText(maxed ? (it.mapIcon ? 'comprado' : 'máximo') : cost + (gem ? ' ✦' : ' ◆')).setColor(maxed ? '#9fffb0' : ((gem ? this.gems : this.souls) >= cost ? (gem ? '#7ae8ff' : '#d9b3ff') : '#ff7a7a'));
     });
+    this.shopTab.setText(this.shopPage ? 'Objetos   [ MAPAS ]   (' + (IS_TOUCH ? 'toca aquí' : 'Tab o ← →') + ' para cambiar)' : '[ OBJETOS ]   Mapas   (' + (IS_TOUCH ? 'toca aquí' : 'Tab o ← →') + ' para cambiar)');
     this.shopDesc.setText(list[this.shopSel].desc);
     const nb = this.progress.bosses.length;
     const pend = this.shopStock().filter(([, need, color]) => nb < need && color !== this.color).map(s => s[1]);
     const falta = pend.length ? Math.min(...pend) - nb : 0;
     const last = !this.curNpc || SHOP_ORDER.indexOf(this.curNpc.area) >= SHOP_ORDER.length - 1;
+    if (this.shopPage) { const tier = SHOP_MAP_TIER[this.curNpc && this.curNpc.area] || 1; this.shopMore.setText(tier >= 4 ? 'No hay más mapas que vender.' : 'Mis colegas más adelante venden 2 mapas más cada uno...'); return; }
     this.shopMore.setText(pend.length ? 'Tendré más mercancía cuando derrotes a ' + falta + ' jefe' + (falta > 1 ? 's' : '') + ' más...' : (last ? 'Esto es todo lo que tengo.' : 'Mis colegas más adelante venden cosas mejores...'));
   },
   shopKeys(J) {
     const n = this.shopItems().length;
     if (J.UP || J.W) { this.shopSel = (this.shopSel + n - 1) % n; this.refreshShop(); SFX.hit(); }
     if (J.DOWN || J.S) { this.shopSel = (this.shopSel + 1) % n; this.refreshShop(); SFX.hit(); }
+    if (J.TAB || J.LEFT || J.RIGHT || J.A || J.D) this.shopTogglePage();
     if (J.ENTER || J.E || J.SPACE || J.X || J.J) this.buyItem(this.shopSel);
     if (J.ESC) this.closeUi();
   },
   buyItem(k) {
     const it = this.shopItems()[k]; if (!it) return;
     this.shopSel = k;
+    if (it.mapIcon) { // mejora del mapa: se paga con almas y es para siempre
+      if (this.mapIcons.has(it.mapIcon)) { this.toast('Ya tienes esta mejora del mapa'); return; }
+      if (this.souls < it.price) { this.toast('No tienes suficientes almas'); SFX.hurt(); this.refreshShop(); return; }
+      this.souls -= it.price; this.mapIcons.add(it.mapIcon); SFX.pick(); this.toast(it.name + ': ' + it.desc + ' (' + it.lore + ')', 7000); this.autoSave(); this.refreshShop(); return;
+    }
     const gem = !!it.gems, cost = gem ? this.itemCost(it) : it.price;
     if (it.perm && (this.perm[it.perm] | 0) >= it.max) { this.toast('Ya tienes el máximo de este objeto'); this.refreshShop(); return; }
     if ((gem ? this.gems : this.souls) < cost) { this.toast(gem ? 'No tienes suficientes gemas ✦ (se encuentran por el mapa y las sueltan los jefes)' : 'No tienes suficientes almas'); SFX.hurt(); this.refreshShop(); return; }
@@ -1702,6 +1730,18 @@ Object.assign(CastleScene.prototype, {
   },
   luaState() { const L = this.lua; return L ? [Math.round(L.x), Math.round(L.y), L.f, L.whip] : null; },
   luaRecv(s) { if (!this.lua || !s) return; const L = this.lua; L.tx = s[0]; L.ty = s[1]; L.f = s[2]; L.whip = s[3]; if (!L.got) { L.got = true; L.seenWhip = L.whip; L.x = L.tx; L.y = L.ty; } },
+  // iconos que el mapa (M) enseña: solo los de las mejoras compradas y solo en las salas que ya has visitado
+  mapIconList() {
+    const out = [], W = this.W, on = this.mapIcons || new Set(), vis = a => this.visited.has(a);
+    if (on.has('boss')) W.bosses.forEach(b => { if (vis(b.area)) out.push({ k: 'boss', x: b.x / T, y: b.y / T - 4, col: this.bossGone(b) ? '#777777' : MAP_COLORS.boss }); });
+    if (on.has('fire')) W.altars.forEach(a => { if (vis(a.area)) out.push({ k: 'fire', x: a.x / T, y: a.y / T - 4, col: this.bonfireLit && this.bonfireLit.has(a.id) ? MAP_COLORS.fire : '#a0642a' }); });
+    if (on.has('npc')) (this.npcObjs || []).forEach(n => { if (!n.off && vis(n.area)) out.push({ k: 'npc', x: n.x / T, y: n.y / T - 4, col: n.type === 'merchant' ? '#ffd23b' : MAP_COLORS.npc }); });
+    if (on.has('cry')) W.crystals.forEach(c => { if (vis(c.area) && !this.cryGot.has(c.id) && !this.hiddenAt(c.x, c.y) && (!c.peek || c.peeked)) out.push({ k: 'cry', x: c.x / T, y: c.y / T - 1, col: MAP_COLORS.cry }); });
+    if (on.has('gem')) W.gems.forEach(c => { if (vis(c.area) && !this.gemGot.has(c.id)) out.push({ k: 'gem', x: c.x / T, y: c.y / T - 1, col: MAP_COLORS.gem }); });
+    if (on.has('forge')) W.forges.forEach(f => { if (vis(f.area) && !this.forgeGot.has(f.id)) out.push({ k: 'forge', x: f.x / T, y: f.y / T - 1, col: MAP_COLORS.forge }); });
+    if (on.has('lift')) W.lifts.forEach(l => { if (vis(l.area)) out.push({ k: 'lift', x: (l.x + l.w / 2) / T, y: (l.yTop + l.yBot) / 2 / T, col: MAP_COLORS.lift }); });
+    return out;
+  },
   isoldaTalk(n) { // la Reina Isolda: recibe el Anillo del Rey (la recompensa está pendiente de decidir: de momento, gemas)
     const q = this.quests;
     if (q.anillo === 1) {
