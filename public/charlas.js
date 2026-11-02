@@ -68,7 +68,7 @@ Object.assign(CastleScene.prototype, {
     if (!this.talkLine && this.talkQ.length && !this.talkBusy(this.talkQ[0].think)) {
       const q = this.talkQ[0], l = q.lines.shift(); if (!q.lines.length) this.talkQ.shift();
       const name = (typeof HERO_REALNAMES !== 'undefined' && HERO_REALNAMES[l[0]]) || ({ lua: 'Lúa', vigilia: 'Vigilia', cadalso: 'Cadalso' })[l[0]] || l[0];
-      this.talkLine = { c: l[0], name, text: hintText ? hintText(l[1]) : l[1], thought: !!l[2], t: Math.min(6, Math.max(2, (1400 + 45 * l[1].length) / 1000)) };
+      this.talkLine = { c: l[0], name, text: hintText ? hintText(l[1]) : l[1], thought: !!l[2], think: !!q.think, key: q.key, t: q.think ? Math.min(10, Math.max(5, (3000 + 85 * l[1].length) / 1000)) : Math.min(6, Math.max(2, (1400 + 45 * l[1].length) / 1000)) }; // los pensamientos ante una puerta duran más: hay que dar tiempo a leerlos
       this.talkBubble.setText(this.talkLine.text).setColor(this.talkLine.thought ? '#cfd8ff' : '#ffffff').setFontStyle(this.talkLine.thought ? 'italic' : 'normal');
     }
     const L = this.talkLine;
@@ -96,11 +96,12 @@ Object.assign(CastleScene.prototype, {
     });
   },
   // ---- pensamiento ante una puerta o un muro cerrado: al tocarlo, el vampiro piensa qué podría abrirlo
-  talkThink(key, text, cd = 30000) {
+  talkThink(key, text, cd = 15000) {
     const now = this.time.now; this.thinkAt = this.thinkAt || {};
+    if (this.talkLine && this.talkLine.think && this.talkLine.key === key) { this.talkLine.t = Math.max(this.talkLine.t, 3); return; } // mientras sigas tocando la puerta, el pensamiento no se apaga
     if (this.thinkAt[key] && now - this.thinkAt[key] < cd) return;
     if (this.talkQ.some(q => q.think) || (this.talkLine && this.talkLine.think)) return; // uno cada vez
-    this.thinkAt[key] = now; this.talkQ.unshift({ lines: [[this.color, text, true]], age: 0, think: true });
+    this.thinkAt[key] = now; this.talkQ.unshift({ lines: [[this.color, text, true]], age: 0, think: true, key });
   },
   talkDoorCheck() {
     if (!this.talkInit || this.dead || this.introLock || !this.player) return;
@@ -118,8 +119,8 @@ Object.assign(CastleScene.prototype, {
     // 2) muros y suelos agrietados, y suelos de raíces
     for (let gy = Math.floor(y0 / T); gy <= Math.floor(y1 / T); gy++) for (let gx = Math.floor(x0 / T); gx <= Math.floor(x1 / T); gx++) {
       const t = this.fg.getTileAt(gx, gy); if (!t || t.index < 0 || t.index % 8 !== K.CRACK || !touch(gx, gy)) continue;
-      if (W.roots && W.roots.has(gy * W.Wt + gx)) { this.talkThink('roots', this.abil.pound ? 'Un suelo de raíces duras. Con un pisotón desde el aire ({down}) lo romperé.' : 'Un suelo de raíces muy duras. Solo un pisotón desde el aire podría romperlo.', 45000); return; }
-      this.talkThink('crack:' + gx + ',' + gy, this.color === 'green' ? 'Está agrietada, pero mis flechas no rompen muros. Necesito una bomba.' : 'Está agrietada: quizá ceda a golpes, o con una bomba.', 60000);
+      if (W.roots && W.roots.has(gy * W.Wt + gx)) { this.talkThink('roots', this.abil.pound ? 'Un suelo de raíces duras. Con un pisotón desde el aire ({down}) lo romperé.' : 'Un suelo de raíces muy duras. Solo un pisotón desde el aire podría romperlo.', 20000); return; }
+      this.talkThink('crack:' + gx + ',' + gy, this.color === 'green' ? 'Está agrietada, pero mis flechas no rompen muros. Necesito una bomba.' : 'Está agrietada: quizá ceda a golpes, o con una bomba.', 25000);
       return;
     }
   },
