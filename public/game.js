@@ -82,7 +82,7 @@ function renderLobby() {
   room.players.forEach(p => {
     const d = document.createElement('div'); d.className = 'pl';
     const c = document.createElement('canvas'); drawHeroCanvas(c, p.animal); d.appendChild(c);
-    d.append(`${p.name}${p.id === room.host ? ' ★' : ''}${p.name === me ? ' (tú)' : ''}`);
+    d.append(`${HERO_NAMES[p.animal] || p.name}${p.id === room.host ? ' ★' : ''}${p.name === me ? ' (tú)' : ''}`); // el nombre del vampiro, no el de la cuenta
     list.appendChild(d);
   });
   const mine = room.players.find(p => p.name === me); selColor = mine && mine.animal;
@@ -93,7 +93,7 @@ function renderLobby() {
     const c = document.createElement('canvas'); c.style.cssText = 'width:36px;height:42px;image-rendering:pixelated'; drawHeroCanvas(c, a);
     b.appendChild(c); b.onclick = () => socket.emit('setAnimal', a); box.appendChild(b);
   });
-  $('abil').textContent = selColor ? HERO_NAMES[selColor] + '\n' + HERO_INFO[selColor].weapon + ' · ' + HERO_INFO[selColor].passive + '\n' + HERO_INFO[selColor].desc : '';
+  $('abil').textContent = selColor ? HERO_NAMES[selColor] + '\n' + HERO_INFO[selColor].weapon + ' · ' + HERO_INFO[selColor].passive + '\n' + HERO_INFO[selColor].desc + '\n\n' + HERO_LORE[selColor] : '';
   $('bStart').classList.toggle('hidden', room.host !== socket.id);
   updateContRow();
 }

@@ -23,6 +23,13 @@ const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple:
 const HERO_NAMES = { red: 'Cor Carmesí', blue: 'Zaf Azul', green: 'Malak Esmeralda', purple: 'Matis Violeta' };
 const HERO_REALNAMES = { red: 'Cor', blue: 'Zaf', green: 'Malak', purple: 'Matis' };
 
+// una línea de historia de cada vampiro, para la pantalla de elegir personaje (docs/PERSONAJES.md)
+const HERO_LORE = {
+  red: 'Objetivo: encontrar al Capitán, su maestro, y la orden que nunca llegó.',
+  blue: 'Objetivo: rescatar a su hermana Lúa y averiguar quién apagó las luces del faro.',
+  green: 'Objetivo: liberar las almas de su valle, atrapadas por una deuda falsa.',
+  purple: 'Objetivo: dar descanso a los muertos de la corte y encontrar a la Reina Isolda.',
+};
 const HERO_INFO = {
   red: { weapon: 'Espada', passive: 'Sed de sangre', desc: 'Espada equilibrada. Pasiva: 40% de curarse al golpear (Zaf y Matis, 25%; Malak no se cura).' },
   blue: { weapon: 'Lanza', passive: 'Visión nocturna', desc: 'Lanza de gran alcance. Pasiva: ve mucho más lejos en la oscuridad. Desventajas: recibe más daño de los ataques a distancia y se mueve un poco más lento.' },
