@@ -740,11 +740,21 @@ Object.assign(CastleScene.prototype, {
     box.style.cssText = 'position:fixed;inset:0;z-index:99;background:#0a0612ee;color:#fff;font:13px Courier New,monospace;padding:10px;display:none;overflow:auto';
     box.innerHTML = '<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:8px"><b>MODO DESARROLLO</b>' +
       '<button id="devGod">Invulnerable: NO</button><button id="devAbil">Dar todas las habilidades</button><button id="devGems">+20 gemas</button><button id="devHp">Curar</button><button id="devHammer">Dar el Martillo</button><button id="devShop">Tienda</button><button id="devSave">Guardar aquí</button><button id="devLoad">Cargar</button><button id="devBoss">Matar jefes (hasta el Conde)</button><button id="devClose">Cerrar (F2)</button><select id="devZone" style="font:12px Courier New,monospace;padding:3px"></select>' +
-      '<span id="devInfo" style="color:#ffd98a">Haz clic en el mapa para teletransportarte</span></div><canvas id="devMap" style="image-rendering:pixelated;cursor:crosshair;border:2px solid #ffb347"></canvas>';
+      '<span id="devInfo" style="color:#ffd98a">Haz clic en el mapa para teletransportarte</span></div><div id="devIcons" style="display:flex;gap:14px;flex-wrap:wrap;align-items:center;margin-bottom:8px"></div><canvas id="devMap" style="image-rendering:pixelated;cursor:crosshair;border:2px solid #ffb347"></canvas>';
     document.body.appendChild(box);
     box.querySelectorAll('button').forEach(b => { b.style.cssText = 'width:auto;margin:0;padding:4px 10px;font:12px Courier New,monospace;cursor:pointer'; });
     box.addEventListener('keydown', ev => ev.stopPropagation()); box.addEventListener('keyup', ev => ev.stopPropagation());
     const cv = box.querySelector('#devMap'), info = box.querySelector('#devInfo'), scale = () => Math.max(1, Math.min(4, (window.innerWidth - 40) / W.Wt));
+    // iconos del mapa: por defecto salen todos; la elección se recuerda en este navegador
+    const ICONS = [['boss', '☠ Jefes'], ['fire', '🔥 Hogueras'], ['npc', '🛒 Personajes y tiendas'], ['cry', '♥ Cristales de vida'], ['gem', '✦ Gemas'], ['forge', '⚒ Forjas'], ['lift', '↕ Ascensores']];
+    this.devIcons = {}; ICONS.forEach(([k]) => { this.devIcons[k] = true; });
+    try { Object.assign(this.devIcons, JSON.parse(localStorage.getItem('ffd_devIcons') || '{}')); } catch (e) { /* sin almacenamiento */ }
+    const iconBar = box.querySelector('#devIcons'); iconBar.innerHTML = '<b style="color:#ffd98a">Iconos:</b>';
+    ICONS.forEach(([k, txt]) => {
+      const lab = document.createElement('label'), cb = document.createElement('input'); lab.style.cssText = 'display:inline-flex;gap:4px;align-items:center;cursor:pointer'; cb.type = 'checkbox'; cb.checked = !!this.devIcons[k];
+      cb.onchange = () => { this.devIcons[k] = cb.checked; try { localStorage.setItem('ffd_devIcons', JSON.stringify(this.devIcons)); } catch (e) { /* sin almacenamiento */ } draw(); };
+      lab.appendChild(cb); lab.appendChild(document.createTextNode(txt)); iconBar.appendChild(lab);
+    });
     const draw = () => { // mapa completo con el estado actual de los muros
       const D = this.fg.layer.data; cv.width = W.Wt; cv.height = W.Ht; const g = cv.getContext('2d');
       for (let y = 0; y < W.Ht; y++) for (let x = 0; x < W.Wt; x++) {
@@ -752,13 +762,23 @@ Object.assign(CastleScene.prototype, {
         g.fillStyle = k === -1 ? (a ? '#241a3a' : '#0a0612') : k === K.ONEWAY ? '#ffffff' : k === K.SPIKES ? '#ff4a4a' : k === K.CRACK ? '#ffcf6a' : (pal ? pal.light : '#444');
         g.fillRect(x, y, 1, 1);
       }
-      // calaveritas donde hay jefes (blancas si siguen vivos, grises si ya cayeron)
-      const SKULL = ['.XXXXX.', 'XXXXXXX', 'X.XXX.X', 'X.XXX.X', 'XXXXXXX', '.XXXXX.', '..X.X..'];
-      W.bosses.forEach(b => {
-        const bx = Math.floor(b.x / T), by = Math.floor(b.y / T) - 4, dead = (this.progress.bosses || []).includes(b.id);
-        g.fillStyle = 'rgba(0,0,0,0.75)'; g.fillRect(bx - 5, by - 5, 11, 11);
-        SKULL.forEach((row, ry) => { for (let rx = 0; rx < 7; rx++) if (row[rx] === 'X') { g.fillStyle = (ry === 2 || ry === 3) && (rx === 1 || rx === 5) ? '#000000' : (dead ? '#777777' : '#ffffff'); g.fillRect(bx - 3 + rx, by - 3 + ry, 1, 1); } });
-      });
+      // iconos sobre el mapa (se eligen con las casillas de arriba; por defecto salen todos)
+      const ON = this.devIcons, pts = this.devPoints = [];
+      const stamp = (rows, gx, gy, col, label) => {
+        g.fillStyle = 'rgba(0,0,0,0.75)'; g.fillRect(gx - 5, gy - 5, 11, 11);
+        rows.forEach((row, ry) => { for (let rx = 0; rx < 7; rx++) if (row[rx] !== '.') { g.fillStyle = row[rx] === 'o' ? '#000000' : col; g.fillRect(gx - 3 + rx, gy - 3 + ry, 1, 1); } });
+        pts.push({ x: gx, y: gy, label });
+      };
+      const SKULL = ['.XXXXX.', 'XXXXXXX', 'XoXXXoX', 'XoXXXoX', 'XXXXXXX', '.XXXXX.', '..X.X..'], FLAME = ['...X...', '..XX...', '..XXX..', '.XXXXX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.'], DIAMOND = ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'];
+      const PERSON = ['..XXX..', '..XXX..', '...X...', '.XXXXX.', 'X.XXX.X', '..X.X..', '.XX.XX.'], ANVIL = ['XXXXXXX', '.XXXXX.', '..XXX..', '..XXX..', '.XXXXX.', 'XXXXXXX', '.......'], ARROWS = ['...X...', '..XXX..', '.XXXXX.', '...X...', '.XXXXX.', '..XXX..', '...X...'];
+      const doneB = id => (this.progress.bosses || []).includes(id);
+      if (ON.boss) W.bosses.forEach(b => stamp(SKULL, Math.floor(b.x / T), Math.floor(b.y / T) - 4, doneB(b.id) ? '#777777' : '#ffffff', '☠ ' + b.name + (doneB(b.id) ? ' (vencido)' : '')));
+      if (ON.fire) W.altars.forEach(a => stamp(FLAME, Math.floor(a.x / T), Math.floor(a.y / T) - 4, this.bonfireLit && this.bonfireLit.has(a.id) ? '#ffb347' : '#a0642a', '🔥 Hoguera' + (a.big ? ' grande' : '')));
+      if (ON.npc) W.npcs.forEach(n => stamp(PERSON, Math.floor(n.x / T), Math.floor(n.y / T) - 4, n.type === 'merchant' ? '#ffd23b' : '#9be37a', (n.type === 'merchant' ? '🛒 Mercader' : '💬 ' + ((NPC_DEFS[n.type] && NPC_DEFS[n.type].name) || n.type))));
+      if (ON.cry) W.crystals.forEach(c => stamp(DIAMOND, Math.floor(c.x / T), Math.floor(c.y / T) - 1, this.cryGot.has(c.id) ? '#777777' : '#ff7aa0', '♥ Cristal de vida' + (this.cryGot.has(c.id) ? ' (cogido)' : '')));
+      if (ON.gem) W.gems.forEach(c => stamp(DIAMOND, Math.floor(c.x / T), Math.floor(c.y / T) - 1, this.gemGot.has(c.id) ? '#777777' : '#5fd8ff', '✦ Gema' + (this.gemGot.has(c.id) ? ' (cogida)' : '')));
+      if (ON.forge) W.forges.forEach(f => stamp(ANVIL, Math.floor(f.x / T), Math.floor(f.y / T) - 1, this.forgeGot.has(f.id) ? '#777777' : '#ffd23b', '⚒ Forja de arma' + (this.forgeGot.has(f.id) ? ' (usada)' : '')));
+      if (ON.lift) W.lifts.forEach(l => stamp(ARROWS, Math.floor((l.x + l.w / 2) / T), Math.floor((l.yTop + l.yBot) / 2 / T), '#ff6a6a', '↕ Ascensor'));
       // dónde estás: borde de tu sala en cian y tu posición en magenta
       const px = Math.floor(this.player.x / T), py = Math.floor(this.player.y / T), here = W.areaOf(px, py);
       if (here) { g.strokeStyle = '#3bf0ff'; g.lineWidth = 2; g.strokeRect(here.x0 + 1, here.y0 + 1, here.rw - 2, here.rh - 2); }
@@ -769,8 +789,8 @@ Object.assign(CastleScene.prototype, {
     };
     const at = ev => { const r = cv.getBoundingClientRect(), s = r.width / W.Wt; return [Math.floor((ev.clientX - r.left) / s), Math.floor((ev.clientY - r.top) / s)]; };
     cv.onmousemove = ev => { const [x, y] = at(ev), a = W.areaOf(x, y), here = W.areaOf(Math.floor(this.player.x / T), Math.floor(this.player.y / T));
-      const bs = W.bosses.find(b => Math.abs(Math.floor(b.x / T) - x) <= 5 && Math.abs(Math.floor(b.y / T) - 4 - y) <= 5); // al pasar sobre una calavera se dice qué jefe es
-      info.textContent = (bs ? '☠ ' + bs.name + (((this.progress.bosses || []).includes(bs.id)) ? ' (vencido)' : '') + '   ·   ' : '') + (a ? a.name + ' (' + a.id + ')' : 'roca') + (here ? '   ·   estás en: ' + here.name : ''); };
+      const pt = (this.devPoints || []).find(p => Math.abs(p.x - x) <= 5 && Math.abs(p.y - y) <= 5); // al pasar sobre un icono se dice qué es
+      info.textContent = (pt ? pt.label + '   ·   ' : '') + (a ? a.name + ' (' + a.id + ')' : 'roca') + (here ? '   ·   estás en: ' + here.name : ''); };
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
     box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
