@@ -36,20 +36,20 @@ const HERO_INFO = {
   green: { weapon: 'Arco', passive: 'Caza de almas', desc: 'Dispara flechas a distancia. Pasiva: +50% de almas al matar. Sus flechas no empujan a los enemigos ni curan. Desventaja: recibe +50% de daño y no rompe muros (necesita Bombas de la tienda).' },
   purple: { weapon: 'Guadaña', passive: 'Piel de sombra', desc: 'Guadaña lenta y muy dañina. Pasiva: +2 corazones de vida máxima. Desventaja: se mueve más lento (compensa con un gancho automático: si el salto se queda corto, se engancha al borde y sube).' },
 };
-// Los cuatro vampiros: mismo cuerpo, distinta cabeza y arma (G acero, B madera, Y dorado). Cor: pelo de punta y espada a la espalda;
-// Zaf: pelo largo y lanza; Malak: capucha y arco; Matis: pelo plateado con flequillo sobre un ojo y guadaña.
+// Los cuatro vampiros: mismo cuerpo, distinta cabeza y arma (G acero, B madera, Y dorado, N azul). Cor: pelo de punta y espada a la espalda;
+// Zaf: pelo largo plateado y lanza azul; Malak: capucha y arco; Matis: pelo negro con flequillo sobre un ojo y una guadaña grande.
 const HERO_MAPS = {
   red: ['..H.HHHH.H.G', '..HHHHHHHH.G', '..HSSSSSSH.G', '..SRSSSSRS.G', '...SFSSFS..G', '.CCCSSSSCCCY', 'CCCCAAAACCCB',
     'CCCAAWWAACCC', 'CC.AAAAAA.CC', '...AAAAAA...', '...AA..AA...', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
-  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'B.HSSSSSSH..', 'BHSRSSSSRSH.', 'BH.SFSSFS.H.', 'BHCCSSSSCCH.', 'BCCCAAAACCCC',
-    'BCCAAWWAACCC', 'BC.AAAAAA.CC', 'B..AAAAAA...', 'B..AA..AA...', 'B..AA..AA...', 'B..DD..DD...', 'B.DDD..DDD..'],
+  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HSSSSSSH..', 'NHSRSSSSRSH.', 'NH.SFSSFS.H.', 'NHCCSSSSCCH.', 'NCCCAAAACCCC',
+    'NCCAAWWAACCC', 'NC.AAAAAA.CC', 'N..AAAAAA...', 'N..AA..AA...', 'N..AA..AA...', 'N..DD..DD...', 'N.DDD..DDD..'],
   green: ['...CCCCCC...', '..CCCCCCCC..', '..CSSSSSSCB.', '..CRSSSSRC.B', '...CCCCCC..B', '.CCCSSSSCCCB', 'CCCCAAAACCCB',
     'CCCAAWWAACCB', 'CCCCCCCCCCCB', '..CCCCCCCC.B', '..CCCCCCCCB.', '..CCCCCCCC..', '...DD..DD...', '..DDD..DDD..'],
-  purple: ['...HHHHHHGGG', '..HHHHHHHH.G', '..HHHHSSSH.B', '..SHSSSSRS.B', '...SFSSFS..B', '.CCCSSSSCCCB', 'CCCCAAAACCCB',
+  purple: ['...HHHHHGGGG', '..HHHHHHHHGG', '..HHHHSSSH.B', '..SHSSSSRS.B', '...SFSSFS..B', '.CCCSSSSCCCB', 'CCCCAAAACCCB',
     'CCCAAWWAACCB', 'CC.AAAAAA.CB', '...AAAAAA..B', '...AA..AA..B', '...AA..AA..B', '...DD..DD..B', '..DDD..DDD.B'],
 };
 const HERO_SCALE = { red: [3, 3], blue: [3, 3.3], green: [2.7, 3], purple: [3.4, 3] }; // [ancho, alto] con que se dibuja cada vampiro
-const HERO_LOOK = { red: { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b' }, blue: { H: '#2a3a6a', S: '#e8e0f4', R: '#7ad8ff' }, green: { H: '#16101c', S: '#e0e8dc', R: '#ffd23b', C: '#1f6a2e' }, purple: { H: '#d8d4ee', S: '#cfc6e6', R: '#d9a0ff' } };
+const HERO_LOOK = { red: { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b' }, blue: { H: '#cdd3ea', S: '#e8e0f4', R: '#7ad8ff' }, green: { H: '#16101c', S: '#e0e8dc', R: '#ffd23b', C: '#1f6a2e' }, purple: { H: '#1a1226', S: '#cfc6e6', R: '#d9a0ff' } };
 const MAPS = {
   hero: [
     '...HHHHHH...', '..HHHHHHHH..', '..HSSSSSSH..', '..SRSSSSRS..', '...SFSSFS...', '.CCCSSSSCCC.', 'CCCCAAAACCCC',
@@ -179,7 +179,7 @@ function drawMapCtx(ctx, map, pal, px, ox, oy) {
     ctx.fillStyle = pal[c] || '#fff'; ctx.fillRect(ox + x * px, oy + y * px, px, px);
   }
 }
-function heroPal(color, key) { return Object.assign({ H: '#16101c', S: '#e8e0f4', R: '#ff2b3b', F: '#ffffff', C: color, A: '#2a2540', D: '#120c18', W: '#c9c4e0', G: '#c9ced8', B: '#8a5a2a', Y: '#ffd23b' }, HERO_LOOK[key] || {}); }
+function heroPal(color, key) { return Object.assign({ H: '#16101c', S: '#e8e0f4', R: '#ff2b3b', F: '#ffffff', C: color, A: '#2a2540', D: '#120c18', W: '#c9c4e0', G: '#c9ced8', B: '#8a5a2a', Y: '#ffd23b', N: '#3a6ad9' }, HERO_LOOK[key] || {}); }
 
 // Dibuja un héroe en un canvas DOM (para el lobby)
 function drawHeroCanvas(canvas, color) {
@@ -290,7 +290,7 @@ function buildArt(scene) {
   const legsA = ['...AA...AA..', '..AA.....AA.', '..DD.....DD.', '.DDD....DDD.'], legsB = ['....AAAA....', '....AAAA....', '....DDDD....', '...DDDDDD...'];
   for (const col in HERO_COLORS) [['w1', legsA], ['w2', legsB]].forEach(([n, legs]) => {
     if (col === 'green') legs = legs.map(r => r.replace(/A/g, 'C')); // Malak lleva la capa hasta las botas
-    const hm = HERO_MAPS[col], low = legs.map((row, i) => row.split('').map((ch, x) => ('BGY'.includes(hm[10 + i][x]) ? hm[10 + i][x] : ch)).join('')); // el arma sigue a la vista al andar
+    const hm = HERO_MAPS[col], low = legs.map((row, i) => row.split('').map((ch, x) => ('BGYN'.includes(hm[10 + i][x]) ? hm[10 + i][x] : ch)).join('')); // el arma sigue a la vista al andar
     const c = tx.createCanvas('hero_' + col + '_' + n, 12, 14); drawMapCtx(c.getContext('2d'), hm.slice(0, 10).concat(low), heroPal(HERO_COLORS[col], col), 1, 0, 0); c.refresh();
   });
   makeMap('npc_merchant', 'npcM', MAP_PAL.npcM, 1);
