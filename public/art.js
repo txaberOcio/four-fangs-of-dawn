@@ -42,8 +42,8 @@ const HERO_BASE_ROWS = ['...HHHHHH...', '..HHHHHHHH..', '..HSSSSSSH..', '..SRSSS
 const HERO_MAPS = {
   red: ['..H.HHHH.H.G', '..HHHHHHHH.G', '..HSSSSSSH.G', '..SRSSSSRS.G', '...SFSSFS..G', '.CCCSSSSCCCY', 'CCCCAAAACCCB',
     'CCCAAWWAACCC', 'CC.AAAAAA.CC', '...AAAAAA...', '...AA..AA...', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
-  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HSSSSSSH..', 'BHSRSSSSRSH.', 'BH.SFSSFS.H.', 'BHPPSSSSPPH.', 'BCCCAAAACCCC',
-    'BCCAAWWAACCC', 'BC.AAAAAA.CC', 'B..AAAAAA...', 'B..AA..AA...', 'B..AA..AA...', 'B..DD..DD...', 'N.DDD..DDD..'],
+  blue: ['G..HHHHHH...', 'G.HHHHHHHH..', 'N.HSSSSSSH..', 'BHSRSSSSRSH.', 'BHHSFSSFSHH.', 'BHHPSSSSPHH.', 'BCHHAAAAHHCC',
+    'BCHHAWWAHHCC', 'BC.HAAAAH.CC', 'B..HAAAAH...', 'B..AA..AA...', 'B..AA..AA...', 'B..DD..DD...', 'N.DDD..DDD..'],
   green: ['...CCCCCC...', '..CCCCCCCC..', '..CSSSSSSCB.', '..CRSSSSRC.B', '...SSCCSS..B', '..CCCSSCCC.B', '..CCAAAACC.B',
     '..CCAWWACC.B', '..CCAAAACC.B', '..CCCCCCCC.B', '....AAAA..B.', '....AAAA....', '....DD.DD...', '...DDD.DDD..'],
   purple: ['...HHHHHGGGG', '..HHHHHHHHGG', '..HHHHSSSH.B', '..SHSSSSRS.B', '...SFSSFS..B', '.CCCSSSSCCCB', 'CCCCAAAACCCB',
@@ -53,9 +53,8 @@ const HERO_MAPS = {
 const HERO_GAME_MAPS = {};
 for (const k in HERO_MAPS) HERO_GAME_MAPS[k] = k === 'green' ? HERO_MAPS[k] : HERO_MAPS[k].map((row, y) => row.split('').map((ch, x) => ('GBYN'.includes(ch) ? (HERO_BASE_ROWS[y][x]) : ch)).join(''));
 const HERO_SCALE = { red: [3, 3], blue: [3, 3.3], green: [2.7, 3], purple: [3.4, 3] }; // [ancho, alto] con que se dibuja cada vampiro
-const HERO_LOOK = { red: { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b' }, blue: { H: '#cdd3ea', S: '#c4b8d6', R: '#7ad8ff', C: '#3a6ad9', A: '#566178', P: '#98a3bb' }, green: { H: '#16101c', S: '#e0e8dc', R: '#ffd23b', C: '#163f22' }, purple: { H: '#1a1226', S: '#cfc6e6', R: '#d9a0ff', C: '#2b2833', A: '#16141c', W: '#9a4ad9' } };
+const HERO_LOOK = { red: { H: '#16101c', S: '#e8e0f4', R: '#ff2b3b' }, blue: { H: '#f4f4fc', S: '#c4b8d6', R: '#7ad8ff', C: '#3a6ad9', A: '#566178', P: '#98a3bb' }, green: { H: '#16101c', S: '#e0e8dc', R: '#ffd23b', C: '#163f22' }, purple: { H: '#1a1226', S: '#cfc6e6', R: '#d9a0ff', C: '#2b2833', A: '#16141c', W: '#9a4ad9' } };
 const MAPS = {
-  swordSwing: ['..W..', '..G..', '..G..', '..G..', '..G..', '..G..', '..G..', '..G..', '.YYY.', '..B..', '..B..', '..Y..'], // espada que Cor blande al atacar
   hero: [
     '...HHHHHH...', '..HHHHHHHH..', '..HSSSSSSH..', '..SRSSSSRS..', '...SFSSFS...', '.CCCSSSSCCC.', 'CCCCAAAACCCC',
     'CCCAAWWAACCC', 'CC.AAAAAA.CC', '...AAAAAA...', '...AA..AA...', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
@@ -287,7 +286,6 @@ function buildArt(scene) {
   ['sk', 'bat1', 'bat2', 'kn', 'gh', 'garg', 'bishop', 'clock', 'conde', 'altar', 'crystal', 'relic', 'heart'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
 
   // vampiros agachados (aplastados contra el suelo)
-  makeMap('sword_swing', 'swordSwing', { W: '#ffffff', G: '#dfe6f2', Y: '#ffd23b', B: '#8a5a2a' }, 1);
   for (const col in HERO_COLORS) {
     const src = tx.get('hero_' + col).getSourceImage(); const c = tx.createCanvas('hero_' + col + '_crouch', 12, 14); const g = c.getContext('2d');
     g.imageSmoothingEnabled = false; g.drawImage(src, 0, 0, 12, 14, 0, 5, 12, 9); c.refresh();
