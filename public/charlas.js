@@ -54,8 +54,9 @@ Object.assign(CastleScene.prototype, {
     const r = Object.values(this.remotes || {}).find(q => q.color === c); if (r) return r.spr;
     const b = [...this.ents.values()].find(e => e.type === c); return b ? b.spr : null;
   },
-  talkBusy() { // no hablan mientras hay un diálogo, una tienda, una escena, un enemigo cerca o un jefe en combate
-    if (this.shopOpen || this.dlg || this.bookOpen || this.travelOpen || this.imbueOpen || this.showMap || this.cut || this.dead) return true;
+  talkBusy(light) { // no hablan mientras hay un diálogo, una tienda, una escena, un enemigo cerca o un jefe en combate (un pensamiento ante una puerta solo espera a los menús)
+    if (this.shopOpen || this.dlg || this.bookOpen || this.travelOpen || this.imbueOpen || this.showMap || this.cut || this.dead || this.introLock) return true;
+    if (light) return false;
     if (this.sealKey) return true;
     const p = this.player; for (const e of this.ents.values()) { if (e.dead || (e.cfg && e.cfg.inv)) continue; const d = Math.hypot(e.spr.x - p.x, e.spr.y - p.y); if (e.boss ? (e.aggro && d < 400) : d < 260) return true; }
     return false;
@@ -64,7 +65,7 @@ Object.assign(CastleScene.prototype, {
     if (!this.talkInit) this.initTalks();
     // pasa el tiempo de las conversaciones en cola (se descartan si llevan 20 s esperando)
     this.talkQ.forEach(q => { q.age += dt; }); this.talkQ = this.talkQ.filter(q => q.age < 20);
-    if (!this.talkLine && this.talkQ.length && !this.talkBusy()) {
+    if (!this.talkLine && this.talkQ.length && !this.talkBusy(this.talkQ[0].think)) {
       const q = this.talkQ[0], l = q.lines.shift(); if (!q.lines.length) this.talkQ.shift();
       const name = (typeof HERO_REALNAMES !== 'undefined' && HERO_REALNAMES[l[0]]) || ({ lua: 'Lúa', vigilia: 'Vigilia', cadalso: 'Cadalso' })[l[0]] || l[0];
       this.talkLine = { c: l[0], name, text: hintText ? hintText(l[1]) : l[1], thought: !!l[2], t: Math.min(6, Math.max(2, (1400 + 45 * l[1].length) / 1000)) };
@@ -79,6 +80,7 @@ Object.assign(CastleScene.prototype, {
       else { this.talkBubble.setVisible(false); this.talkSub.setText(L.name + ': ' + L.text).setColor(L.thought ? '#cfd8ff' : '#ffffff').setVisible(true); }
       if (L.t <= 0) { this.talkLine = null; this.talkBubble.setVisible(false); this.talkSub.setVisible(false); this.talkWait = 0.35; }
     } else if (this.talkWait > 0) this.talkWait -= dt;
+    this.doorT = (this.doorT || 0) - dt; if (this.doorT <= 0) { this.doorT = 0.2; this.talkDoorCheck(); } // puertas y muros cerrados
     // lugares inalcanzables (tipo D): cada medio segundo se mira si se está cerca de alguno y todavía no se puede pasar
     this.talkSpotT -= dt; if (this.talkSpotT > 0 || typeof TALK_TRIGGERS === 'undefined') return; this.talkSpotT = 0.5;
     const p = this.player;
@@ -92,6 +94,34 @@ Object.assign(CastleScene.prototype, {
       if (n.gate && World.gateOpen(n.gate, this.progress.bosses || [])) return;
       this.talkFire(tg.id);
     });
+  },
+  // ---- pensamiento ante una puerta o un muro cerrado: al tocarlo, el vampiro piensa qué podría abrirlo
+  talkThink(key, text, cd = 30000) {
+    const now = this.time.now; this.thinkAt = this.thinkAt || {};
+    if (this.thinkAt[key] && now - this.thinkAt[key] < cd) return;
+    if (this.talkQ.some(q => q.think) || (this.talkLine && this.talkLine.think)) return; // uno cada vez
+    this.thinkAt[key] = now; this.talkQ.unshift({ lines: [[this.color, text, true]], age: 0, think: true });
+  },
+  talkDoorCheck() {
+    if (!this.talkInit || this.dead || this.introLock || !this.player) return;
+    const p = this.player, W = this.W, m = 5, x0 = p.x - 15 - m, x1 = p.x + 15 + m, y0 = p.y - 20 - m, y1 = p.y + 20 + m;
+    const touch = (gx, gy) => x1 > gx * T && x0 < (gx + 1) * T && y1 > gy * T && y0 < (gy + 1) * T;
+    // 1) puertas, rejas y tapas selladas por un jefe (y suelos agrietados que se abren solos)
+    for (const gt of W.gates || []) {
+      if (gt.open || this.gateOk(gt)) continue;
+      if (gt.tiles.some(t => touch(t.gx, t.gy))) {
+        const quien = (typeof GATE_BY !== 'undefined' && GATE_BY[gt.boss]) || 'a un jefe';
+        this.talkThink('gate:' + gt.boss + (gt.crack ? ':c' : ''), gt.crack ? 'Este suelo agrietado cederá solo... cuando venza ' + quien + '.' : 'Está sellada. Quizá se abra cuando venza ' + quien + '.');
+        return;
+      }
+    }
+    // 2) muros y suelos agrietados, y suelos de raíces
+    for (let gy = Math.floor(y0 / T); gy <= Math.floor(y1 / T); gy++) for (let gx = Math.floor(x0 / T); gx <= Math.floor(x1 / T); gx++) {
+      const t = this.fg.getTileAt(gx, gy); if (!t || t.index < 0 || t.index % 8 !== K.CRACK || !touch(gx, gy)) continue;
+      if (W.roots && W.roots.has(gy * W.Wt + gx)) { this.talkThink('roots', this.abil.pound ? 'Un suelo de raíces duras. Con un pisotón desde el aire ({down}) lo romperé.' : 'Un suelo de raíces muy duras. Solo un pisotón desde el aire podría romperlo.', 45000); return; }
+      this.talkThink('crack:' + gx + ',' + gy, this.color === 'green' ? 'Está agrietada, pero mis flechas no rompen muros. Necesito una bomba.' : 'Está agrietada: quizá ceda a golpes, o con una bomba.', 60000);
+      return;
+    }
   },
   // ---- ganchos
   talkOnArea(id) { if (typeof TALK_TRIGGERS !== 'undefined') TALK_TRIGGERS.forEach(t => { if (t.type === 'area' && t.area === id) this.talkFire(t.id); }); },

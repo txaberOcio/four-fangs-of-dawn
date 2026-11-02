@@ -746,12 +746,12 @@ Object.assign(CastleScene.prototype, {
     box.addEventListener('keydown', ev => ev.stopPropagation()); box.addEventListener('keyup', ev => ev.stopPropagation());
     const cv = box.querySelector('#devMap'), info = box.querySelector('#devInfo'), scale = () => Math.max(1, Math.min(4, (window.innerWidth - 40) / W.Wt));
     // iconos del mapa: por defecto salen todos; la elección se recuerda en este navegador
-    const ICONS = [['boss', '☠ Jefes'], ['fire', '🔥 Hogueras'], ['npc', '🛒 Personajes y tiendas'], ['cry', '♥ Cristales de vida'], ['gem', '✦ Gemas'], ['forge', '⚒ Forjas'], ['lift', '↕ Ascensores']];
+    const ICONS = [['boss', '☠', 'Jefes'], ['fire', '🔥', 'Hogueras'], ['npc', '🛒', 'Personajes y tiendas'], ['cry', '♥', 'Cristales de vida'], ['gem', '✦', 'Gemas'], ['forge', '⚒', 'Forjas'], ['lift', '↕', 'Ascensores']]; // solo el icono; el nombre sale al pasar el ratón
     this.devIcons = {}; ICONS.forEach(([k]) => { this.devIcons[k] = true; });
     try { Object.assign(this.devIcons, JSON.parse(localStorage.getItem('ffd_devIcons') || '{}')); } catch (e) { /* sin almacenamiento */ }
-    const iconBar = box.querySelector('#devIcons'); iconBar.innerHTML = '<b style="color:#ffd98a">Iconos:</b>';
-    ICONS.forEach(([k, txt]) => {
-      const lab = document.createElement('label'), cb = document.createElement('input'); lab.style.cssText = 'display:inline-flex;gap:4px;align-items:center;cursor:pointer'; cb.type = 'checkbox'; cb.checked = !!this.devIcons[k];
+    const iconBar = box.querySelector('#devIcons'); iconBar.innerHTML = '';
+    ICONS.forEach(([k, txt, tip]) => {
+      const lab = document.createElement('label'), cb = document.createElement('input'); lab.style.cssText = 'display:inline-flex;gap:3px;align-items:center;cursor:pointer;font-size:16px'; lab.title = tip; cb.type = 'checkbox'; cb.checked = !!this.devIcons[k];
       cb.onchange = () => { this.devIcons[k] = cb.checked; try { localStorage.setItem('ffd_devIcons', JSON.stringify(this.devIcons)); } catch (e) { /* sin almacenamiento */ } draw(); };
       lab.appendChild(cb); lab.appendChild(document.createTextNode(txt)); iconBar.appendChild(lab);
     });
