@@ -25,10 +25,10 @@ const HERO_REALNAMES = { red: 'Cor', blue: 'Zaf', green: 'Malak', purple: 'Matis
 
 // una línea de historia de cada vampiro, para la pantalla de elegir personaje (docs/PERSONAJES.md)
 const HERO_LORE = {
-  red: 'Objetivo: encontrar al Capitán, su maestro, y la orden que nunca llegó.',
-  blue: 'Objetivo: rescatar a su hermana Lúa y averiguar quién apagó las luces del faro.',
-  green: 'Objetivo: liberar las almas de su valle, atrapadas por una deuda falsa.',
-  purple: 'Objetivo: dar descanso a los muertos de la corte y encontrar a la Reina Isolda.',
+  red: 'Cor se formó con el Capitán, el maestro que cerró las puertas del castillo. Vuelve para dar la orden que nunca llegó.',
+  blue: 'Zaf vigilaba la costa cuando el cielo dejó de encenderse. Está aquí para rescatar a su hermana Lúa y saber quién apagó las luces.',
+  green: 'Malak firmó una deuda para salvar a su valle, y todas sus almas acabaron en frascos. Está aquí para liberarlas.',
+  purple: 'Matis fue escolta de la Reina Isolda antes del cerco. Está aquí para dar descanso a los muertos de la corte.',
 };
 const HERO_INFO = {
   red: { weapon: 'Espada', passive: 'Sed de sangre', desc: 'Espada equilibrada. Pasiva: 40% de curarse al golpear (Zaf y Matis, 25%; Malak no se cura).' },
