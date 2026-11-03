@@ -74,6 +74,7 @@ const SHOP_STOCK = {
   mer: [['pot', 0], ['pot2', 0], ['bomb', 0], ['lamp', 0], ['ward', 0], ['str', 0], ['spd', 0], ['rage', 0], ['tonic', 0], ['amu', 0], ['talis', 0]], // Zona 2: las bombas están antes del secreto de la Conservera
   cap: [['pot', 0], ['pot2', 0], ['bomb', 0], ['lamp', 0], ['ward', 0], ['str', 0], ['spd', 0], ['rage', 0], ['tonic', 0], ['amu', 0], ['talis', 0], ['fruit', 0]]
 };
+SHOP_STOCK.intF = SHOP_STOCK.cap.slice(); // Intendencia del Furriel (Zona 3): lo mismo que el mercader de la Capilla del Cuartel, y solo atiende de día
 SHOP_STOCK.dev = ITEMS.map(i => [i.id, 0]); // tienda del panel de desarrollo (F2)
 // Mejoras del mapa: los iconos que el mapa (M) enseña solo se ven si los compras. Cada mercader vende 2 más que el anterior (1, 3, 5, 7).
 // tier = primer mercader que la vende; clave = el icono que activa (los mismos que las casillas del panel F2)
@@ -86,14 +87,14 @@ const MAP_UPGRADES = [
   { id: 'map_forge', mapIcon: 'forge', tier: 4, price: 1250, name: 'Plano del Herrero', desc: 'Marca las forjas de arma que todavía no has usado.', lore: 'El Herrero dibujó dónde están sus yunques antes de perder el martillo.' },
   { id: 'map_lift', mapIcon: 'lift', tier: 4, price: 1500, name: 'Cadenas del Montacargas', desc: 'Marca los ascensores en el mapa.', lore: 'Quien tira de las cadenas sabe adónde bajan.' },
 ];
-const SHOP_MAP_TIER = { vest: 1, naveS: 2, casaM: 3, asc: 4, mer: 4, cap: 4, dev: 4 }; // hasta qué mejoras del mapa vende cada mercader
+const SHOP_MAP_TIER = { vest: 1, naveS: 2, casaM: 3, asc: 4, mer: 4, cap: 4, intF: 4, dev: 4 }; // hasta qué mejoras del mapa vende cada mercader
 // dibujos de los iconos del mapa (7x7); el mismo juego los usa en el mapa (M) y en el panel de desarrollo (F2)
 const MAP_PATTERNS = {
   boss: ['.XXXXX.', 'XXXXXXX', 'XoXXXoX', 'XoXXXoX', 'XXXXXXX', '.XXXXX.', '..X.X..'], fire: ['...X...', '..XX...', '..XXX..', '.XXXXX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.'], cry: ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
   npc: ['..XXX..', '..XXX..', '...X...', '.XXXXX.', 'X.XXX.X', '..X.X..', '.XX.XX.'], forge: ['XXXXXXX', '.XXXXX.', '..XXX..', '..XXX..', '.XXXXX.', 'XXXXXXX', '.......'], lift: ['...X...', '..XXX..', '.XXXXX.', '...X...', '.XXXXX.', '..XXX..', '...X...'] };
 MAP_PATTERNS.gem = MAP_PATTERNS.cry;
 const MAP_COLORS = { boss: '#ffffff', fire: '#ffb347', npc: '#9be37a', cry: '#ff7aa0', gem: '#5fd8ff', forge: '#ffd23b', lift: '#ff6a6a' };
-const SHOP_ORDER = ['vest', 'naveS', 'casaM', 'asc', 'mer', 'cap'];
+const SHOP_ORDER = ['vest', 'naveS', 'casaM', 'asc', 'mer', 'cap', 'intF'];
 // poderes elementales de la Forja de los Elementos: cambian el color del ataque y añaden un efecto
 const ELEMENTS = {
   fire: { name: 'Fuego', tint: 0xff7a2a, desc: 'quema al enemigo: daño extra durante 3 s', long: 'El filo arde. Cada golpe prende al enemigo: sufre 1 de daño cada 0,75 s durante 3 s (el fuego no se acumula, se renueva). Muy útil contra enemigos con mucha vida.' },
@@ -1324,6 +1325,7 @@ Object.assign(CastleScene.prototype, {
     for (const n of this.npcObjs) { if (n.off) continue; const dx = Math.abs(n.x - p.x), dy = Math.abs((n.y - 30) - p.y); if (dx < 70 && dy < 80 && dx < bd) { bd = dx; best = n; } }
     if (best) {
       this.promptTxt.setVisible(!(this.shopOpen || this.dlg || this.imbueOpen)).setPosition(best.x, best.y - 74).setText(best.def.shop ? '{act}: comerciar' : (best.def.menu ? '{act}: imbuir el arma' : '{act}: hablar'));
+      if (ePress && best.area === 'intF' && World.phaseAt(this.cyc.t).i === 0) { this.curNpc = best; this.showLines(best, ['La tienda cierra de noche: el Furriel no abre hasta el alba.', 'Vuelve cuando amanezca (o golpea la campana de la plaza).']); return; } // la Intendencia solo atiende con luz
       if (ePress) { this.curNpc = best; if (best.def.talk && best.def.talk(this, best)) return; if (best.def.shop) this.openShop(best); else if (best.def.menu) this.openImbue(best.def.menu === 'all' ? 'all' : 'forge', best); else this.openDialogue(best); }
       return;
     }
@@ -1952,7 +1954,7 @@ Object.assign(CastleScene.prototype, {
   buildHouses() { // fachada de cada casa (en la sala de fuera) y su interior de madera
     const W = this.W; this.caveLamps = this.caveLamps || [];
     (W.doors || []).forEach(d => {
-      if (d.label) return; // puerta con rótulo (torre, etc.): se dibuja aparte y no lleva fachada de casita
+      if (d.label && !W.areas[d.area].interior) return; // puerta con rótulo (torre, etc.): se dibuja aparte y no lleva fachada de casita
       const a = W.areas[d.area], fy = d.y, g = this.add.graphics().setDepth(-5.6);
       if (a.interior) { // interior: paredes de tablones, alfombra, estantes con frascos y el mostrador del mercader
         const x0 = (a.x0 + 3) * T, x1 = (a.x0 + 23) * T, y0 = (a.y0 + 8) * T;
@@ -1961,7 +1963,10 @@ Object.assign(CastleScene.prototype, {
         for (let x = x0 + 70; x < x1; x += 140) g.fillStyle(0x3a2616, 1).fillRect(x, y0, 10, fy - y0);
         g.fillStyle(0x3a2616, 1).fillRect(x0, fy - 40, x1 - x0, 40).fillStyle(0x6b2a32, 1).fillRect(x0 + 120, fy - 6, x1 - x0 - 240, 6);
         const cols = [0xff3b5c, 0xb43bff, 0x3bd9ff, 0xff9a3b, 0x3bff9a, 0xffe066];
-        [[x0 + 300, y0 + 70], [x0 + 300, y0 + 130], [x0 + 470, y0 + 70]].forEach(([sx, sy], k) => {
+        const hasM = W.npcs.some(n => n.area === a.id && n.type === 'merchant'); // estantes de frascos solo en las tiendas; el resto de interiores lleva armero y barriles
+        if (!hasM) { for (let k = 0; k < 3; k++) { const rx = x0 + 70 + k * 42; g.fillStyle(0x3a2616, 1).fillRect(rx, y0 + 54, 4, 70).fillStyle(0x6a6a72, 1).fillRect(rx - 7, y0 + 60, 18, 3).fillRect(rx - 3, y0 + 40 + k * 4, 10, 22); } // lanzas y escudos en el armero
+          [[x0 + 330, fy - 30], [x0 + 366, fy - 30], [x0 + 348, fy - 60]].forEach(([bx, by]) => { g.fillStyle(0x4a3220, 1).fillRect(bx - 14, by, 28, 30).fillStyle(0x6a4a2c, 1).fillRect(bx - 12, by + 2, 24, 26).fillStyle(0x3a2616, 1).fillRect(bx - 14, by + 12, 28, 3); }); } // barriles
+                (hasM ? [[x0 + 300, y0 + 70], [x0 + 300, y0 + 130], [x0 + 470, y0 + 70]] : []).forEach(([sx, sy], k) => {
           g.fillStyle(0x2e1d12, 1).fillRect(sx, sy, 130, 8);
           for (let i = 0; i < 6; i++) { const c = cols[(i + k * 2) % cols.length]; g.fillStyle(0x1a1018, 1).fillRect(sx + 8 + i * 20, sy - 22, 12, 22); g.fillStyle(c, 1).fillRect(sx + 10 + i * 20, sy - 16, 8, 14); g.fillStyle(0xffffff, 0.5).fillRect(sx + 11 + i * 20, sy - 14, 2, 6); }
         });

@@ -243,11 +243,15 @@
     area('cbT', 'Campanario: Cámara de las Campanas', Z3Z, 3, 1, 1, 2, [['cycle'], ['bell', 3, 34], ['bell', 22, 34], ['P', 5, 28, 4], ['PH', 10, 25, 4, 'A'], ['PH', 15, 22, 4, 'A'], ['P', 20, 19, 5], ['E', 'bat', 12, 14]]); // la salida a la Azotea está a 16 casillas del suelo: hay que cruzar las plataformas del Alba (20 s)
     // Azotea: terraza de piedra a la altura de la puerta y gran escalinata hasta la calle
     area('azotea', 'Campanario: Azotea', Z3Z, 4, 1, 2, 2, [['cycle'], ['open'], ['altar', 34, 34], ['cry', 45, 33], ['B', 1, 19, 10, 16], ['stairs', 26, 34, 'L', 16], ['E', 'bat', 40, 12]]);
+    // Interiores de las casas del Cuartel (fuera de la calle, bajo ella): se entra por la puerta de la fachada y se sale por la suya
+    area('intF', 'Intendencia del Furriel', Z3Z, 5, 9, 1, 1, [['special'], ['interior'], ['calm'], ['door', 5, 'cu1', 13, 'Salir a la calle'], ['npc', 'merchant', 17, 16], ['torch', 9, 11], ['torch', 21, 11]]);
+    area('intG', 'Garita del Cabo', Z3Z, 6, 9, 1, 1, [['special'], ['interior'], ['calm'], ['door', 5, 'cu1', 40, 'Salir a la calle'], ['altar', 14, 16], ['torch', 9, 11], ['torch', 21, 11]]);
+    area('intE', 'Escondite del Armero', Z3Z, 7, 9, 1, 1, [['special'], ['interior'], ['calm'], ['door', 5, 'cu1', 68, 'Salir a la calle'], ['cry', 17, 15], ['torch', 9, 11], ['torch', 21, 11]]);
     // Cuartel Viejo (Barrio del Relevo): casas con balcón y alero, escalera de piedra, pasarela entre aleros, un arco y un portón que solo abre en el alba
     area('cu1', 'Cuartel Viejo: Calle de los Relevos', Z3Z, 5, 8, 3, 1, [['cycle'], ['open'],
       ['stairs', 2, 16, 'R', 5], ['facade', 7, 12, 'stone', 'R'], ['cart', 19, 15], ['PH', 22, 14, 4, 'ADO'], ['P', 19, 12, 15],
       ['facade', 34, 13, 'timber', 'L'], ['B', 48, 12, 1, 5], ['B', 54, 12, 1, 5], ['B', 48, 11, 7, 1], ['stairs', 59, 16, 'L', 5],
-      ['facade', 62, 12, 'adobe', 'R'], ['cry', 66, 6],
+      ['facade', 62, 12, 'adobe', 'R'], ['cry', 66, 6], ['door', 13, 'intF', 5, 'Entrar en la Intendencia del Furriel'], ['door', 40, 'intG', 5, 'Entrar en la Garita del Cabo'], ['door', 68, 'intE', 5, 'Entrar en el Escondite del Armero'],
       ['E', 'kn', 16, 16], ['E', 'sk', 30, 16], ['E', 'kn', 51, 16], ['E', 'sk', 75, 16], ['E', 'bat', 40, 5]]);
     area('cu2', 'Cuartel Viejo: Patio del Relevo', Z3Z, 8, 8, 2, 1, [['cycle'], ['open'], ['bell', 8, 16], ['B', 3, 13, 1, 4], ['stairs', 16, 16, 'L', 4], ['P', 3, 12, 10], ['PB', 34, 1, 2, 16, 'NDO'], ['cart', 40, 15], ['PH', 44, 14, 5, 'ADO'], ['E', 'kn', 22, 16], ['E', 'kn', 28, 16], ['E', 'sk', 47, 16], ['E', 'bat', 20, 5]]); // el portón (34 a 35) solo se abre en el alba: hay que golpear la campana o esperar
     area('cu3', 'Cuartel Viejo: Puerta del Relevo', Z3Z, 10, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]); // final provisional del primer tramo
