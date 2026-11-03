@@ -119,6 +119,7 @@ const HINT_KEYS = { act: { key: 'E', pad: '△', touch: 'E' }, dash: { key: 'C',
 function hintText(s) { const m = inputMode(); return String(s).replace(/\{(act|dash|down)\}/g, (_, k) => HINT_KEYS[k][m]); }
 // ---------- Bestiario y diarios ----------
 const BESTIARY = {
+  eco: { name: 'Eco del ciclo', text: 'Cada vuelta del día se lleva a un vecino de Primalba, y de noche vuelven los que no volvieron: salen del humo de las lámparas apagadas, uno por lámpara.', tip: 'No te ven en la luz. Enciende su lámpara ({act}) y se disuelve; al amanecer todos vuelven a dormir.' },
   vrojo: { name: 'Vampiro cazador', text: 'Un colmillo de capa roja con la espada de Cor: tajos cortos y un impulso que te cae encima. Se cura cada vez que te toca.', tip: 'Esquiva el impulso (se agacha antes) y golpéalo cuando termine.' },
   vazul: { name: 'Vampiro lancero', text: 'Un colmillo de capa azul con la lanza de Zaf: estocada larga de cerca y, de lejos, te arroja una jabalina de luz.', tip: 'Cuando se queda quieto viene el golpe: acércate o salta por encima. La jabalina va recta: agáchate o salta.' },
   vverde: { name: 'Vampiro arquero', text: 'Un colmillo de capa verde con el arco de Malak: flechas rápidas, una ráfaga de tres cada tres disparos y un paso atrás si te acercas. Suelta el doble de almas.', tip: 'Avanza saltando o usa el impulso; si lo arrinconas no puede retroceder.' },
@@ -1711,7 +1712,7 @@ Object.assign(CastleScene.prototype, {
       pg.fillStyle(0x4a3220, 1).fillRect(x - 60, fy - 40, 120, 8).fillRect(x - 54, fy - 40, 8, 40).fillRect(x + 46, fy - 40, 8, 40); for (let i = 0; i < 6; i++) pg.fillStyle(i === 5 ? 0x2a1c10 : 0xcdbf9e, 1).fillRect(x - 54 + i * 19, fy - 50, 12, 10); // mesa para seis; la sexta silla, vacía
     });
     (w.props || []).filter(p => !w.sky || open.some(a => a.id === p.area)).forEach(p => {
-      if (p.kind === 'stairs' || p.kind === 'tower') return; // de ladrillo: se ven sus casillas
+      if (p.kind === 'stairs' || p.kind === 'tower' || p.kind === 'cradle' || p.kind === 'portrait' || p.kind === 'table' || p.kind === 'faro') return; // de ladrillo (se ven sus casillas) o decorado sin casillas propias (si no, forEachTile sin ancho ni alto ocultaba todo el suelo desde su posición)
       if (p.kind === 'facade') { this.drawFacade(pg, p); return; }
       this.fg.forEachTile(t => { t.alpha = 0; }, this, p.gx, p.gy, p.w, p.h);
       const x = p.gx * T, y = p.gy * T, wd = p.w * T, hd = p.h * T;

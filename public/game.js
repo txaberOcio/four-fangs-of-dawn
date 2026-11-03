@@ -128,6 +128,7 @@ function endGame() { if (game) { game.destroy(true); game = null; } setupTouch(f
 // ---------- Configuración de entidades ----------
 const EN = {
   // vampiros de la Calle de las Horas: uno por colmillo, con una habilidad de su vampiro (ab: ver eliteAbility)
+  eco: { tex: 'gh', sc: 3, body: [8, 10], hp: 3, dmg: 1, spd: 55, hb: [24, 32], kind: 'ghost' }, // eco de un vecino que el ciclo se llevó: sale de una lámpara apagada de noche
   vrojo: { tex: 'vrojo', sc: 3, body: [10, 13], hp: 5, dmg: 2, spd: 50, hb: [32, 44], kind: 'walk', lifesteal: true, vamp: 'red' }, // Cor: ESPADA (tajos como los suyos), IMPULSO (embiste) y sed de sangre (se cura al herirte)
   vazul: { tex: 'vazul', sc: 3, body: [10, 13], hp: 5, dmg: 1, spd: 44, hb: [32, 44], kind: 'walk', vamp: 'blue' }, // Zaf: LANZA (estocada larga) y jabalina de luz (la arroja de lejos)
   vverde: { tex: 'vverde', sc: 3, body: [10, 13], hp: 4, dmg: 1, spd: 36, hb: [32, 44], kind: 'walk', vamp: 'green' }, // Malak: ARCO (flechas, y cada tercera una ráfaga de tres), paso atrás si te acercas y suelta el doble de almas
@@ -557,10 +558,34 @@ class CastleScene extends Phaser.Scene {
     this.litList = this.torchObjs.filter(o => o.lit).map(o => ({ x: o.x, y: o.y, r: o.r || 215 }));
     this.altars.filter(a => a.lit).forEach(a => this.litList.push({ x: a.x, y: a.y - 40, r: a.big && !a.mini ? 330 : 160 }));
   }
+  // ---- la noche da miedo: en las salas con ciclo al aire libre tu luz mengua, los enemigos corren más y ven más lejos, suena más lenta y grave, y llegan fantasmas
+  nightLevel(a) { // 0 de día; 1 en plena noche; con rampa de 4 s al entrar y al salir
+    if (!a || !a.cycle || a.indoor) return 0;
+    const ph = World.phaseAt(this.cyc.t);
+    if (ph.i === 0) return ph.left < 4 ? ph.left / 4 : 1;
+    if (ph.i === 3) return ph.left < 4 ? 1 - ph.left / 4 : 0;
+    return 0;
+  }
+  nightAt(x, y) { return this.nightLevel(this.W.areaOf(Math.floor(x / T), Math.floor(y / T))); }
+  // Los ecos: los vecinos que el ciclo se llevó vuelven de noche por las lámparas apagadas. Sale uno por lámpara apagada de la sala (hasta 3, las más cercanas),
+  // se disuelve si enciendes su lámpara y todos vuelven a dormir al amanecer. Nada es aleatorio: apagadas = ecos.
+  nightSpawn() {
+    const cur = this.W.areas[this.myArea], nl = this.nightLevel(cur), ecos = [...this.ents.values()].filter(e => e.nightTorch !== undefined);
+    ecos.forEach(e => { const o = this.torchObjs[e.nightTorch]; if (nl < 0.95 || !o || o.lit) this.ecoDissolve(e); });
+    if (nl < 0.95 || !cur || cur.safe || cur.calm) return;
+    const live = [...this.ents.values()].filter(e => e.nightTorch !== undefined);
+    if (live.length >= 3) return;
+    const p = this.player, cand = this.torchObjs.filter(o => o.area === cur.id && !o.lit && !live.some(e => e.nightTorch === o.id) && Math.abs(o.x - p.x) < 800).sort((a, b) => Math.abs(a.x - p.x) - Math.abs(b.x - p.x))[0];
+    if (!cand) return;
+    for (let i = 0; i < 6; i++) this.poof(cand.x + Phaser.Math.Between(-10, 10), cand.y + 8 - i * 6, 1, 0xaaaaff); // sale del humo de la lámpara
+    this.createEnt('n' + (this.nid++), 'eco', cand.x, cand.y + 14, true, { room: cur.id, summoned: true, awake: true, nightTorch: cand.id });
+    if (!this.ecoHint) { this.ecoHint = true; this.toast('Las lámparas apagadas dejan salir a los ecos de quienes el ciclo se llevó. Enciéndelas ({act}) y se van.', 9000); }
+  }
+  ecoDissolve(e) { if (!this.ents.has(e.id)) return; this.poof(e.spr.x, e.spr.y, 6, 0xaaaaff); e.spr.destroy(); this.ents.delete(e.id); }
   // ---- Ciclo del Alba: la sala actual lo sigue si tiene ['cycle']. Color y opacidad de la oscuridad por fase, con transición de 4 s, y luz de cielo
   cycArea() { const a = this.W.areas[this.myArea]; return a && a.cycle ? a : null; }
   cycSky() {
-    const SK = [{ c: [4, 2, 10], a: 0.9, sky: 0 }, { c: [58, 28, 74], a: 0.6, sky: 0.35 }, { c: [10, 12, 24], a: 0.2, sky: 0.85 }, { c: [52, 24, 12], a: 0.68, sky: 0.3 }];
+    const SK = [{ c: [4, 2, 10], a: 0.94, sky: 0 }, { c: [58, 28, 74], a: 0.6, sky: 0.35 }, { c: [10, 12, 24], a: 0.2, sky: 0.85 }, { c: [52, 24, 12], a: 0.68, sky: 0.3 }];
     const ph = World.phaseAt(this.cyc.t), cur = SK[ph.i], nx = SK[(ph.i + 1) % 4], k = ph.left < 4 ? 1 - ph.left / 4 : 0, L = (u, v) => u + (v - u) * k;
     return { col: ((L(cur.c[0], nx.c[0]) | 0) << 16) | ((L(cur.c[1], nx.c[1]) | 0) << 8) | (L(cur.c[2], nx.c[2]) | 0), a: L(cur.a, nx.a), sky: L(cur.sky, nx.sky), ph };
   }
@@ -587,6 +612,7 @@ class CastleScene extends Phaser.Scene {
   torchKey(id) { return id + (World.REGIONS[this.W.region].tOff || 0); } // las antorchas de la Zona 3 se guardan con 5000 de más: son otro mapa
   setTorch(id, on) {
     const o = this.torchObjs[id]; if (!o || o.lit === !!on) return;
+    if (on) [...this.ents.values()].filter(q => q.nightTorch === id).forEach(q => this.ecoDissolve(q)); // la luz devuelve a los ecos a su sueño
     o.lit = !!on; o.flame.setVisible(o.lit); o.glow.setVisible(o.lit && !LITE); this.torchOn[this.torchKey(id)] = o.lit; this.rebuildLights();
     this.poof(o.x, o.y, 4, o.lit ? 0xffb347 : 0x666666);
   }
@@ -605,7 +631,7 @@ class CastleScene extends Phaser.Scene {
     const lamp = (x, y, r, a = 1) => { const X = x - sx0, Y = y - sy0; if (X < -r || X > SW + r || Y < -r || Y > SH + r) return; img.setScale(r / 64 / q).setAlpha(a); rt.erase(img, X / q, Y / q); };
     this.torchObjs.forEach(o => { if (o.lit && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, (o.r || 215) * (1 + 0.03 * Math.sin(time * 0.009 + o.id)), 1); });
     this.altars.forEach(a => { if (a.lit) lamp(a.x, a.y - 40, a.big && !a.mini ? 330 : 160, 0.9); });
-    lamp(p.x, p.y, 120 * this.auraMul(), 0.95);
+    lamp(p.x, p.y, 120 * this.auraMul() * (1 - 0.45 * this.nightLevel(this.W.areas[this.myArea])), 0.95); // de noche en la calle, tu luz alcanza menos
     this.npcObjs.forEach(n => { if (!n.off) lamp(n.x, n.y - 20, n.def.shop ? 110 : 80, 0.85); });
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id) && !this.hiddenAt(f.x, f.y)) lamp(f.x, f.y, 70, 0.8); });
     (this.sforgeObjs || []).forEach(f => lamp(f.x, f.y, 120, 0.9));
@@ -801,6 +827,7 @@ class CastleScene extends Phaser.Scene {
   // ===================================================== simulación del anfitrión
   simUpdate(dt) {
     this.simT += dt;
+    this.nightT = (this.nightT || 0) - dt; if (this.nightT <= 0) { this.nightT = 5; this.nightSpawn(); }
     // activación de salas
     this.activeT -= dt;
     if (this.activeT <= 0) {
@@ -874,7 +901,7 @@ class CastleScene extends Phaser.Scene {
   //   rojo (Cor): espada + impulso · azul (Zaf): lanza + jabalina de luz · verde (Malak): arco + paso atrás y ráfaga · morado (Matis): guadaña + gancho + paso de sombra
   vampAI(e, dt, tg) {
     const b = e.spr.body, x = e.spr.x, y = e.spr.y, col = e.cfg.vamp;
-    e.vCd = (e.vCd === undefined ? 1.2 : e.vCd) - dt;
+    e.vCd = (e.vCd === undefined ? 1.2 : e.vCd) - dt * (1 + 0.4 * this.nightAt(x, y)); // de noche atacan más a menudo
     if (e.vPh === 'tele') { e.vT -= dt; e.tele = true; b.setVelocityX(0); if (e.vT <= 0) { e.tele = false; e.vPh = 'act'; e.vT = e.vAct; this.vampFire(e, e.vKind, tg); } return true; }
     if (e.vPh === 'act') {
       e.vT -= dt;
@@ -960,8 +987,9 @@ class CastleScene extends Phaser.Scene {
   }
 
   aiUpdate(e, dt) {
-    const slow = e.slowT > 0 ? 0.5 : 1; // hielo: la mitad de velocidad
-    const b = e.spr.body, cfg = e.cfg, tg = this.nearest(e.spr.x, e.spr.y, 420);
+    const nl = this.nightAt(e.spr.x, e.spr.y); // de noche en la calle los enemigos corren un 40 % más y te ven desde más lejos
+    const slow = (e.slowT > 0 ? 0.5 : 1) * (1 + 0.4 * nl); // hielo: la mitad de velocidad
+    const b = e.spr.body, cfg = e.cfg, tg = this.nearest(e.spr.x, e.spr.y, 420 * (1 + 0.3 * nl));
     if (cfg.kind === 'saw') { // sierra: va y viene por su raíl, no se puede matar
       const o = e.opts || { ax: 'h', r: 100, w: 1.4 };
       if (e.ox === undefined) { e.ox = e.spr.x; e.oy = e.spr.y; e.ph = (e.ox * 0.013) % 6.28; }
@@ -1474,6 +1502,7 @@ class CastleScene extends Phaser.Scene {
       this.banner(`${this.W.region !== 'main' ? World.REGIONS[this.W.region].name : World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle(); if (this.zoneEndCheck) this.zoneEndCheck(ar);
       const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
       if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche (ves tras los muros agrietados).', 9000); }
+    Music.setNight(this.nightLevel(this.W.areas[this.myArea]) > 0.6);
     this.mmT -= dt;
     if (this.mmT <= 0 || this.showMap) { this.mmT = 0.2; this.updateMaps(); }
     if (inp.mapPress) {

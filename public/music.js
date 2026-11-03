@@ -7,7 +7,7 @@ const saveOpts = () => { try { localStorage.setItem('opts', JSON.stringify(OPT))
 const fsz = s => Math.round(parseFloat(s) * OPT.text) + 'px';
 const Music = (() => {
   let ctx = null, master = null, echoIn = null, noiseBuf = null, timer = null, step = 0, nextT = 0;
-  let zone = 0, bossKind = 0, boss = false, bossPending = null, started = false, muted = false;
+  let night = false, zone = 0, bossKind = 0, boss = false, bossPending = null, started = false, muted = false;
   const VOL = 0.34;
   try { muted = localStorage.getItem('mute') === '1'; } catch (e) { /* sin almacenamiento */ }
   // raíz MIDI, tempo, timbre del colchón, extras
@@ -72,13 +72,13 @@ const Music = (() => {
     g.gain.setValueAtTime(0.5, t); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.22);
     o.connect(g); g.connect(master); o.start(t); o.stop(t + 0.25);
   }
-  function stepDur() { const z = ZONES[zone]; return 60 / (boss ? 128 : z.bpm) / 4; }
+  function stepDur() { const z = ZONES[zone]; return 60 / (boss ? 128 : z.bpm * (night ? 0.78 : 1)) / 4; } // de noche, más lenta
 
   function playStep(s16, bar, t) {
     const z = ZONES[zone], sd = stepDur(), chord = (z.calm && !boss ? CALM_CHORDS : CHORDS)[bar % 4], root = z.root;
     if (s16 === 0) { // colchón: acorde sostenido
       chord.forEach(n => tone(mtof(root + 12 + n), t, sd * 16 * 0.98, z.pad, z.organ ? 0.03 : 0.028, z.organ ? 900 : 650, 0.35));
-      if (z.drone && bar % 2 === 0) tone(mtof(root - 12), t, sd * 32, 'sawtooth', 0.05, 260, 0.2);
+      if ((z.drone || night) && bar % 2 === 0) tone(mtof(root - 12), t, sd * 32, 'sawtooth', 0.05, 260, 0.2);
       if (z.royal) tone(mtof(root + chord[0] + 24), t, sd * 6, 'square', 0.02, 1400, 0.5);
     }
     // bajo
@@ -116,6 +116,7 @@ const Music = (() => {
     stop() { if (timer) clearInterval(timer); timer = null; started = false; if (master) master.gain.value = 0; },
     CALM,
     setZone(z) { if (ZONES[z]) zone = z; },
+    setNight(b) { night = !!b; }, // la noche de la Calle de las Horas: más lenta y con un zumbido grave
     setBossKind(k) { bossKind = k || 0; },
     setBoss(b) { if (b !== boss && bossPending !== b) bossPending = b; },
     toggleMute() {
