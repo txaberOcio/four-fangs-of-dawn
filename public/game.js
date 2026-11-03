@@ -45,6 +45,7 @@ const SFX = {
 
 // ---------- UI y red ----------
 let me = null, room = null, game = null, progress = null, selColor = null, saves = {}, saveMe = null;
+let REGION = 'main', FROM_REGION = null, SWITCHING = false; // mapa actual ('main' o 'z3'), de dónde se viene y si se está cruzando la Puerta Gigante
 const COLOR_LIST = ['red', 'blue', 'green', 'purple'];
 function show(screen) { ['auth', 'menu', 'lobby'].forEach(s => $('s-' + s).classList.toggle('hidden', s !== screen)); $('ui').classList.remove('hidden'); }
 function setStats(s) { $('stG').textContent = s.games || 0; $('stW').textContent = s.wins || 0; $('stC').textContent = s.bosses || 0; $('stT').textContent = s.bestTime ?? '-'; }
@@ -99,7 +100,13 @@ function renderLobby() {
   updateContRow();
 }
 socket.on('room', r => { room = r; if (!game) { renderLobby(); show('lobby'); } });
-socket.on('started', payload => { room = payload.room; progress = payload.progress; saveMe = payload.me || null; startGame(); });
+socket.on('started', payload => { room = payload.room; progress = payload.progress; saveMe = payload.me || null; REGION = progress && progress.region === 'z3' ? 'z3' : 'main'; FROM_REGION = null; SWITCHING = false; startGame(); });
+// la Puerta Gigante: todos pasan a otro mapa; cada uno se lleva su estado personal tal cual lo tiene
+socket.on('region', p => {
+  if (!game || !p) return; const sc = game.scene.getScenes(true)[0];
+  if (sc && sc.personalPayload) saveMe = sc.personalPayload(null, true);
+  progress = p.progress; REGION = p.region === 'z3' ? 'z3' : 'main'; FROM_REGION = p.from; SWITCHING = true; startGame();
+});
 
 function startGame() {
   $('ui').classList.add('hidden');
@@ -191,11 +198,11 @@ const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * 
 class CastleScene extends Phaser.Scene {
   // ===================================================== creación
   create() {
-    const w = this.W = World.build();
+    const w = this.W = World.build(REGION);
     buildArt(this);
     this.progress = progress || { abilities: {}, bosses: [], broken: [] };
     this.abil = { dash: false, dj: false, wj: false }; // las habilidades son de cada vampiro
-    (this.progress.broken || []).forEach(k => { const [gx, gy] = String(k).split(',').map(Number); if (w.fg[gy] && w.fg[gy][gx] !== undefined) w.fg[gy][gx] = -1; });
+    (this.progress.broken || []).forEach(k => { const s = String(k), z3k = s.startsWith('z3:'); if (z3k !== (REGION === 'z3')) return; const [gx, gy] = s.replace('z3:', '').split(',').map(Number); if (w.fg[gy] && w.fg[gy][gx] !== undefined) w.fg[gy][gx] = -1; });
 
     // mapa de tiles (fondo + primer plano)
     const bgMap = this.make.tilemap({ data: w.bg.map(r => r.slice()), tileWidth: T, tileHeight: T });
@@ -212,7 +219,7 @@ class CastleScene extends Phaser.Scene {
     // antorchas: se pueden encender y apagar (tecla E); el estado es compartido
     this.torchOn = Object.assign({}, this.progress.torches || {});
     this.torchObjs = w.torches.map(t => {
-      const lit = this.torchOn[t.id] !== undefined ? !!this.torchOn[t.id] : t.lit;
+      const lit = this.torchOn[this.torchKey(t.id)] !== undefined ? !!this.torchOn[this.torchKey(t.id)] : t.lit;
       return { ...t, lit,
         sconce: this.add.image(t.x, t.y + 8, 'sconce').setScale(3).setDepth(-3),
         flame: this.add.image(t.x, t.y, 'flame1').setScale(3).setDepth(-3).setVisible(lit),
@@ -221,7 +228,7 @@ class CastleScene extends Phaser.Scene {
     this.time.addEvent({ delay: 160, loop: true, callback: () => { this.fl = !this.fl; this.torchObjs.forEach(o => { if (o.lit) o.flame.setTexture(this.fl ? 'flame2' : 'flame1'); }); this.altars.forEach(a => a.spr.setTexture(a.lit ? (this.fl ? 'bonfire2' : 'bonfire1') : 'bonfire_off')); } });
 
     // altares, cristales, reliquias
-    this.altars = w.altars.map(a => ({ ...a, lit: a.area === 'vest', spr: this.add.image(a.x, a.y - (a.big && !a.mini ? 36 : 18), 'bonfire_off').setScale(a.big && !a.mini ? 6 : 3).setDepth(-2) }));
+    this.altars = w.altars.map(a => ({ ...a, lit: a.area === w.spawnPoint.area, spr: this.add.image(a.x, a.y - (a.big && !a.mini ? 36 : 18), 'bonfire_off').setScale(a.big && !a.mini ? 6 : 3).setDepth(-2) }));
     this.bonfireLit = new Set(this.altars.filter(a => a.lit).map(a => a.id));
     this.cryGot = new Set();
     this.crystals = w.crystals.map(c => ({ ...c, spr: this.add.image(c.x, c.y, 'crystal').setScale(2.6).setDepth(2) }));
@@ -231,7 +238,7 @@ class CastleScene extends Phaser.Scene {
     // jugador
     const mine = room.players.find(p => p.id === socket.id);
     this.color = mine ? mine.animal : 'red';
-    const sp = w.spawnPoint;
+    const door0 = FROM_REGION ? (w.gdoors || []).find(d => d.toRegion === FROM_REGION) : null, sp = door0 ? { x: door0.x, y: door0.y } : w.spawnPoint; // al cruzar la Puerta Gigante apareces junto a su otro lado
     this.lastAltar = { x: sp.x + (room.players.indexOf(mine) - 1) * 24, y: sp.y };
     this.player = this.physics.add.sprite(this.lastAltar.x, this.lastAltar.y - 21, 'hero_' + this.color).setScale(HERO_SCALE[this.color][0], HERO_SCALE[this.color][1]).setDepth(8);
     this.player.setSize(10, 13); this.heroBody(false); // el cuerpo físico es igual para todos aunque se dibujen con otra silueta
@@ -322,7 +329,7 @@ class CastleScene extends Phaser.Scene {
   // Pinta un área en el lienzo del minimapa (solo se ve lo explorado)
   mapTitle() { // título del mapa grande (M) con la sala en la que estás
     const a = this.W.areas[this.myArea];
-    this.bigTitle.setText('MAPA DEL CASTILLO  (M para cerrar)' + (a ? '\nEstás en: ' + (World.ZONES[a.z] ? World.ZONES[a.z] + ' — ' : '') + a.name : ''));
+    this.bigTitle.setText('MAPA DEL CASTILLO  (M para cerrar)' + (a ? '\nEstás en: ' + (this.W.region === 'z3' ? 'La Calle de las Horas — ' : (World.ZONES[a.z] ? World.ZONES[a.z] + ' — ' : '')) + a.name : ''));
   }
   markVisited(a) {
     if (this.visited.has(a.id)) return;
@@ -421,7 +428,7 @@ class CastleScene extends Phaser.Scene {
       { const ar = this.W.areaOf(Math.floor(s.x / T), Math.floor(s.y / T)); if (ar) this.markVisited(ar); }
     });
     on('snap', s => this.onSnap(s));
-    on('torch', ({ id, on: v }) => this.setTorch(id, v));
+    on('torch', ({ id, on: v }) => { const off = this.W.region === 'z3' ? 5000 : 0; if (id >= off && id < off + 5000) this.setTorch(id - off, v); });
     on('ignite', ({ id }) => { if (!this.isHost) return; const p = this.projs.get(id); if (p && POISON.includes(p.type)) this.igniteProj(p); });
     on('bell', ({ id }) => { if (!this.isHost) return; const b = (this.bells || []).find(q => q.id === id); if (b && b.cd <= 0 && b.ring <= 0) { b.cd = 15; b.ring = 3; } }); // un compañero golpea una campana: el anfitrión lleva el reloj
     on('zap', ({ id }) => { if (!this.isHost) return; const p = this.projs.get(id); if (p && SILENCE_TYPES.includes(p.type)) this.zapProj(p); });
@@ -552,16 +559,17 @@ class CastleScene extends Phaser.Scene {
     for (const t of this.targets()) { if (this.inLight(t.x, t.y)) continue; const d = Math.hypot(t.x - x, t.y - y); if (d < bd) { bd = d; best = t; } }
     return best;
   }
+  torchKey(id) { return id + (this.W.region === 'z3' ? 5000 : 0); } // las antorchas de la Zona 3 se guardan con 5000 de más: son otro mapa
   setTorch(id, on) {
     const o = this.torchObjs[id]; if (!o || o.lit === !!on) return;
-    o.lit = !!on; o.flame.setVisible(o.lit); o.glow.setVisible(o.lit && !LITE); this.torchOn[id] = o.lit; this.rebuildLights();
+    o.lit = !!on; o.flame.setVisible(o.lit); o.glow.setVisible(o.lit && !LITE); this.torchOn[this.torchKey(id)] = o.lit; this.rebuildLights();
     this.poof(o.x, o.y, 4, o.lit ? 0xffb347 : 0x666666);
   }
   interactTorch(pressedE) {
     const p = this.player; let best = null, bd = 1e9;
     if (!this.dead) for (const o of this.torchObjs) { const dx = Math.abs(o.x - p.x), dy = Math.abs(o.y - p.y); if (dx < 48 && dy < 100) { /* hay que estar cerca: las antorchas altas se encienden en mitad de un salto */ const d = dx + dy; if (d < bd) { bd = d; best = o; } } }
     if (best) { this.promptTxt.setVisible(true).setPosition(best.x, best.y - 26).setText(best.lit ? '{act}: apagar' : '{act}: encender'); } else this.promptTxt.setVisible(false);
-    if (best && pressedE) { const on = !best.lit; this.setTorch(best.id, on); socket.emit('torch', { id: best.id, on }); SFX.altar(); }
+    if (best && pressedE) { const on = !best.lit; this.setTorch(best.id, on); socket.emit('torch', { id: this.torchKey(best.id), on }); SFX.altar(); }
   }
   drawDark(time) {
     const p = this.player, w = this.W;
@@ -578,6 +586,7 @@ class CastleScene extends Phaser.Scene {
     (this.sforgeObjs || []).forEach(f => lamp(f.x, f.y, 120, 0.9));
     if (this.timedStep) this.timedStep(time);
     if (this.gdoorDraw) this.gdoorDraw();
+    if (this.skyStep) this.skyStep(time);
     if (this.phasedStep) { this.phasedStep(time); this.bellStep(Math.min(0.1, Math.max(0, (time - (this.bellPrevT || time)) / 1000)), time); this.bellPrevT = time; }
     (this.caveLamps || []).forEach(L => { if (!(L.gate && L.gate.open)) lamp(L.x, L.y, L.r, 0.85); }); this.caveEmbers(time); this.mossSpores(time); this.liftStep(0.016);
     (this.gemObjs || []).forEach(o => { if (!this.gemGot.has(o.id) && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, 45, 0.8); });
@@ -879,7 +888,7 @@ class CastleScene extends Phaser.Scene {
       const lit = this.torchObjs.filter(o => o.lit && Math.hypot(o.x - x, o.y - y) < 380).sort((a, b) => Math.hypot(a.x - x, a.y - y) - Math.hypot(b.x - x, b.y - y))[0];
       if (lit && e.abN % 2 === 1) { // soplido: apaga la antorcha más cercana a distancia
         for (let i = 0; i < 6; i++) this.poof(x + (lit.x - x) * i / 6, y + (lit.y - y) * i / 6, 1, 0xbbaaff);
-        this.setTorch(lit.id, false); socket.emit('torch', { id: lit.id, on: false }); return;
+        this.setTorch(lit.id, false); socket.emit('torch', { id: this.torchKey(lit.id), on: false }); return;
       }
       const nx = tg.x + (Math.random() < 0.5 ? -1 : 1) * 90, ny = tg.y - 10;
       if (!this.solidAt(nx, ny)) { this.poof(x, y, 5, 0xbbaaff); e.spr.setPosition(nx, ny); this.poof(nx, ny, 5, 0xbbaaff); }
@@ -1160,7 +1169,7 @@ class CastleScene extends Phaser.Scene {
         if (Math.abs(dxT) > 28) { b.setVelocityX(Math.sign(dxT) * (rage ? 190 : 150)); e.spr.setFlipX(dxT < 0); e.tele = false; e.chan = 0; }
         else {
           b.setVelocityX(0); e.tele = true; e.chan = (e.chan || 0) + dt;
-          if (e.chan >= (rage ? 0.7 : 1.1)) { this.setTorch(tt.id, true); socket.emit('torch', { id: tt.id, on: true }); e.relightT = rage ? 2 : 3.2; e.chan = 0; done(0.5); }
+          if (e.chan >= (rage ? 0.7 : 1.1)) { this.setTorch(tt.id, true); socket.emit('torch', { id: this.torchKey(tt.id), on: true }); e.relightT = rage ? 2 : 3.2; e.chan = 0; done(0.5); }
         }
         break; }
       case 'rays': // lluvia de rayos de luz desde el techo
@@ -1375,7 +1384,7 @@ class CastleScene extends Phaser.Scene {
     if (ar && ar.id !== this.myArea) { const firstVisit = !!this.visited && !this.visited.has(ar.id); this.myArea = ar.id; this.markVisited(ar); this.talkOnArea(ar.id);
       if (firstVisit && ar.id === 'cb0') { this.centerTxt.setText('ZONA 3\n\nLA CALLE DE LAS HORAS'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 3')) this.centerTxt.setText(''); }); } // primera vez al otro lado de la Puerta Gigante
       if (firstVisit && ar.id === 'asc2') { this.mapGrow = true; this.centerTxt.setText('ZONA 2\n\nMÁS ALLÁ DE LA GRAN HOGUERA'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 2')) this.centerTxt.setText(''); }); } // primer descenso al segundo mapa
-      this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle(); if (this.zoneEndCheck) this.zoneEndCheck(ar);
+      this.banner(`${this.W.region === 'z3' ? 'La Calle de las Horas' : World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle(); if (this.zoneEndCheck) this.zoneEndCheck(ar);
       const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
       if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche (ves tras los muros agrietados).', 9000); }
     this.mmT -= dt;

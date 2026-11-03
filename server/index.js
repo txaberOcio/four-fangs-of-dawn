@@ -17,7 +17,7 @@ const TALK_ID = /^[A-Z]\d{2}$/; // ids de las charlas (A01, B14...)
 const RIVAL = { aurora: 'vesper', vesper: 'aurora' }; // solo se puede derrotar a uno de los dos
 const MAX_PLAYERS = 4;
 const MAX_ACCOUNTS = Number(process.env.MAX_ACCOUNTS) || 2000;
-const world = World.build(); // se usa para validar eventos (por ejemplo, que un muro roto sea de verdad una grieta)
+const worlds = { main: World.build(), z3: World.build('z3') }, world = worlds.main; // se usa para validar eventos (por ejemplo, que un muro roto sea de verdad una grieta)
 
 // ---------- Cuentas (JSON, contraseñas con scrypt) ----------
 const readJson = f => JSON.parse(fs.readFileSync(f, 'utf8'));
@@ -253,6 +253,7 @@ io.on('connection', socket => {
     r.progress = r.cont ? JSON.parse(JSON.stringify(hslot.world)) : freshProgress();
     r.progress.torches = r.progress.torches || {}; r.progress.broken = Array.isArray(r.progress.broken) ? r.progress.broken : [];
     r.progress.bosses = Array.isArray(r.progress.bosses) ? r.progress.bosses.filter(b => BOSS_IDS.includes(b)) : [];
+    r.progress.region = r.progress.region === 'z3' && r.progress.bosses.includes('cadalso') && r.progress.bosses.includes('vigilia') ? 'z3' : 'main'; // mapa en el que se está (castillo y Zona 2, o la Calle de las Horas)
     r.progress.talks = Array.isArray(r.progress.talks) ? r.progress.talks.filter(t => typeof t === 'string' && TALK_ID.test(t)).slice(0, 200) : []; // charlas ya vistas
     for (const p of Object.values(r.players)) {
       const s = io.sockets.sockets.get(p.id), u = users[p.name], slot = u && u.saves && u.saves[p.animal];
@@ -350,9 +351,9 @@ io.on('connection', socket => {
     const { gx, gy } = data && typeof data === 'object' ? data : {};
     const r = myRoom();
     if (!r || !r.started || !Number.isInteger(gx) || !Number.isInteger(gy)) return;
-    const row = world.fg[gy], v = row ? row[gx] : undefined;
+    const rg = r.progress.region === 'z3' ? 'z3' : 'main', row = worlds[rg].fg[gy], v = row ? row[gx] : undefined;
     if (v === undefined || v < 0 || v % 8 !== World.K.CRACK) return; // solo se pueden romper las grietas del mapa
-    const k = gx + ',' + gy;
+    const k = (rg === 'z3' ? 'z3:' : '') + gx + ',' + gy; // los muros de la Zona 3 llevan prefijo: es otro mapa
     if (r.progress.broken.includes(k) || r.progress.broken.length > 500) return;
     r.progress.broken.push(k);
     socket.to(r.code).emit('broke', { gx, gy });
@@ -362,8 +363,8 @@ io.on('connection', socket => {
   on('revertWorld', data => {
     const r = myRoom(); if (!r || !r.started || r.host !== socket.id || Object.keys(r.players).length !== 1 || !data || typeof data !== 'object') return;
     const bosses = Array.isArray(data.bosses) ? data.bosses.filter(b => BOSS_IDS.includes(b)) : [];
-    const broken = (Array.isArray(data.broken) ? data.broken : []).filter(k => { if (typeof k !== 'string') return false; const [gx, gy] = k.split(',').map(Number); const row = world.fg[gy], v = row ? row[gx] : undefined; return Number.isInteger(gx) && Number.isInteger(gy) && v !== undefined && v >= 0 && v % 8 === World.K.CRACK; }).slice(0, 500);
-    const torches = {}; if (data.torches && typeof data.torches === 'object') for (const k of Object.keys(data.torches).slice(0, 2000)) { const id = Number(k); if (Number.isInteger(id) && id >= 0 && id <= 2000) torches[id] = !!data.torches[k]; }
+    const broken = (Array.isArray(data.broken) ? data.broken : []).filter(k => { if (typeof k !== 'string') return false; if (/^z3:\d+,\d+$/.test(k)) return true; const [gx, gy] = k.split(',').map(Number); const row = world.fg[gy], v = row ? row[gx] : undefined; return Number.isInteger(gx) && Number.isInteger(gy) && v !== undefined && v >= 0 && v % 8 === World.K.CRACK; }).slice(0, 500);
+    const torches = {}; if (data.torches && typeof data.torches === 'object') for (const k of Object.keys(data.torches).slice(0, 2000)) { const id = Number(k); if (Number.isInteger(id) && id >= 0 && id <= 20000) torches[id] = !!data.torches[k]; }
     r.progress.bosses = bosses; r.progress.broken = broken; r.progress.torches = torches; r.won = bosses.includes('conde');
     io.to(r.code).emit('progress', r.progress);
   });
@@ -375,10 +376,20 @@ io.on('connection', socket => {
     io.to(to).emit('loot', { amt, item: ITEM_IDS.includes(item) ? item : null, eid: typeof eid === 'string' ? eid.slice(0, 40) : null, bonus: clampInt(bonus, 0, 500), kt: typeof kt === 'string' ? kt.slice(0, 12) : null });
   });
   // Encender / apagar antorchas (estado compartido)
+  // Cruzar la Puerta Gigante (o volver): todos los de la sala cambian de mapa a la vez
+  on('region', to => {
+    const r = myRoom();
+    if (!r || !r.started || (to !== 'main' && to !== 'z3')) return;
+    const from = r.progress.region === 'z3' ? 'z3' : 'main';
+    if (from === to) return;
+    if (to === 'z3' && !(r.progress.bosses.includes('cadalso') && r.progress.bosses.includes('vigilia'))) return; // la puerta solo abre al caer los dos Regentes
+    r.progress.region = to;
+    io.to(r.code).emit('region', { region: to, from, progress: r.progress });
+  });
   on('torch', data => {
     const { id, on: onFlag } = data && typeof data === 'object' ? data : {};
     const r = myRoom();
-    if (!r || !r.started || !Number.isInteger(id) || id < 0 || id > 2000) return;
+    if (!r || !r.started || !Number.isInteger(id) || id < 0 || id > 20000) return; // las antorchas de la Zona 3 suman 5000 a su número
     r.progress.torches[id] = !!onFlag;
     socket.to(r.code).emit('torch', { id, on: !!onFlag });
   });

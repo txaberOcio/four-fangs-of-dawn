@@ -4,6 +4,7 @@
 (function (root) {
   'use strict';
   const T = 32, CW = 26, CH = 18, COLS = 22, ROWS = 16;
+  const REGIONS = { main: { cols: COLS, rows: ROWS, entry: 'vest' }, z3: { cols: 40, rows: 12, entry: 'zag' } }; // cada región es un mundo aparte (su propio mapa de tiles)
   const PHYS = {
     gravity: 900, speed: 165, jump: -470, djump: -420,
     dashSpeed: 560, dashTime: 0.18, dashCd: 0.5, // Impulso: unos 100 px (antes 0.25 s = 140 px)
@@ -49,7 +50,9 @@
   const AREAS = [];
   // diff: escalado de dificultad del área. Por defecto igual que z (el aspecto), salvo estas salas de la entrada que tienen la paleta de los Calabozos
   const DIFF = { bodega: 0, cripta: 0, tunel: 0, osario: 0, pozo: 0, arch1: 4, arch2: 4, arch3: 4, scrip: 4, pas1: 7, pas2: 7, pas3: 7, pas4: 7, pas5: 7 }; // el Archivo Prohibido se visita más tarde: dificultad de zona 4; el camino de salida, como las Torres del Alba
-  const area = (id, name, z, c, r, w, h, ops) => AREAS.push({ id, name, z, diff: DIFF[id] !== undefined ? DIFF[id] : z, c, r, w, h, ops: ops || [] });
+  let CUR = 'main'; // región en la que se definen las áreas: 'main' (castillo y Zona 2) o 'z3' (la Calle de las Horas, un mapa aparte con su propia rejilla)
+  const inRegion = (r, fn) => { CUR = r; try { fn(); } finally { CUR = 'main'; } };
+  const area = (id, name, z, c, r, w, h, ops) => AREAS.push({ id, name, z, diff: DIFF[id] !== undefined ? DIFF[id] : z, c, r, w, h, ops: ops || [], region: CUR });
 
   // --- Ala de entrada (camino principal hacia la Gárgola) ---
   area('vest', 'Vestíbulo', 0, 2, 6, 1, 1, [['npc', 'merchant', 13, 16], ['tri', 'tl', 5], ['tri', 'tr', 5], ['altar', 6, 16], ['E', 'sk', 18, 16], ['E', 'sk', 21, 16]]);
@@ -222,23 +225,43 @@
   area('dep2', 'Galería de los Retratos Cubiertos', 11, 19, 11, 2, 1, [['climb', 40, 4, 'norm', true], ['E', 'kn', 20, 16], ['E', 'gh', 30, 9], ['E', 'sk', 46, 16]]);
   area('dep3', 'Despacho del Chambelán', 11, 19, 12, 2, 1, [['climb', 8, 4, 'norm', true], ['boss', 'chambelan', 28, 16]]);
   area('dep4', 'Antesala de los Regentes', 15, 19, 13, 2, 1, [['altar', 6, 16], ['forge', 24, 16], ['climb', 40, 4, 'norm', true]]);
-  area('tronos', 'Salón de los Dos Tronos', 15, 19, 14, 3, 2, [['climb', 8, 4, 'norm', true], ['boss', 'cadalso', 52, 34], ['boss', 'vigilia', 24, 34], ['gdoor', 72, 'cb0', 23, 'cadalso,vigilia']]); // la Puerta Gigante de la Zona 3 se abre al caer los dos Regentes
+  area('tronos', 'Salón de los Dos Tronos', 15, 19, 14, 3, 2, [['climb', 8, 4, 'norm', true], ['boss', 'cadalso', 52, 34], ['boss', 'vigilia', 24, 34], ['gdoor', 72, 'z3', 0, 'cadalso,vigilia']]); // la Puerta Gigante de la Zona 3 se abre al caer los dos Regentes
 
-  // --- Campanario (Zona 3, tramo vertical de prueba): sala 'special' fuera del mapa y del validador; se llega solo con el panel F2 de desarrollo.
-  //   Sigue el ciclo del Alba: plataformas de fase (N noche, A alba, D día, O ocaso) y campanas que se golpean para pasar a la fase siguiente.
-  const CAMP_Z = 12; // de momento con la paleta de la Capilla del Cuartel; la Zona 3 tendrá la suya
-  area('cb0', 'Campanario: Pie de la Torre', CAMP_Z, 0, 15, 1, 1, [['special'], ['cycle'], ['indoor'], ['calm'], ['altar', 6, 16], ['bell', 20, 16], ['climb', 11, 4, 'norm', true], ['gdoor', 23, 'tronos', 72, '']]);
-  area('cb1', 'Campanario: Escalera de Cuerda', CAMP_Z, 0, 13, 1, 2, [['special'], ['cycle'], ['bell', 4, 34], ['ladder', 11, 4, i => (i % 3 === 0 ? 'ADO' : '')], ['E', 'bat', 8, 20], ['cry', 21, 30]]);
-  area('cb2', 'Campanario: Sombras del Badajo', CAMP_Z, 0, 11, 1, 2, [['special'], ['cycle'], ['bell', 21, 34], ['ladder', 11, 4, i => (i % 3 === 1 ? 'NAO' : '')], ['E', 'bat', 8, 22], ['E', 'bat', 18, 12]]);
-  area('cbT', 'Campanario: Cámara de las Campanas', CAMP_Z, 0, 9, 1, 2, [['special'], ['cycle'], ['bell', 3, 34], ['bell', 22, 34], ['P', 5, 28, 4], ['PH', 10, 25, 4, 'A'], ['PH', 15, 22, 4, 'A'], ['P', 20, 19, 5], ['E', 'bat', 12, 14]]); // la salida a la Azotea está a 16 casillas del suelo: hay que cruzar las plataformas del Alba (20 s)
-  area('azotea', 'Campanario: Azotea', CAMP_Z, 1, 9, 2, 2, [['special'], ['cycle'], ['altar', 6, 34], ['cry', 40, 33], ['P', 1, 19, 8], ['P', 12, 24, 5], ['P', 19, 29, 5], ['PH', 26, 27, 5, 'DO'], ['P', 34, 29, 5], ['E', 'bat', 30, 12]]);
+
+  // ===== Zona 3: la Calle de las Horas (región 'z3', un mapa aparte; ver docs/ZONA3-PROPUESTA.md) =====
+  // De momento: el Zaguán, la Plaza de la Puerta con el Campanario (tramo vertical) y el principio del Cuartel Viejo. La paleta es provisional (Capilla del Cuartel).
+  const Z3Z = 12;
+  inRegion('z3', () => {
+    // Zaguán: fachada del castillo con la Puerta Gigante empotrada y, a la derecha, la calle al aire libre
+    area('zag', 'El Zaguán de las Horas', Z3Z, 0, 8, 2, 1, [['cycle'], ['open'], ['castle', 22], ['calm'], ['altar', 14, 16], ['bell', 36, 16], ['gdoor', 3, 'main', 0, '']]);
+    // Plaza de la Puerta: mercado a la izquierda, torre-puerta del Campanario en medio (la calle pasa bajo su arco) y la Casa del Pregón a la derecha
+    area('plz0', 'Plaza de la Puerta', Z3Z, 2, 8, 3, 1, [['cycle'], ['open'], ['calm'], ['altar', 10, 16], ['bell', 20, 16], ['cart', 14, 15], ['PH', 17, 14, 4, 'D'], ['tower', 26, 26], ['door', 32, 'cb0', 3, 'Entrar en la torre del Campanario'], ['facade', 56, 14, 'adobe', 'R']]);
+    // Campanario: torre sobre el arco (tramo vertical con plataformas de fase y campanas). Se entra por la puerta de la torre y se sale por la misma
+    area('cb0', 'Campanario: Pie de la Torre', Z3Z, 3, 7, 1, 1, [['cycle'], ['indoor'], ['calm'], ['bell', 6, 16], ['door', 3, 'plz0', 32, 'Salir a la plaza'], ['climb', 11, 4, 'norm', true]]);
+    area('cb1', 'Campanario: Escalera de Cuerda', Z3Z, 3, 5, 1, 2, [['cycle'], ['bell', 4, 34], ['ladder', 11, 4, i => (i % 3 === 0 ? 'ADO' : '')], ['E', 'bat', 8, 20], ['cry', 21, 30]]);
+    area('cb2', 'Campanario: Sombras del Badajo', Z3Z, 3, 3, 1, 2, [['cycle'], ['bell', 21, 34], ['ladder', 11, 4, i => (i % 3 === 1 ? 'NAO' : '')], ['E', 'bat', 8, 22], ['E', 'bat', 18, 12]]);
+    area('cbT', 'Campanario: Cámara de las Campanas', Z3Z, 3, 1, 1, 2, [['cycle'], ['bell', 3, 34], ['bell', 22, 34], ['P', 5, 28, 4], ['PH', 10, 25, 4, 'A'], ['PH', 15, 22, 4, 'A'], ['P', 20, 19, 5], ['E', 'bat', 12, 14]]); // la salida a la Azotea está a 16 casillas del suelo: hay que cruzar las plataformas del Alba (20 s)
+    // Azotea: terraza de piedra a la altura de la puerta y gran escalinata hasta la calle
+    area('azotea', 'Campanario: Azotea', Z3Z, 4, 1, 2, 2, [['cycle'], ['open'], ['altar', 34, 34], ['cry', 45, 33], ['B', 1, 19, 10, 16], ['stairs', 26, 34, 'L', 16], ['E', 'bat', 40, 12]]);
+    // Cuartel Viejo (Barrio del Relevo): casas con balcón y alero, escalera de piedra, pasarela entre aleros, un arco y un portón que solo abre en el alba
+    area('cu1', 'Cuartel Viejo: Calle de los Relevos', Z3Z, 5, 8, 3, 1, [['cycle'], ['open'],
+      ['stairs', 2, 16, 'R', 5], ['facade', 7, 12, 'stone', 'R'], ['cart', 19, 15], ['PH', 22, 14, 4, 'ADO'], ['P', 19, 12, 15],
+      ['facade', 34, 13, 'timber', 'L'], ['B', 48, 12, 1, 5], ['B', 54, 12, 1, 5], ['B', 48, 11, 7, 1], ['stairs', 59, 16, 'L', 5],
+      ['facade', 62, 12, 'adobe', 'R'], ['cry', 66, 6],
+      ['E', 'kn', 16, 16], ['E', 'sk', 30, 16], ['E', 'kn', 51, 16], ['E', 'sk', 75, 16], ['E', 'bat', 40, 5]]);
+    area('cu2', 'Cuartel Viejo: Patio del Relevo', Z3Z, 8, 8, 2, 1, [['cycle'], ['open'], ['bell', 8, 16], ['B', 3, 13, 1, 4], ['stairs', 16, 16, 'L', 4], ['P', 3, 12, 10], ['PB', 34, 1, 2, 16, 'NDO'], ['cart', 40, 15], ['PH', 44, 14, 5, 'ADO'], ['E', 'kn', 22, 16], ['E', 'kn', 28, 16], ['E', 'sk', 47, 16], ['E', 'bat', 20, 5]]); // el portón (34 a 35) solo se abre en el alba: hay que golpear la campana o esperar
+    area('cu3', 'Cuartel Viejo: Puerta del Relevo', Z3Z, 10, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]); // final provisional del primer tramo
+  });
 
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
-  const E = (a, b, size = 3, o = {}) => LINKS.push({ t: 'E', a, b, size, ...o });
+  const E = (a, b, size = 3, o = {}) => LINKS.push({ t: 'E', a, b, size, region: CUR, ...o });
   // S(arriba, abajo, x, tamaño): hueco vertical; x es local al área de arriba
-  const S = (a, b, x = 11, size = 4, o = {}) => LINKS.push({ t: 'S', a, b, x, size, ...o });
-  E('cbT', 'azotea', 3, { lift: 16 }); S('cbT', 'cb2'); S('cb2', 'cb1'); S('cb1', 'cb0'); // Campanario
+  const S = (a, b, x = 11, size = 4, o = {}) => LINKS.push({ t: 'S', a, b, x, size, region: CUR, ...o });
+  inRegion('z3', () => {
+    E('zag', 'plz0', 14); E('plz0', 'cu1', 14); E('cu1', 'cu2', 14); E('cu2', 'cu3', 14); // la calle es continua: pasos casi tan altos como la sala
+    S('cb1', 'cb0'); S('cb2', 'cb1'); S('cbT', 'cb2'); E('cbT', 'azotea', 3, { lift: 16 }); // a la torre se entra por la puerta de su base
+  });
   E('cripta', 'bodega'); E('bodega', 'vest'); E('vest', 'salon'); E('salon', 'corr'); E('corr', 'foso');
   E('foso', 'cubil', 5); E('cubil', 'osario', 1); E('corr', 'tunel'); E('tunel', 'pozo'); // puerta de 1 tile: hay que agacharse
   E('hidden', 'escal', 3, { crack: true });
@@ -282,6 +305,10 @@
     return ops;
   }
 
+  // región de un área por su id; y si un id guardado (de área o de objeto: tipo_area_n) pertenece a OTRA región distinta de la actual
+  const areaRegion = id => { const a = AREAS.find(q => q.id === id); return a ? (a.region || 'main') : null; };
+  const isForeign = (id, region) => typeof id === 'string' && id.split('_').some(tk => { const r = areaRegion(tk); return r !== null && r !== region; });
+
   // ---------- Ciclo del Alba (Zona 3): reloj puro y escalera de plataformas de fase ----------
   // Noche 55 s, Alba 20 s, Día 55 s, Ocaso 30 s (160 s). Una sala con ['cycle'] lo sigue; las plataformas ['PH',x,y,w,'NAD'] existen solo en las fases indicadas (N noche, A alba, D día, O ocaso)
   const PHASES = [{ k: 'N', name: 'Noche', len: 55 }, { k: 'A', name: 'Alba', len: 20 }, { k: 'D', name: 'Día', len: 55 }, { k: 'O', name: 'Ocaso', len: 30 }];
@@ -296,21 +323,23 @@
     return ops;
   }
 
-  function build() {
-    const Wt = COLS * CW, Ht = ROWS * CH + 2;
+  function build(region) {
+    region = REGIONS[region] ? region : 'main';
+    const R = REGIONS[region], AREAS_R = AREAS.filter(a => (a.region || 'main') === region), LINKS_R = LINKS.filter(l => (l.region || 'main') === region);
+    const Wt = R.cols * CW, Ht = R.rows * CH + 2;
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], bleeds: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], phased: [], bells: [], gdoors: [], lifts: [], roots: new Set() };
+    const world = { region, sky: region === 'z3', T, COLS: R.cols, ROWS: R.rows, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS_R, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], bleeds: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], phased: [], bells: [], gdoors: [], props: [], lifts: [], roots: new Set() };
     let uid = 1;
     // 1) interior de cada área
-    for (const a of AREAS) {
+    for (const a of AREAS_R) {
       a.x0 = a.c * CW; a.y0 = a.r * CH; a.rw = a.w * CW; a.rh = a.h * CH; a.seal = []; a.exits = {};
       world.areas[a.id] = a;
       const z = a.z * 8;
       for (let y = 0; y < a.rh; y++) for (let x = 0; x < a.rw; x++) {
         const gx = a.x0 + x, gy = a.y0 + y;
-        areaAt[gy][gx] = AREAS.indexOf(a);
+        areaAt[gy][gx] = AREAS_R.indexOf(a);
         bg[gy][gx] = z + K.BG;
         const border = x === 0 || y === 0 || x === a.rw - 1 || y === a.rh - 1;
         fg[gy][gx] = border ? z + (y === a.rh - 1 ? K.FLOOR : K.SOLID) : -1;
@@ -322,7 +351,7 @@
     const setF = (a, x, y, k) => { if (x < 0 || y < 0 || x >= a.rw || y >= a.rh) return; fg[a.y0 + y][a.x0 + x] = k < 0 ? -1 : a.z * 8 + k; };
     const free = (a, x, y) => fg[a.y0 + y][a.x0 + x] === -1;
     // 2) conexiones
-    for (const l of LINKS) {
+    for (const l of LINKS_R) {
       const A = world.areas[l.a], B = world.areas[l.b];
       if (!A || !B) throw new Error('Enlace a área inexistente ' + l.a + ' ' + l.b);
       if (l.t === 'E') {
@@ -357,11 +386,11 @@
       }
     }
     // 3) contenido
-    for (const a of AREAS) {
+    for (const a of AREAS_R) {
       const cnt = {}, sid = k => k + '_' + a.id + '_' + (cnt[k] = (cnt[k] || 0) + 1); // ids estables para guardar partida
       const has = k => a.ops.some(op => op[0] === k);
       a.safe = !has('unsafe') && a.ops.some(op => op[0] === 'npc' || op[0] === 'altar'); // zona segura: sin enemigos
-      a.special = has('special'); a.calm = has('calm'); a.interior = has('interior'); a.cycle = has('cycle'); a.indoor = has('indoor');
+      a.special = has('special'); a.calm = has('calm'); a.interior = has('interior'); a.cycle = has('cycle'); a.indoor = has('indoor'); a.open = has('open'); const cs = a.ops.find(o => o[0] === 'castle'); a.castle = cs ? cs[1] : 0; // 'castle': los primeros N tiles de la sala son la fachada del castillo (muro de ladrillo con almenas), el resto es calle al aire libre // 'open': sala al aire libre (sin techo ni paredes a la vista, con cielo)
       const ops = [];
       for (const op of a.ops) { if (op[0] === 'climb') climbOps(a.rw, a.rh, op[1], op[2], op[3]).forEach(o => ops.push(o)); else if (op[0] === 'ladder') ladderOps(a.rw, a.rh, op[1], op[2], op[3]).forEach(o => ops.push(o)); else ops.push(op); }
       for (const op of ops) {
@@ -370,9 +399,25 @@
           // ['TP', x, y, ancho, periodo, segundos visible, desfase]: plataforma que aparece y desaparece (para el validador siempre está)
           case 'TP': { const n = (cnt.tp = (cnt.tp || 0) + 1); world.timed.push({ id: 'tp_' + a.id + '_' + n, area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], period: op[4], on: op[5], phase: op[6] || 0, idx: a.z * 8 + K.ONEWAY }); for (let x = op[1]; x < op[1] + op[3]; x++) if (free(a, x, op[2])) setF(a, x, op[2], K.ONEWAY); break; }
           // ['PH', x, y, ancho, 'NAD']: plataforma de fase (para el validador siempre está); ['bell', x, y]: campana que se golpea para pasar a la fase siguiente
-          case 'PH': { const n = (cnt.ph = (cnt.ph || 0) + 1); world.phased.push({ id: 'ph_' + a.id + '_' + n, area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], mask: op[4], idx: a.z * 8 + K.ONEWAY }); for (let x = op[1]; x < op[1] + op[3]; x++) if (free(a, x, op[2])) setF(a, x, op[2], K.ONEWAY); break; }
+          case 'PH': { const n = (cnt.ph = (cnt.ph || 0) + 1); world.phased.push({ id: 'ph_' + a.id + '_' + n, area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], h: 1, mask: op[4], idx: a.z * 8 + K.ONEWAY, oneway: true }); for (let x = op[1]; x < op[1] + op[3]; x++) if (free(a, x, op[2])) setF(a, x, op[2], K.ONEWAY); break; }
           // ['gdoor', x, salaDestino, xDestino, 'jefe1,jefe2']: Puerta Gigante entre zonas; se abre cuando han caído los jefes indicados (vacío = siempre abierta)
-          case 'gdoor': { const b = world.areas[op[2]]; if (!b) throw new Error('Puerta gigante a área inexistente ' + op[2]); world.gdoors.push({ id: sid('gd'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, to: op[2], toX: (b.x0 + op[3] + 0.5) * T, toY: (b.y0 + b.rh - 1) * T, needs: op[4] ? op[4].split(',') : [] }); break; }
+          case 'gdoor': { const b = world.areas[op[2]]; if (!b && REGIONS[op[2]]) { world.gdoors.push({ id: sid('gd'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, toRegion: op[2], needs: op[4] ? op[4].split(',') : [] }); break; } if (!b) throw new Error('Puerta gigante a área inexistente ' + op[2]); world.gdoors.push({ id: sid('gd'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, to: op[2], toX: (b.x0 + op[3] + 0.5) * T, toY: (b.y0 + b.rh - 1) * T, needs: op[4] ? op[4].split(',') : [] }); break; }
+          // ['PB', x, y, ancho, alto, 'NADO']: bloque SÓLIDO que existe solo en las fases indicadas (un portón con horario; para el validador siempre está)
+          case 'PB': { const n = (cnt.pb = (cnt.pb || 0) + 1); world.phased.push({ id: 'pb_' + a.id + '_' + n, area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], h: op[4], mask: op[5], idx: a.z * 8 + K.SOLID, oneway: false }); for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) if (free(a, x, y)) setF(a, x, y, K.SOLID); break; }
+          // ['house'|'crate', x, y, ancho, alto]: bloque sólido que se dibuja como casa (con terraza y tejadillo) o como pila de cajas; sustituyen a las plataformas flotantes de la calle
+          // ['stairs', x, ySuelo, 'R'|'L', n]: n columnas sólidas de 1 casilla más altas cada una (escalera de piedra; en la Zona 3 el jugador sube cada peldaño andando)
+          case 'stairs': { const dir = op[3] === 'L' ? -1 : 1, n = op[4]; for (let i = 0; i < n; i++) for (let y = op[2] - i; y <= op[2]; y++) setF(a, op[1] + dir * i, y, K.SOLID); world.props.push({ kind: 'stairs', area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], dir, n }); break; }
+          // ['cart', x, y]: carro de 3x2 casillas, sólido (primer peldaño de un puesto o de una fachada)
+          case 'cart': for (let y = op[2]; y < op[2] + 2; y++) for (let x = op[1]; x < op[1] + 3; x++) setF(a, x, y, K.SOLID); world.props.push({ kind: 'cart', area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: 3, h: 2 }); break;
+          // ['facade', x, ancho, estilo, 'L'|'R']: casa de fondo, NO sólida (se pasa por delante). Lo pisable son sus balcones y aleros (plataformas de una dirección ligadas a la fachada): balcón a 2 casillas del suelo, alero a 4 y cumbrera a 7 (si mide 9 o más)
+          case 'facade': { const gr = a.rh - 2, w = op[2], side = op[4] === 'L' ? 0 : 1, bw = Math.min(5, w - 3), bx = op[1] + (side ? w - bw - 1 : 1);
+            for (let x = bw ? bx : 0; x < bx + bw; x++) if (free(a, x, gr - 2)) setF(a, x, gr - 2, K.ONEWAY);
+            for (let x = op[1]; x < op[1] + w; x++) if (free(a, x, gr - 4)) setF(a, x, gr - 4, K.ONEWAY);
+            const ridge = w >= 9; if (ridge) for (let x = op[1] + 2; x < op[1] + w - 2; x++) if (free(a, x, gr - 7)) setF(a, x, gr - 7, K.ONEWAY);
+            world.props.push({ kind: 'facade', area: a.id, gx: a.x0 + op[1], w, style: op[3] || 'adobe', eaveY: a.y0 + gr - 4, groundY: a.y0 + a.rh - 1, balX: a.x0 + bx, balW: bw, balY: a.y0 + gr - 2, ridge: ridge ? [a.x0 + op[1] + 2, w - 4, a.y0 + gr - 7] : null }); break; }
+          // ['tower', x, ancho]: torre-puerta sobre la calle: base sólida con un arco de 5 casillas por el que pasa la calle (los muros de ladrillo y el fondo quedan a la vista)
+          case 'tower': { const w = op[2]; for (let y = 1; y <= 11; y++) for (let x = op[1]; x < op[1] + w; x++) setF(a, x, y, K.SOLID); for (let y = 12; y < a.rh - 1; y++) for (let x = 0; x < 3; x++) { setF(a, op[1] + x, y, K.SOLID); setF(a, op[1] + w - 1 - x, y, K.SOLID); } a.keepbg = [op[1], op[1] + w - 1]; world.props.push({ kind: 'tower', area: a.id, gx: a.x0 + op[1], w }); break; }
+          case 'house': case 'crate': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); world.props.push({ kind: op[0], area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], h: op[4] }); break;
           case 'bell': world.bells.push({ id: sid('b'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T }); break;
           case 'B': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); break;
           case 'K': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.CRACK);
@@ -388,7 +433,7 @@
           case 'torch': world.torches.push({ id: world.torches.length, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T, z: a.z, area: a.id, lit: true, r: 150 }); break;
           case 'pit': for (let x = op[1]; x <= op[2]; x++) setF(a, x, a.rh - 1, K.SPIKES); break;
           case 'E': if (a.safe) break; world.spawns.push({ id: 'e' + (uid++), area: a.id, type: op[1], x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, opts: op[4] || null, zone: a.diff }); break;
-          case 'door': { const b = world.areas[op[2]]; if (!b) throw new Error('Puerta a área inexistente ' + op[2]); world.doors.push({ id: sid('d'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, to: op[2], toX: (b.x0 + op[3] + 0.5) * T, toY: (b.y0 + b.rh - 1) * T }); break; }
+          case 'door': { const b = world.areas[op[2]]; if (!b) throw new Error('Puerta a área inexistente ' + op[2]); world.doors.push({ id: sid('d'), area: a.id, label: op[4] || '', x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, to: op[2], toX: (b.x0 + op[3] + 0.5) * T, toY: (b.y0 + b.rh - 1) * T }); break; }
           case 'bleed': world.bleeds.push({ area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], h: op[3] }); break; // ['bleed', x, y, alto]: muro agrietado que gotea sangre (pista)
           case 'page': world.pages.push({ id: sid('p'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'cry': world.crystals.push({ id: sid('c'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T, peek: op[3] === 'peek' }); break; // 'peek': solo se ve cuando el jugador está a su altura
@@ -411,11 +456,11 @@
     // una plataforma apoyada sobre roca se vuelve sólida: si no, al bajar atravesándola (↓ + saltar) te quedas dentro del bloque y caes a la sala de abajo
     for (let y = 0; y < Ht - 1; y++) for (let x = 0; x < Wt; x++) { const v = fg[y][x], b = fg[y + 1][x]; if (v >= 0 && v % 8 === K.ONEWAY && b >= 0 && (b % 8 === K.SOLID || b % 8 === K.CRACK)) fg[y][x] = v - K.ONEWAY + K.SOLID; }
     const gcnt = {};
-    for (const [aid, gx, gy] of GEMS) { const a = world.areas[aid]; if (!a) throw new Error('Gema en área inexistente ' + aid); gcnt[aid] = (gcnt[aid] || 0) + 1; world.gems.push({ id: 'g_' + aid + '_' + gcnt[aid], area: aid, x: (a.x0 + gx + 0.5) * T, y: (a.y0 + gy + 0.5) * T }); }
+    for (const [aid, gx, gy] of GEMS) { const a = world.areas[aid]; if (!a) { if (AREAS.some(q => q.id === aid)) continue; throw new Error('Gema en área inexistente ' + aid); } gcnt[aid] = (gcnt[aid] || 0) + 1; world.gems.push({ id: 'g_' + aid + '_' + gcnt[aid], area: aid, x: (a.x0 + gx + 0.5) * T, y: (a.y0 + gy + 0.5) * T }); }
     // pasos entre salas: casillas pegadas a ambos lados de la frontera que no son pared fija (huecos, puertas por jefe, grietas, raíces). El juego mira si están libres para saber si el paso está abierto
     const gateSet = new Set(); world.gates.forEach(g => g.tiles.forEach(t => gateSet.add(t.gy * Wt + t.gx)));
     const passTile = (x, y) => { const v = fg[y][x]; return v < 0 || v % 8 === K.ONEWAY || v % 8 === K.CRACK || gateSet.has(y * Wt + x); };
-    const pass = {}, addPass = (ia, ib, t1, t2) => { const A = AREAS[ia].id, B = AREAS[ib].id, k = A < B ? A + '|' + B : B + '|' + A; (pass[k] = pass[k] || []).push([t1, t2]); };
+    const pass = {}, addPass = (ia, ib, t1, t2) => { const A = AREAS_R[ia].id, B = AREAS_R[ib].id, k = A < B ? A + '|' + B : B + '|' + A; (pass[k] = pass[k] || []).push([t1, t2]); };
     for (let y = 0; y < Ht - 1; y++) for (let x = 0; x < Wt - 1; x++) {
       const ia = areaAt[y][x]; if (ia < 0) continue;
       const ir = areaAt[y][x + 1], id = areaAt[y + 1][x];
@@ -423,8 +468,8 @@
       if (id >= 0 && id !== ia && passTile(x, y) && passTile(x, y + 1)) addPass(ia, id, [x, y], [x, y + 1]);
     }
     world.passages = pass; // { 'salaA|salaB': [[[gx,gy],[gx,gy]], ...] }
-    world.spawnPoint = world.altars.find(a => a.area === 'vest');
-    world.areaOf = (gx, gy) => { const i = (areaAt[gy] || [])[gx]; return i >= 0 && i !== undefined ? AREAS[i] : null; };
+    world.spawnPoint = world.altars.find(a => a.area === R.entry);
+    world.areaOf = (gx, gy) => { const i = (areaAt[gy] || [])[gx]; return i >= 0 && i !== undefined ? AREAS_R[i] : null; };
     return world;
   }
 
@@ -444,7 +489,7 @@
     { bosses: ['chambelan'] },
     { bosses: ['cadalso', 'vigilia'] },
   ];
-  const api = { build, T, COLS, ROWS, CW, CH, PHYS, K, ROCK, kind, isSolidKind, ZONES, ABILITIES, BOSSES, gateOpen, PROGRESSION, PHASES, CYCLE, phaseAt, nextPhaseStart };
+  const api = { build, T, COLS, ROWS, CW, CH, PHYS, K, ROCK, kind, isSolidKind, ZONES, ABILITIES, BOSSES, gateOpen, PROGRESSION, PHASES, CYCLE, phaseAt, nextPhaseStart, REGIONS, isForeign, areaRegion };
   root.World = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

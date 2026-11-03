@@ -373,14 +373,14 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.buildHouses(); this.buildGateDoors(); this.buildGDoors(); this.buildBleeds(); if (this.floorBroken) this.dropThroneDecor(false);
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.skyBuild(); this.buildHouses(); this.buildGateDoors(); this.buildGDoors(); this.buildBleeds(); if (this.floorBroken) this.dropThroneDecor(false);
     this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
-    this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
+    this.lastBonfire = this.altars.find(a => a.area === this.W.spawnPoint.area) || this.altars[0];
     this.canAuto = !!saveMe || !saves[this.color]; // evita pisar una partida guardada de este vampiro en una partida nueva
     const fresh = !saveMe && !(this.progress.bosses || []).length; // partida nueva: escena de inicio (T1 de docs/HISTORIA.md)
     if (saveMe) this.loadPersonal(saveMe);
-    this.startIntro(fresh); // partida nueva: historia sobre negro; siempre: controles hasta pulsar E
+    if (SWITCHING) SWITCHING = false; else this.startIntro(fresh); // cruzar la Puerta Gigante no repite la historia ni los controles. Partida nueva: historia sobre negro; siempre: controles hasta pulsar E
     saveMe = null;
     this.snap = this.captureState(); // punto de control inicial: al empezar o al cargar la partida
     const onRest = () => { if (this.isHost) this.restReset(); };
@@ -392,37 +392,39 @@ Object.assign(CastleScene.prototype, {
   },
   // Recupera los datos personales de la partida guardada
   loadPersonal(m) {
+    const reg = this.W.region, mc = {}; this.stash = {}; // lo que pertenece al otro mapa (cristales, páginas, hogueras, salas visitadas...) se aparta y se devuelve intacto al guardar
+    ['cry', 'forge', 'gemGot', 'pages', 'lit', 'visited'].forEach(k => { const arr = Array.isArray(m[k]) ? m[k] : []; this.stash[k] = arr.filter(id => World.isForeign(id, reg)); mc[k] = arr.filter(id => !World.isForeign(id, reg)); });
     this.travel = !!m.travel; this.element = ELEMENTS[m.el] ? m.el : ''; this.mapIcons = new Set((m.mapi || []).filter(k => MAP_PATTERNS[k]));
     this.gems = m.gems | 0; this.perm = { dmg: (m.perm && m.perm.dmg) | 0, souls: (m.perm && m.perm.souls) | 0, hp: (m.perm && m.perm.hp) | 0 };
-    (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
+    mc.gemGot.forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
     this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.quests = { anillo: (m.quests && m.quests.anillo) | 0, fin1: (m.quests && m.quests.fin1) | 0 }; this.syncNpcs();
     if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     const oldFruit = this.inv.fruit | 0; this.inv.fruit = 0; this.inv.fang = 0; this.inv.talis = 0; // eran objetos de inventario en partidas antiguas
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0) + oldFruit; this.hp = this.maxHp;
-    const visited = new Set(m.visited || []);
-    (m.visited || []).forEach(id => { const ar = this.W.areas[id]; if (ar) this.markVisited(ar); });
+    const visited = new Set(mc.visited);
+    mc.visited.forEach(id => { const ar = this.W.areas[id]; if (ar) this.markVisited(ar); });
     (m.elite || []).forEach(id => this.eliteGot.add(id)); (m.seen || []).forEach(id => this.seen.add(id)); this.kills = Object.assign({}, m.kills || {});
     { const hs = this.W.spawns.find(s => s.opts && s.opts.reward && s.opts.reward.hammer); if (hs && this.hammerState === 0 && this.eliteGot.has(hs.opts.name)) this.hammerState = 1; } // partidas que ya vencieron al Verdugo antes de que llevara el martillo
-    (m.pages || []).forEach(id => { this.pagesGot.add(id); const pg = this.pageObjs.find(x => x.id === id); if (pg) { pg.spr.destroy(); pg.glow.destroy(); } });
+    mc.pages.forEach(id => { this.pagesGot.add(id); const pg = this.pageObjs.find(x => x.id === id); if (pg) { pg.spr.destroy(); pg.glow.destroy(); } });
     // objetos recogidos: si algún id antiguo ya no existe, se marcan como recogidos los primeros de las zonas visitadas
     const restore = (ids, list, apply) => {
       let lost = 0;
       (ids || []).forEach(id => { const o = list.find(x => x.id === id); if (o) apply(o); else lost++; });
       list.filter(o => visited.has(o.area) && !this.cryGot.has(o.id) && !this.forgeGot.has(o.id)).slice(0, lost).forEach(apply);
     };
-    restore(m.cry, this.crystals, c => { this.cryGot.add(c.id); c.spr.destroy(); });
-    restore(m.forge, this.forgeObjs, f => { this.forgeGot.add(f.id); f.spr.destroy(); f.glow.destroy(); });
+    restore(mc.cry, this.crystals, c => { this.cryGot.add(c.id); c.spr.destroy(); });
+    restore(mc.forge, this.forgeObjs, f => { this.forgeGot.add(f.id); f.spr.destroy(); f.glow.destroy(); });
     // hogueras encendidas y última hoguera (con alternativa si el id guardado ya no existe)
     let litAny = false;
-    (m.lit || []).forEach(id => { const o = this.altars.find(x => x.id === id); if (o) { o.lit = true; this.bonfireLit.add(id); litAny = true; } });
+    mc.lit.forEach(id => { const o = this.altars.find(x => x.id === id); if (o) { o.lit = true; this.bonfireLit.add(id); litAny = true; } });
     if (!litAny) this.altars.filter(o => visited.has(o.area)).forEach(o => { o.lit = true; this.bonfireLit.add(o.id); });
     let a = this.altars.find(x => x.id === m.altar);
     if (!a) { const cand = this.altars.filter(o => visited.has(o.area)); a = cand[cand.length - 1] || null; }
-    if (a) { this.lastAltar = { x: a.x, y: a.y }; this.lastBonfire = a; this.player.setPosition(a.x, a.y - 21); this.lastGround = { x: a.x, y: a.y - 21 }; }
+    if (a && !m.sw) { this.lastAltar = { x: a.x, y: a.y }; this.lastBonfire = a; this.player.setPosition(a.x, a.y - 21); this.lastGround = { x: a.x, y: a.y - 21 }; }
     this.rebuildLights();
-    this.time.delayedCall(800, () => this.toast('Partida cargada desde tu última hoguera', 4000));
+    if (!m.sw) this.time.delayedCall(800, () => this.toast('Partida cargada desde tu última hoguera', 4000));
   },
   auraMul() { return (this.pas.aura || 1) * (this.buffs.lamp > 0 ? 1.7 : 1) * (this.abil.eye ? 1.4 : 1); },
   wstats() { return this.wpn.lv[Math.min(this.wlv, 5) - 1]; },
@@ -687,6 +689,7 @@ Object.assign(CastleScene.prototype, {
 
     this.hookStep(dt, onFloor, dir, ui);
 
+    this.stepUp(dir, onFloor); // en la Zona 3: los escalones de 1 casilla se suben andando
     // impulso (dash)
     if (!ui && this.abil.dash && inp.dashPress && this.dashCd <= 0 && this.dashAvail && this.stun <= 0 && (!this.crouching || this.canStand())) {
       if (this.crouching) this.setCrouch(false);
@@ -978,6 +981,15 @@ Object.assign(CastleScene.prototype, {
     this.slashFx(p.x, p.y + (this.crouching ? 7 : 0), this.facing, this.color);
   },
   // ---- habilidades de los jefes de la Zona 1 y 2 sin recompensa
+  stepUp(dir, onFloor) { // subir escalón: si andando se choca con un bloque de 1 casilla de alto y hay hueco encima, se sube sin saltar (solo en la Zona 3: en el castillo un reborde de 1 casilla es obstáculo)
+    if (this.W.region !== 'z3' || !onFloor || !dir || this.crouching || this.dashT > 0 || this.stun > 0 || this.dead) return;
+    const p = this.player, b = p.body; if (!(dir > 0 ? b.blocked.right : b.blocked.left)) return;
+    const solid = (x, y) => { const t = this.fg.getTileAtWorldXY(x, y); if (!t || t.index < 0) return false; const k = t.index % 8; return k === K.SOLID || k === K.FLOOR || k === K.CRACK; };
+    const ex = dir > 0 ? b.right + 3 : b.left - 3, fy = b.bottom - 3; // casilla de delante a la altura de los pies
+    if (!solid(ex, fy)) return;
+    if (solid(ex, fy - T) || solid(ex, fy - 2 * T) || solid(b.center.x, b.top - T) || solid(ex, b.top - T)) return; // más de 1 casilla de alto o sin hueco para la cabeza
+    p.y -= T; b.setVelocityY(0); p.x += dir * 4;
+  },
   mistStep() { // Impulso de Niebla: el impulso hiere (1) a cada enemigo que atraviesa y te cura medio corazón la primera vez
     if (!this.abil.mist || this.dashT <= 0 || this.dead || !this.dashHit) return;
     const p = this.player;
@@ -1324,7 +1336,7 @@ Object.assign(CastleScene.prototype, {
     // puertas de las casas
     for (const d of this.W.doors || []) {
       if (Math.abs(d.x - p.x) < 40 && Math.abs((d.y - 30) - p.y) < 60) {
-        this.promptTxt.setVisible(true).setPosition(d.x, d.y - 104).setText(this.W.areas[d.area].interior ? '{act}: salir' : '{act}: entrar en la ' + this.W.areas[d.to].name);
+        this.promptTxt.setVisible(true).setPosition(d.x, d.y - 104).setText(d.label ? '{act}: ' + d.label : this.W.areas[d.area].interior ? '{act}: salir' : '{act}: entrar en la ' + this.W.areas[d.to].name);
         if (ePress) this.useDoor(d);
         return;
       }
@@ -1366,8 +1378,12 @@ Object.assign(CastleScene.prototype, {
   },
   savePersonal(a) {
     this.snap = this.captureState(); // nuevo punto de control: lo guardado al descansar en la hoguera
-    socket.emit('save', { souls: this.souls, inv: this.inv, wlv: this.wlv, maxHp: this.maxHp, cry: [...this.cryGot], forge: [...this.forgeGot],
-      altar: a.id, lit: [...this.bonfireLit], visited: [...this.visited], abil: this.abil, elite: [...this.eliteGot], pages: [...this.pagesGot], seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: [...this.gemGot], perm: this.perm, bg: [...this.bossGemsPaid], hammer: this.hammerState, met: this.smithMet, quests: this.quests, mapi: [...this.mapIcons] });
+    socket.emit('save', this.personalPayload(a));
+  },
+  personalPayload(a, sw) { // datos personales de este vampiro (con lo del otro mapa apartado); sw: se usa al cruzar la Puerta Gigante
+    const st = this.stash || {}, cat = (k, cur) => [...cur, ...(st[k] || [])];
+    return { souls: this.souls, inv: this.inv, wlv: this.wlv, maxHp: this.maxHp, cry: cat('cry', this.cryGot), forge: cat('forge', this.forgeGot),
+      altar: a ? a.id : null, sw: !!sw, lit: cat('lit', this.bonfireLit), visited: cat('visited', this.visited), abil: this.abil, elite: [...this.eliteGot], pages: cat('pages', this.pagesGot), seen: [...this.seen], kills: this.kills, travel: this.travel, el: this.element, gems: this.gems, gemGot: cat('gemGot', this.gemGot), perm: this.perm, bg: [...this.bossGemsPaid], hammer: this.hammerState, met: this.smithMet, quests: this.quests, mapi: [...this.mapIcons] };
   },
 
   // ---- punto de control: lo conseguido desde el último descanso en una hoguera se pierde al morir
@@ -1401,11 +1417,11 @@ Object.assign(CastleScene.prototype, {
   },
   revertWorld(sw) { // el mundo vuelve a como estaba al guardar (solo en partidas de un jugador)
     const cur = this.progress, keepAbil = Object.assign({}, cur.abilities);
-    (cur.broken || []).forEach(k => { if (!sw.broken.includes(k)) { const [gx, gy] = String(k).split(',').map(Number), a = this.W.areaOf(gx, gy); if (a) this.fg.putTileAt(a.z * 8 + K.CRACK, gx, gy); } }); // los muros rotos vuelven
+    (cur.broken || []).forEach(k => { if (!sw.broken.includes(k) && String(k).startsWith('z3:') === (this.W.region === 'z3')) { const [gx, gy] = String(k).replace('z3:', '').split(',').map(Number), a = this.W.areaOf(gx, gy); if (a) this.fg.putTileAt(a.z * 8 + K.CRACK, gx, gy); } }); // los muros rotos vuelven
     this.progress = { abilities: keepAbil, bosses: [...sw.bosses], broken: [...sw.broken], torches: Object.assign({}, sw.torches) };
     socket.emit('revertWorld', { bosses: this.progress.bosses, broken: this.progress.broken, torches: this.progress.torches });
     (this.W.gates || []).forEach(gt => { if (gt.open && !this.gateOk(gt)) { gt.open = false; gt.tiles.forEach(t => { const a = this.W.areaOf(t.gx, t.gy); if (a) this.fg.putTileAt(a.z * 8 + (gt.crack ? K.CRACK : K.SOLID), t.gx, t.gy); }); } }); // las puertas se vuelven a cerrar
-    this.torchObjs.forEach(o => { const want = this.progress.torches[o.id] !== undefined ? !!this.progress.torches[o.id] : !!(this.W.torches[o.id] && this.W.torches[o.id].lit); this.setTorch(o.id, want); });
+    this.torchObjs.forEach(o => { const want = this.progress.torches[this.torchKey(o.id)] !== undefined ? !!this.progress.torches[this.torchKey(o.id)] : !!(this.W.torches[o.id] && this.W.torches[o.id].lit); this.setTorch(o.id, want); });
     if (this.floorBroken && !this.progress.bosses.includes('conde')) { // el suelo del trono se reconstruye
       const th = this.W.areas.throne, fo = this.W.areas.fosoC;
       for (let gx = th.x0 + 2; gx <= th.x0 + th.rw - 3; gx++) for (const gy of [th.y0 + th.rh - 1, fo.y0]) { const v = this.W.fg[gy][gx]; if (v >= 0) this.fg.putTileAt(v, gx, gy); }
@@ -1588,9 +1604,9 @@ Object.assign(CastleScene.prototype, {
   exploration() {
     const w = this.W, rooms = w.areaList.filter(a => !a.special), vis = rooms.filter(a => this.visited.has(a.id)).length;
     const items = w.crystals.length + w.forges.length + w.gems.length, gotItems = this.cryGot.size + this.forgeGot.size + this.gemGot.size;
-    const bon = w.altars.length, litB = this.altars.filter(a => a.lit).length, bos = w.bosses.length, dead = this.progress.bosses.length;
+    const bon = w.altars.length, litB = this.altars.filter(a => a.lit).length, bos = w.bosses.length, dead = w.bosses.filter(b => this.progress.bosses.includes(b.id)).length;
     const extra = w.pages.length + this.W.spawns.filter(s => s.opts && s.opts.elite).length, gotExtra = this.pagesGot.size + this.eliteGot.size;
-    const pct = Math.round(35 * vis / rooms.length + 25 * gotItems / items + 10 * litB / bon + 20 * dead / bos + 10 * gotExtra / extra);
+    const q = (n, d) => (d ? n / d : 0), pct = Math.round(35 * q(vis, rooms.length) + 25 * q(gotItems, items) + 10 * q(litB, bon) + 20 * q(dead, bos) + 10 * q(gotExtra, extra));
     return { pct, vis, rooms: rooms.length, gotItems, items, litB, bon, dead, bos, pages: this.pagesGot.size, nPages: w.pages.length, elites: this.eliteGot.size, nElites: this.W.spawns.filter(s => s.opts && s.opts.elite).length };
   },
   nextElement(f) { // la forja y el santuario ofrecen elementos distintos; si llevas uno del otro, se pasa a su primero
@@ -1649,6 +1665,133 @@ Object.assign(CastleScene.prototype, {
     SFX.elem(); this.poof(from.x || this.player.x, (from.y || this.player.y) - 20, 12, col); this.cameras.main.flash(160, (col >> 16) & 255, (col >> 8) & 255, col & 255);
     this.toast(sel.id ? 'Arma imbuida de ' + ELEMENTS[sel.id].name + ': ' + ELEMENTS[sel.id].desc : 'Arma sin elemento', 5000); this.autoSave();
   },
+  // ---- Cielo de la Zona 3: la calle es exterior. Se oculta la roca sobre el suelo y el techo y las paredes de las salas abiertas (siguen siendo sólidos), y detrás
+  // se pinta un cielo en degradado según la fase, con estrellas, luna o sol y una ciudad de siluetas que se mueve más despacio que la cámara
+  skyBuild() {
+    const w = this.W; if (!w.sky) return;
+    const open = w.areaList.filter(a => a.open); if (!open.length) return;
+    const ground = this.skyGround = Math.max(...open.map(a => a.y0 + a.rh - 1)); // el suelo de la calle (la sala abierta más baja)
+    this.fg.forEachTile(t => { if (t.index >= 0 && (t.index >> 3) === World.ROCK && t.y < ground) t.alpha = 0; });
+    open.forEach(a => {
+      const cs = a.castle || 0; // fachada del castillo: se deja a la vista el muro de ladrillo, el techo y la pared izquierda
+      this.bgLayer.forEachTile(t => { if (!a.keepbg || t.x < a.x0 + a.keepbg[0] || t.x > a.x0 + a.keepbg[1]) t.alpha = 0; }, this, a.x0 + cs, a.y0, a.rw - cs, a.rh); // (la torre-puerta conserva su fondo de ladrillo)
+      this.fg.forEachTile(t => { if (t.index >= 0 && t.y < a.y0 + a.rh - 1 && (t.y === a.y0 || t.x === a.x0 || t.x === a.x0 + a.rw - 1) && !(cs && t.x < a.x0 + cs)) t.alpha = 0; }, this, a.x0, a.y0, a.rw, a.rh);
+      if (cs) { // almenas sobre el muro y una torre en el borde
+        const P = ZONE_PAL[a.z], g = this.add.graphics().setDepth(-4.8), top = a.y0 * T;
+        g.fillStyle(P.dark, 1).fillRect(a.x0 * T, top - T, cs * T, T); for (let i = 0; i < cs; i += 2) { g.fillStyle(P.base, 1).fillRect((a.x0 + i) * T, top - 2 * T, T, T).fillStyle(P.light, 1).fillRect((a.x0 + i) * T, top - 2 * T, T, 5); }
+        g.fillStyle(P.dark, 1).fillRect((a.x0 + cs - 1) * T, top - 6 * T, T, 6 * T).fillStyle(P.base, 1).fillRect((a.x0 + cs - 1) * T + 4, top - 6 * T, T - 8, 6 * T);
+      }
+    });
+    // casas y cajas: sus casillas sólidas se ocultan y se dibuja el edificio encima
+    const pg = this.add.graphics().setDepth(-4.9); this.propG = pg;
+    (w.props || []).filter(p => open.some(a => a.id === p.area)).forEach(p => {
+      if (p.kind === 'stairs' || p.kind === 'tower') return; // de ladrillo: se ven sus casillas
+      if (p.kind === 'facade') { this.drawFacade(pg, p); return; }
+      this.fg.forEachTile(t => { t.alpha = 0; }, this, p.gx, p.gy, p.w, p.h);
+      const x = p.gx * T, y = p.gy * T, wd = p.w * T, hd = p.h * T;
+      if (p.kind === 'cart') { // carro de madera con carga y dos ruedas
+        pg.fillStyle(0x5a3d26, 1).fillRect(x + 6, y + T, wd - 12, T - 14).fillStyle(0x7a5430, 1).fillRect(x + 6, y + T, wd - 12, 6);
+        pg.fillStyle(0x8a6a44, 1).fillRect(x + 12, y + 6, 26, T - 6).fillStyle(0x6a4a2c, 1).fillRect(x + 44, y + 12, 30, T - 12).fillStyle(0x3a2616, 1).fillRect(x + 12, y + 6, 26, 3).fillRect(x + 44, y + 12, 30, 3);
+        [x + 22, x + wd - 22].forEach(cx => { pg.fillStyle(0x3a2616, 1).fillCircle(cx, y + hd - 12, 13).fillStyle(0x6a4a2c, 1).fillCircle(cx, y + hd - 12, 9).fillStyle(0x3a2616, 1).fillCircle(cx, y + hd - 12, 3); });
+        pg.fillStyle(0x3a2616, 1).fillRect(x - 18, y + T + 6, 26, 5); // lanza del carro
+        return;
+      }
+      if (p.kind === 'crate') { // pila de cajas y barriles de madera
+        for (let cy = 0; cy < p.h; cy += 1) for (let cx = 0; cx < p.w; cx += 1) { const bx = x + cx * T, by = y + cy * T; pg.fillStyle(0x6a4a2c, 1).fillRect(bx, by, T, T).fillStyle(0x8a6a44, 1).fillRect(bx + 2, by + 2, T - 4, T - 4).fillStyle(0x4a3220, 1).fillRect(bx, by, T, 3).fillRect(bx, by, 3, T).fillRect(bx, by + T - 3, T, 3).fillRect(bx + T - 3, by, 3, T).fillRect(bx + 4, by + T / 2 - 1, T - 8, 3); }
+        return;
+      }
+      // casa: pared de adobe con entramado de madera, terraza con tejadillo, puerta y ventanas con postigos
+      pg.fillStyle(0x7a6446, 1).fillRect(x, y, wd, hd).fillStyle(0x93805e, 1).fillRect(x + 4, y + 14, wd - 8, hd - 14);
+      pg.fillStyle(0x3a2a1c, 1); for (let bx = 0; bx <= wd - 6; bx += T * 2) pg.fillRect(x + bx, y + 10, 6, hd - 10); pg.fillRect(x, y + hd * 0.5, wd, 5); pg.fillRect(x, y + hd - 6, wd, 6);
+      pg.fillStyle(0x6a2c26, 1).fillRect(x - 6, y, wd + 12, 12).fillStyle(0x8a3a30, 1).fillRect(x - 6, y, wd + 12, 4); for (let tx = 0; tx < wd + 12; tx += 12) pg.fillStyle(0x4a1c18, 1).fillRect(x - 6 + tx, y + 6, 2, 6); // tejadillo
+      pg.fillStyle(0x2a1c10, 1).fillRect(x + 12, y + hd - 46, 26, 46).fillStyle(0x4a3220, 1).fillRect(x + 15, y + hd - 43, 20, 43); // puerta
+      for (let wx = x + 60; wx < x + wd - 30; wx += 70) { pg.fillStyle(0x1a1208, 1).fillRect(wx, y + 26, 20, 22).fillStyle(0xffc060, 0.55).fillRect(wx + 3, y + 29, 14, 16).fillStyle(0x4a3220, 1).fillRect(wx - 5, y + 26, 5, 22).fillRect(wx + 20, y + 26, 5, 22); }
+      pg.fillStyle(0x5a5048, 1).fillRect(x + wd - 36, y - 26, 16, 26).fillStyle(0x3a3430, 1).fillRect(x + wd - 38, y - 30, 20, 6); // chimenea
+    });
+    // hogueras del exterior: un mini refugio de madera con tejado de paja, banco y círculo de piedras, y la hoguera en el centro
+    const rg = this.add.graphics().setDepth(-4.95);
+    (w.altars || []).forEach(al => {
+      const ar = w.areas[al.area]; if (!ar || !ar.open || (ar.castle && al.x < (ar.x0 + ar.castle) * T)) return;
+      const x = al.x, fy = al.y, hw = 84, wallH = 74, roofY = fy - wallH - 6;
+      rg.fillStyle(0x3a2a1c, 1).fillRect(x - hw + 8, roofY, 8, wallH + 6).fillRect(x + hw - 16, roofY, 8, wallH + 6); // postes
+      rg.fillStyle(0x4a3624, 1).fillRect(x - hw + 14, fy - wallH, hw * 2 - 28, wallH); for (let px = x - hw + 14; px < x + hw - 14; px += 14) rg.fillStyle(0x33241a, 1).fillRect(px, fy - wallH, 2, wallH); // pared del fondo de tablones
+      rg.fillStyle(0x6a5030, 1).fillTriangle(x - hw - 14, roofY + 4, x + hw + 14, roofY + 4, x, roofY - 56); // tejado de paja
+      for (let k = 0; k < 7; k++) rg.fillStyle(k % 2 ? 0x8a7040 : 0x9a8048, 1).fillTriangle(x - hw - 14 + k * 4, roofY + 4, x + hw + 14 - k * 4, roofY + 4, x, roofY - 56 + k * 8);
+      rg.fillStyle(0x2a1c10, 1).fillRect(x - hw - 14, roofY + 2, hw * 2 + 28, 5); // viga bajo el alero
+      rg.fillStyle(0x5a4228, 1).fillRect(x - 64, fy - 12, 28, 10).fillRect(x + 36, fy - 12, 28, 10); // bancos
+      for (let i = 0; i < 9; i++) { const an = Math.PI * (i / 8), sx = x + Math.cos(an) * 26, sy = fy - 2 - Math.sin(an) * 5; rg.fillStyle(i % 2 ? 0x6a6a72 : 0x8a8a92, 1).fillCircle(sx, sy, 5); } // círculo de piedras
+    });
+    // puertas con rótulo (la torre del Campanario): marco de piedra, puerta de madera con herrajes y un farol
+    (w.doors || []).filter(d => d.label && w.areas[d.area]).forEach(d => {
+      const fy = d.y, x = d.x; pg.fillStyle(0x4a463e, 1).fillRect(x - 40, fy - 112, 80, 112).fillStyle(0x1a1208, 1).fillRect(x - 32, fy - 104, 64, 104).fillStyle(0x4a3220, 1).fillRect(x - 28, fy - 100, 56, 100);
+      pg.fillStyle(0x2a1c10, 1).fillRect(x - 1, fy - 100, 3, 100).fillStyle(0x6a6a72, 1).fillRect(x - 28, fy - 78, 56, 4).fillRect(x - 28, fy - 34, 56, 4).fillStyle(0xc8a05a, 1).fillCircle(x - 10, fy - 50, 3).fillCircle(x + 10, fy - 50, 3);
+      pg.fillStyle(0x5a5a62, 1).fillTriangle(x - 40, fy - 112, x + 40, fy - 112, x, fy - 140); // dintel en arco
+      this.caveLamps = this.caveLamps || []; this.caveLamps.push({ x, y: fy - 60, r: 90 });
+    });
+    this.skyG = this.add.graphics().setScrollFactor(0).setDepth(-30); this.cityG = this.add.graphics().setScrollFactor(0.25, 1).setDepth(-29); this.skyKey = -1;
+    const rnd = rndSeeded(77); this.stars = Array.from({ length: LITE ? 25 : 60 }, () => ({ x: rnd() * SW, y: rnd() * SH * 0.55, s: rnd() < 0.2 ? 3 : 2, p: rnd() * 6 }));
+    this.cityBld = []; // ciudad antigua y rudimentaria: casas bajas de madera y piedra con tejados a dos aguas, algún salón con entramado, torres cónicas, una iglesia y lienzos de muralla
+    for (let x = -40; x < w.Wt * T * 0.25 + SW + 200;) {
+      const r = rnd(); let b;
+      if (r < 0.5) b = { k: 'house', w: 46 + rnd() * 40, h: 36 + rnd() * 40, rh: 24 + rnd() * 22, chim: rnd() < 0.4 };
+      else if (r < 0.68) b = { k: 'hall', w: 90 + rnd() * 50, h: 50 + rnd() * 30, rh: 26 + rnd() * 14 };
+      else if (r < 0.82) b = { k: 'tower', w: 34 + rnd() * 18, h: 110 + rnd() * 80, rh: 34 + rnd() * 14 };
+      else if (r < 0.9) b = { k: 'church', w: 60 + rnd() * 20, h: 70 + rnd() * 20, rh: 30, spire: 70 + rnd() * 40 };
+      else b = { k: 'wall', w: 90 + rnd() * 90, h: 34 + rnd() * 16 };
+      b.x = x; this.cityBld.push(b); x += b.w + (b.k === 'wall' ? 0 : 6 + rnd() * 26);
+    }
+  },
+  drawFacade(pg, p) { // casa de fondo con zócalo de piedra, paredes entramadas, ventanas con postigos, puerta, balcón con barandilla, alero y tejado
+    const x = p.gx * T, W = p.w * T, E = p.eaveY * T, G = p.groundY * T, H = G - E;
+    const ST = { adobe: { wall: 0xa8946a, beam: 0x4a3624, roof: 0x9a8048, roof2: 0x7a6030, base: 0x6a6258 }, timber: { wall: 0x8a7a5a, beam: 0x3a2a1c, roof: 0x8a4a32, roof2: 0x6a3624, base: 0x5a5248 }, stone: { wall: 0x7c766a, beam: 0x3a342c, roof: 0x4a4e58, roof2: 0x363a44, base: 0x625c52 } }[p.style] || {};
+    pg.fillStyle(ST.wall, 1).fillRect(x, E, W, H).fillStyle(ST.base, 1).fillRect(x - 4, G - 44, W + 8, 44); // pared y zócalo de piedra
+    for (let sx = 0; sx < W; sx += 20) pg.fillStyle(0x4a463e, 1).fillRect(x + sx - 4 + ((sx / 20) % 2) * 10, G - 44 + ((sx / 20) % 2 ? 14 : 28), 2, 14); // juntas del zócalo
+    pg.fillStyle(ST.beam, 1); for (let sx = 0; sx <= W - 6; sx += T * 2) pg.fillRect(x + sx, E, 6, H - 44); pg.fillRect(x, E + (H - 44) * 0.5, W, 5); // entramado
+    if (p.style === 'timber') for (let sx = 0; sx < W - T * 2; sx += T * 4) { pg.lineStyle(4, ST.beam, 1).lineBetween(x + sx + 6, E + 6, x + sx + T * 2, E + (H - 44) * 0.5); }
+    const dx = x + W * 0.5 - 16; pg.fillStyle(0x1a1208, 1).fillRect(dx - 4, G - 80, 40, 80).fillStyle(0x4a3220, 1).fillRect(dx, G - 76, 32, 76).fillStyle(0x2a1c10, 1).fillRect(dx + 15, G - 76, 2, 76).fillRect(dx, G - 44, 32, 3); // puerta con travesaño
+    for (let wx = x + 22; wx < x + W - 40; wx += 74) if (Math.abs(wx - dx) > 44) { pg.fillStyle(0x1a1208, 1).fillRect(wx, E + 24, 22, 26).fillStyle(0xffc060, 0.5).fillRect(wx + 3, E + 27, 16, 20).fillStyle(ST.beam, 1).fillRect(wx - 7, E + 24, 7, 26).fillRect(wx + 22, E + 24, 7, 26).fillRect(wx - 3, E + 50, 28, 4); } // ventana con postigos
+    // balcón: tablones, ménsulas y barandilla
+    if (p.balW > 0) { const bx = p.balX * T, bw = p.balW * T, by = p.balY * T; pg.fillStyle(0x6a4a2c, 1).fillRect(bx, by, bw, 7).fillStyle(0x8a6a44, 1).fillRect(bx, by, bw, 3);
+      for (let sx = 8; sx < bw; sx += 40) pg.lineStyle(4, 0x3a2a1c, 1).lineBetween(bx + sx, by + 7, bx + sx - 14, by + 30);
+      pg.fillStyle(0x3a2a1c, 1).fillRect(bx, by - 22, 4, 22).fillRect(bx + bw - 4, by - 22, 4, 22).fillRect(bx, by - 22, bw, 4); for (let sx = 10; sx < bw - 6; sx += 14) pg.fillRect(bx + sx, by - 20, 3, 20); }
+    // tejado: del alero (ancho) a la cumbrera (más estrecha), con alero que sobresale
+    const rd = p.ridge, rx0 = rd ? rd[0] * T : x + T * 2, rx1 = rd ? (rd[0] + rd[1]) * T : x + W - T * 2, ry = rd ? rd[2] * T : E - T * 2;
+    pg.fillStyle(ST.roof, 1).fillPoints([{ x: x - 10, y: E + 2 }, { x: x + W + 10, y: E + 2 }, { x: rx1, y: ry }, { x: rx0, y: ry }], true);
+    for (let k = 1; k < 4; k++) { const yy = ry + (E - ry) * (k / 4), f = k / 4; pg.lineStyle(3, ST.roof2, 1).lineBetween(rx0 + (x - 10 - rx0) * f, yy, rx1 + (x + W + 10 - rx1) * f, yy); }
+    pg.fillStyle(ST.beam, 1).fillRect(x - 12, E, W + 24, 6).fillRect(rx0, ry - 4, rx1 - rx0, 5); // alero y cumbrera de madera
+    if (p.style !== 'stone') pg.fillStyle(0x5a5048, 1).fillRect(rx1 - 30, ry - 22, 14, 24).fillStyle(0x3a3430, 1).fillRect(rx1 - 33, ry - 26, 20, 6); // chimenea
+  },
+  skyStep(time) {
+    if (!this.skyG) return;
+    const ca = this.cycArea(); this.skyG.setVisible(!!ca); this.cityG.setVisible(!!ca); if (!ca) return;
+    const ph = World.phaseAt(this.cyc.t), nx = (ph.i + 1) % 4, k = ph.left < 4 ? 1 - ph.left / 4 : 0;
+    const TOP = [0x04030c, 0x3a2058, 0x3b82d6, 0x2a1448], BOT = [0x1a1236, 0xff9a6a, 0xcdeaff, 0xff6a3a], CITY = [0x0a0714, 0x2a1630, 0x6a7fa0, 0x301626];
+    const mix = (c1, c2, f) => { const r = ((c1 >> 16) & 255) + (((c2 >> 16) & 255) - ((c1 >> 16) & 255)) * f, g = ((c1 >> 8) & 255) + (((c2 >> 8) & 255) - ((c1 >> 8) & 255)) * f, b = (c1 & 255) + ((c2 & 255) - (c1 & 255)) * f; return ((r | 0) << 16) | ((g | 0) << 8) | (b | 0); };
+    const top = mix(TOP[ph.i], TOP[nx], k), bot = mix(BOT[ph.i], BOT[nx], k), g = this.skyG; g.clear();
+    g.fillGradientStyle(top, top, bot, bot, 1).fillRect(0, 0, SW, SH);
+    const night = ph.i === 0 ? 1 - k : (ph.i === 3 ? k : 0); // cuánta noche hay: de noche y mezclándose al ocaso
+    if (night > 0.05) { this.stars.forEach(s => { g.fillStyle(0xffffff, night * (0.45 + 0.4 * Math.sin(time * 0.003 + s.p))).fillRect(s.x, s.y, s.s, s.s); }); }
+    const m = ((this.cyc.t % World.CYCLE) + World.CYCLE) % World.CYCLE, dayF = Phaser.Math.Clamp((m - 55) / 105, 0, 1); // sol: del alba al ocaso
+    if (ph.i === 0) g.fillStyle(0xe8eaff, 0.9).fillCircle(SW * 0.72, SH * 0.2, 18).fillStyle(top, 0.9).fillCircle(SW * 0.72 + 8, SH * 0.2 - 4, 15);
+    else { const sx = SW * (0.12 + 0.76 * dayF), sy = SH * (0.6 - 0.42 * Math.sin(Math.PI * dayF)); g.fillStyle(ph.i === 2 ? 0xfff6c0 : 0xffc07a, 0.25).fillCircle(sx, sy, 38).fillStyle(ph.i === 2 ? 0xfffbe0 : 0xffd9a0, 1).fillCircle(sx, sy, 20); }
+    // ciudad de fondo: solo se repinta al cambiar de fase
+    const ck = ph.i * 10 + (k > 0.5 ? nx : ph.i); if (ck !== this.skyKey) {
+      this.skyKey = ck; const base = this.skyGround * T + T, cg = this.cityG; cg.clear(); const col = mix(CITY[ph.i], CITY[nx], k > 0.5 ? 1 : 0);
+      const lit = ph.i === 2 ? 0 : 0.5, dark = mix(col, 0x000000, 0.22);
+      const win = (x, y) => { cg.fillStyle(0xffc060, lit).fillRect(x, y, 5, 7); };
+      this.cityBld.forEach(b => {
+        const y0 = base - b.h, cx = b.x + b.w / 2;
+        if (b.k === 'wall') { cg.fillStyle(col, 1).fillRect(b.x, y0, b.w, b.h); for (let i = 0; i < b.w; i += 16) cg.fillRect(b.x + i, y0 - 7, 9, 7); cg.fillStyle(dark, 1).fillRect(b.x, y0 + 12, b.w, 2); return; }
+        cg.fillStyle(col, 1).fillRect(b.x, y0, b.w, b.h);
+        if (b.k === 'tower') { cg.fillTriangle(b.x - 5, y0, b.x + b.w + 5, y0, cx, y0 - b.rh * 1.5); cg.fillStyle(dark, 1).fillRect(cx - 2, y0 + 20, 4, 10).fillRect(cx - 2, y0 + 60, 4, 10); win(cx - 2, y0 + 20); return; }
+        if (b.k === 'church') { cg.fillTriangle(b.x - 4, y0, b.x + b.w + 4, y0, cx, y0 - b.rh); const tw = 20, tx = b.x + b.w - tw - 6; cg.fillRect(tx, y0 - b.spire + 20, tw, b.spire); cg.fillTriangle(tx - 3, y0 - b.spire + 20, tx + tw + 3, y0 - b.spire + 20, tx + tw / 2, y0 - b.spire - 18); cg.fillStyle(dark, 1).fillRect(tx + 7, y0 - b.spire + 34, 6, 12).fillRect(b.x + 12, y0 + 18, 6, 14); return; }
+        cg.fillTriangle(b.x - 6, y0, b.x + b.w + 6, y0, cx, y0 - b.rh); // tejado a dos aguas
+        if (b.chim) cg.fillRect(b.x + b.w * 0.7, y0 - b.rh * 0.8, 7, b.rh * 0.8);
+        cg.fillStyle(dark, 1); if (b.k === 'hall') { for (let x = b.x + 12; x < b.x + b.w - 4; x += 22) cg.fillRect(x, y0, 3, b.h); cg.fillRect(b.x, y0 + b.h * 0.45, b.w, 3); } // entramado de madera
+        cg.fillRect(cx - 5, base - 22, 10, 22); win(b.x + 8, y0 + 8); if (b.w > 70) win(b.x + b.w - 14, y0 + 8);
+      });
+    }
+  },
   // ---- Ciclo del Alba: plataformas de fase y campanas
   phasedStep(time) { // las plataformas ['PH'] existen solo en las fases de su máscara; avisan (parpadeo) 0,8 s antes de desaparecer
     if (!this.phased || !this.phased.length) return;
@@ -1657,14 +1800,21 @@ Object.assign(CastleScene.prototype, {
       const shown = p.ok.includes(ph.i), warn = shown && !p.ok.includes(nx) && ph.left < 0.8;
       if (shown !== p.shown) {
         p.shown = shown;
-        for (let i = 0; i < p.w; i++) {
-          if (shown) { const tl = this.fg.putTileAt(p.idx, p.gx + i, p.gy); if (tl) { tl.setCollision(false, false, true, false); this.map.calculateFacesAt(p.gx + i, p.gy); } }
-          else { this.fg.removeTileAt(p.gx + i, p.gy); this.map.calculateFacesAt(p.gx + i, p.gy); }
+        for (let j = 0; j < (p.h || 1); j++) for (let i = 0; i < p.w; i++) {
+          if (shown) { const tl = this.fg.putTileAt(p.idx, p.gx + i, p.gy + j); if (tl) { if (p.oneway) tl.setCollision(false, false, true, false); else tl.setCollision(true, true, true, true); this.map.calculateFacesAt(p.gx + i, p.gy + j); } }
+          else { this.fg.removeTileAt(p.gx + i, p.gy + j); this.map.calculateFacesAt(p.gx + i, p.gy + j); }
         }
         if (!LITE) this.poof((p.gx + p.w / 2) * T, (p.gy + 0.5) * T, 2, 0xffd6a0);
       }
       const ar = this.W.areas[p.area]; if (!this.myArea || (this.myArea !== p.area && !this.openNeighbors(this.myArea).has(p.area))) continue; // solo se dibuja en la sala actual y las vecinas
-      const x = p.gx * T, y = p.gy * T, wd = p.w * T;
+      const x = p.gx * T, y = p.gy * T, wd = p.w * T, hd = (p.h || 1) * T;
+      if (!p.oneway) { if (shown) { if (warn && ((time >> 7) & 1)) g.fillStyle(0xffffff, 0.35).fillRect(x, y, wd, hd); else g.fillStyle(0xffd27a, 0.18).fillRect(x, y, wd, hd); } else g.lineStyle(2, 0xffd27a, 0.35).strokeRect(x + 1, y + 1, wd - 2, hd - 2); continue; } // portón: bloque sólido con horario
+      if (ar && ar.open) { // toldo de puesto de mercado: postes de madera hasta el suelo y lona a rayas que se recoge de noche
+        const fy = (ar.y0 + ar.rh - 1) * T; g.fillStyle(0x4a3220, 1).fillRect(x, y, 5, fy - y).fillRect(x + wd - 5, y, 5, fy - y);
+        if (shown) { const blink = warn && ((time >> 7) & 1); for (let sx = 0; sx < wd; sx += 16) { g.fillStyle(blink ? 0xffffff : (sx / 16) % 2 ? 0xe8d8b0 : 0xb83a3a, 1).fillRect(x + sx, y, Math.min(16, wd - sx), 9); g.fillTriangle(x + sx, y + 9, x + sx + Math.min(16, wd - sx), y + 9, x + sx + Math.min(16, wd - sx) / 2, y + 16); } }
+        else g.fillStyle(0xb8a888, 1).fillRect(x, y, wd, 4);
+        continue;
+      }
       if (shown) { if (warn && ((time >> 7) & 1)) g.fillStyle(0xffffff, 0.6).fillRect(x, y, wd, 8); else g.fillStyle(0xffd27a, 0.4).fillRect(x, y, wd, 4); }
       else g.lineStyle(2, 0xffd27a, 0.3).strokeRect(x + 1, y + 1, wd - 2, 6);
     }
@@ -1758,6 +1908,7 @@ Object.assign(CastleScene.prototype, {
   useGDoor(d) { // fundido largo a negro y aparece al otro lado
     if (this.doorBusy || this.dead) return; this.doorBusy = true; SFX.boss();
     const cam = this.cameras.main; cam.fadeOut(700, 0, 0, 0);
+    if (d.toRegion) { this.time.delayedCall(760, () => { socket.emit('region', d.toRegion); this.time.delayedCall(2500, () => { this.doorBusy = false; }); }); return; } // otro mapa: el servidor avisa a todos y se reconstruye el mundo
     this.time.delayedCall(780, () => { this.player.setPosition(d.toX, d.toY - 21); this.player.body.setVelocity(0, 0); cam.fadeIn(900, 0, 0, 0); this.doorBusy = false; this.autoSave && this.autoSave(); });
   },
   buildGateDoors() { // reja de hierro con sello rojo sobre cada puerta que abre un jefe (las grietas que se abren solas no)
@@ -1801,6 +1952,7 @@ Object.assign(CastleScene.prototype, {
   buildHouses() { // fachada de cada casa (en la sala de fuera) y su interior de madera
     const W = this.W; this.caveLamps = this.caveLamps || [];
     (W.doors || []).forEach(d => {
+      if (d.label) return; // puerta con rótulo (torre, etc.): se dibuja aparte y no lleva fachada de casita
       const a = W.areas[d.area], fy = d.y, g = this.add.graphics().setDepth(-5.6);
       if (a.interior) { // interior: paredes de tablones, alfombra, estantes con frascos y el mostrador del mercader
         const x0 = (a.x0 + 3) * T, x1 = (a.x0 + 23) * T, y0 = (a.y0 + 8) * T;
