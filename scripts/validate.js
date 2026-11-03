@@ -3,7 +3,10 @@
    Las puertas por jefe empiezan CERRADAS y se abren al caer cada jefe alcanzable, así que además comprueba
    el orden real de jefes contra World.PROGRESSION. Variante del Alba: PICK=aurora (por defecto) o PICK=vesper. */
 const World = require('../public/world.js');
-const w = World.build();
+const REGION = process.env.REGION || (process.argv[2] === 'z3' ? 'z3' : 'main'); // REGION=z3 valida La Calle de las Horas (mapa aparte): se entra con el impulso, el doble salto y el salto de pared del castillo; las puertas con rótulo cuentan como pasos
+const w = World.build(REGION);
+// los portones con horario (['PB'] altos) se abren en alguna fase del ciclo: para el alcance se tratan como abiertos; los tramos bajos de puente (levadizos) se dejan puestos
+(w.phased || []).filter(p => !p.oneway && p.h >= 8).forEach(p => { for (let j = 0; j < p.h; j++) for (let i = 0; i < p.w; i++) w.fg[p.gy + j][p.gx + i] = -1; });
 // puertas por jefe: empiezan cerradas; se abren con los jefes ya derrotados (World.gateOpen, la misma regla que usa el juego)
 const defeated = new Set();
 w.gates.forEach(g => g.tiles.forEach(t => { t.orig = w.fg[t.gy][t.gx]; }));
@@ -204,7 +207,19 @@ if (process.argv[2] === 'dbg') { // depuración: node validate.js dbg <gx> <gy> 
   console.log([...res.entries()].map(e => e[0] + ' <- ' + e[1]).join('\n')); process.exit();
 }
 // ---- Fases de progreso ----
-const abil = { dash: false, dj: false, wj: false };
+const abil = REGION === 'z3' ? { dash: true, dj: true, wj: true } : { dash: false, dj: false, wj: false };
+const Z3_PROGRESSION = [{ bosses: ['reverberia'] }, { bosses: ['tasador'] }, { bosses: ['planidera'] }, { bosses: ['nasa'] }, { bosses: ['tornera'] }, { bosses: ['anhelia'] }]; // orden previsto de los jefes de la Zona 3
+const PROG = REGION === 'z3' ? Z3_PROGRESSION : World.PROGRESSION;
+// alcance: en la Zona 3 las puertas (torre del Campanario, casas) son pasos: desde cada puerta alcanzada se parte otra búsqueda en su destino
+function reach(abil, start) {
+  if (REGION !== 'z3') return bfs(abil, start);
+  const starts = [start], seen = new Set([start.x + ',' + start.y]); let all = [];
+  for (let i = 0; i < starts.length; i++) {
+    const nodes = bfs(abil, starts[i]); all = all.concat(nodes);
+    for (const d of w.doors) { const k = d.toX + ',' + (d.toY - 21); if (seen.has(k)) continue; if (nodes.some(n => Math.abs(n.x - d.x) < 70 && Math.abs(n.y - (d.y - 21)) < 70)) { seen.add(k); starts.push({ x: d.toX, y: d.toY - 21 }); } }
+  }
+  return all;
+}
 const start = w.spawnPoint;
 const roomOf = n => { const a = w.areaOf(Math.floor(n.x / T), Math.floor(n.y / T)); return a ? a.id : 'roca'; };
 const firstStage = {};
@@ -216,7 +231,7 @@ let finalNodes = [];
 while (changed) {
   const t0 = Date.now();
   abilAt.push(Object.keys(abil).filter(k => abil[k]));
-  const nodes = bfs(abil, start);
+  const nodes = reach(abil, start);
   const rooms = new Set(nodes.map(roomOf));
   rooms.forEach(r => { if (!(r in firstStage)) firstStage[r] = stage; });
   w.crystals.forEach(c => { if (!('cry:' + c.id in firstStage) && nodes.some(n => Math.abs(n.x - c.x) < 70 && Math.abs(n.y - c.y) < 70)) firstStage['cry:' + c.id] = stage; });
@@ -234,7 +249,7 @@ const allRooms = Object.keys(w.areas).filter(r => !w.areas[r].special);
 // Con Vesper (sin Alas del Alba) la Cueva del Abismo y lo que exige planear sobre los pinchos son opcionales: no cuentan como error
 const OPT_ROOMS = PICK === 'vesper' ? ['caida', 'fragua', 'gran'] : [], OPT_ITEMS = PICK === 'vesper' ? ['cripta', 'cumbre', 'fragua'] : [];
 const missing = allRooms.filter(r => !(r in firstStage) && !OPT_ROOMS.includes(r));
-const names = { 0: 'inicio', 1: 'tras la Gárgola (Impulso)', 2: 'tras el Obispo (Doble salto)', 3: 'tras el Guardián del Reloj (Salto de pared)', 4: 'tras el Conde', 5: 'tras Aurora/Vesper', 6: 'tras el Alcaide (Pisotón)' };
+const names = REGION === 'z3' ? { 0: 'inicio (hasta Reverberia)', 1: 'tras Reverberia', 2: 'tras el Tasador', 3: 'tras la Plañidera', 4: 'tras Nasa', 5: 'tras la Tornera' } : { 0: 'inicio', 1: 'tras la Gárgola (Impulso)', 2: 'tras el Obispo (Doble salto)', 3: 'tras el Guardián del Reloj (Salto de pared)', 4: 'tras el Conde', 5: 'tras Aurora/Vesper', 6: 'tras el Alcaide (Pisotón)' };
 console.log('\nSalas por fase en la que se alcanzan:');
 for (let s = 0; s < stage; s++) {
   const list = allRooms.filter(r => firstStage[r] === s).map(r => w.areas[r].name + ' (' + r + ')');
@@ -248,12 +263,12 @@ console.log('Gemas:', w.gems.map(c => `${c.area}→fase ${firstStage['gem:' + c.
 // orden real de jefes: lo que se puede alcanzar en cada etapa debe coincidir con World.PROGRESSION
 let badOrder = false;
 console.log('\nOrden de jefes (variante ' + PICK + '):');
-World.PROGRESSION.forEach((p, i) => {
+PROG.forEach((p, i) => {
   const exp = p.bosses.map(b => b === 'rival' ? PICK : b).sort().join(','), got = (reached[i] || []).slice().sort().join(',');
   const ok = exp === got; if (!ok) badOrder = true;
   console.log(`  Etapa ${i}: esperado [${exp}] alcanzado [${got}] ${ok ? 'OK' : 'ERROR'}`);
 });
-if (reached.length < World.PROGRESSION.length) { badOrder = true; console.log(`  ERROR: solo ${reached.length} etapas de ${World.PROGRESSION.length}`); }
+if (reached.length < PROG.length) { badOrder = true; console.log(`  ERROR: solo ${reached.length} etapas de ${PROG.length}`); }
 process.exitCode = missing.length || unreachC.length || badOrder ? 1 : 0;
 // DUMP=fichero.json: guarda en qué etapa se alcanza cada sala y objeto (lo usa scripts/recorrido.js)
 if (process.env.DUMP) require('fs').writeFileSync(process.env.DUMP, JSON.stringify({ pick: PICK, firstStage, reached, abilAt }));

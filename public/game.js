@@ -258,7 +258,7 @@ class CastleScene extends Phaser.Scene {
     this.facing = 1; this.atkT = 0; this.atkCd = 0; this.swingHit = new Set(); this.lastGround = { x: this.player.x, y: this.player.y };
     this.curAltar = null;
 
-    this.keys = this.input.keyboard.addKeys('UP,DOWN,LEFT,RIGHT,W,A,D,S,E,SPACE,X,J,C,K,SHIFT,M,Z,ENTER,ESC,Q,R,TAB,N,B');
+    this.keys = this.input.keyboard.addKeys('UP,DOWN,LEFT,RIGHT,W,A,D,S,E,SPACE,X,J,C,K,SHIFT,M,Z,ENTER,ESC,Q,R,TAB,N,B,V');
     this.input.keyboard.addCapture('UP,DOWN,LEFT,RIGHT,SPACE,TAB');
     this.cameras.main.startFollow(this.player, true, 1, 1);
     this.cameras.main.roundPixels = true;
@@ -438,6 +438,7 @@ class CastleScene extends Phaser.Scene {
     on('torch', ({ id, on: v }) => { const off = this.W.region === 'z3' ? 5000 : 0; if (id >= off && id < off + 5000) this.setTorch(id - off, v); });
     on('ignite', ({ id }) => { if (!this.isHost) return; const p = this.projs.get(id); if (p && POISON.includes(p.type)) this.igniteProj(p); });
     on('bell', ({ id }) => { if (!this.isHost) return; const b = (this.bells || []).find(q => q.id === id); if (b && b.cd <= 0 && b.ring <= 0) { b.cd = 15; b.ring = 3; } }); // un compañero golpea una campana: el anfitrión lleva el reloj
+    on('hold', () => { if (this.isHost) this.cycHold = 8; });
     on('zap', ({ id }) => { if (!this.isHost) return; const p = this.projs.get(id); if (p && SILENCE_TYPES.includes(p.type)) this.zapProj(p); });
     on('hit', h => { if (!this.isHost) return; const e = this.ents.get(h.id); if (e && e.sim) this.damageEnt(e, h.dmg, h.dir, h.from, h.el); });
     on('progress', p => this.applyProgress(p, false));
@@ -479,7 +480,7 @@ class CastleScene extends Phaser.Scene {
       const dead = (p.bosses || []).includes(id), key = 'seal_' + id;
       if (!dead) this.scenes.delete(key); else if (!this.scenes.has(key)) { this.scenes.add(key); if (!silent) this.sealBreakScene(id); }
     });
-    this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
+    this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song', 'hourglass'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
   }
   bossGone(b) { const r = World.BOSSES[b.id] && World.BOSSES[b.id].rival; return this.progress.bosses.includes(b.id) || !!(r && this.progress.bosses.includes(r)); }
   gateOk(gt) { return World.gateOpen(gt.boss, this.progress.bosses); }
@@ -511,7 +512,7 @@ class CastleScene extends Phaser.Scene {
   }
   grantAbility(a) {
     this.abil[a] = true; SFX.pick();
-    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.', pound: 'En el aire, mantén abajo para caer en picado: rompe los suelos de raíces y aturde a los enemigos.', silence: 'Tus golpes y flechas destruyen los orbes enemigos.', mist: 'Tu impulso hiere a los enemigos que atraviesa y te cura un poco.', axe: 'Mantén el ataque para cargar un tajo de doble daño (no rompe escudos azules, salvo la guardia del Capitán).', bone: 'Pulsa el impulso otra vez en el aire para un segundo impulso.', vine: 'Tras un pisotón, tu siguiente salto es un 40 % más alto.', song: 'Agáchate y quédate quieto 1,5 s: una onda aturde a los enemigos cercanos.' })[a], 6000);
+    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.', pound: 'En el aire, mantén abajo para caer en picado: rompe los suelos de raíces y aturde a los enemigos.', silence: 'Tus golpes y flechas destruyen los orbes enemigos.', mist: 'Tu impulso hiere a los enemigos que atraviesa y te cura un poco.', axe: 'Mantén el ataque para cargar un tajo de doble daño (no rompe escudos azules, salvo la guardia del Capitán).', bone: 'Pulsa el impulso otra vez en el aire para un segundo impulso.', vine: 'Tras un pisotón, tu siguiente salto es un 40 % más alto.', song: 'Agáchate y quédate quieto 1,5 s: una onda aturde a los enemigos cercanos.', hourglass: 'Pulsa V para congelar el ciclo del Alba 8 s (recarga 25 s).' })[a], 6000);
     this.wallBroken();
     this.syncRelics(); this.applyProgress(this.progress, true); this.autoSave();
   }
@@ -1405,7 +1406,7 @@ class CastleScene extends Phaser.Scene {
   update(time, delta) {
     if (!this.player) return;
     const dt = Math.min(delta / 1000, 0.05), K_ = this.keys, p = this.player, b = p.body;
-    this.cyc.t += dt; // el ciclo del Alba avanza en todos (el anfitrión lo corrige cada instantánea)
+    if (!(this.cycHold > 0)) this.cyc.t += dt; // el ciclo del Alba avanza en todos (el anfitrión lo corrige cada instantánea); Hora Sostenida lo congela
     const inp = this.readInput(K_);
 
     // ---- jugador

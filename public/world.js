@@ -12,7 +12,7 @@
     bodyW: 30, bodyH: 39,
   };
   const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos', 'Patíbulo Exterior', 'Dependencias de los Funcionarios', 'Capilla del Cuartel', 'La Milla Verde', 'La Despensa', 'Los Tronos', 'La Calle de las Horas'];
-  const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche', pound: 'Pisotón de Raíces', silence: 'Palabra de Silencio', mist: 'Impulso de Niebla', axe: 'Hachazo del Verdugo', bone: 'Paso de Hueso', vine: 'Raíces Vivas', song: 'Canto de la Hondura' };
+  const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche', pound: 'Pisotón de Raíces', silence: 'Palabra de Silencio', mist: 'Impulso de Niebla', axe: 'Hachazo del Verdugo', bone: 'Paso de Hueso', vine: 'Raíces Vivas', song: 'Canto de la Hondura', hourglass: 'Hora Sostenida' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
   const kind = idx => (idx < 0 ? -1 : idx % 8);
@@ -34,7 +34,7 @@
     tasador: { name: 'El Tasador Mayor', hp: 100, drop: null },
     planidera: { name: 'La Plañidera Mayor', hp: 100, drop: null },
     nasa: { name: 'Nasa, el Pescador de Noche', hp: 110, drop: null },
-    tornera: { name: 'La Tornera Mayor', hp: 130, drop: null },
+    tornera: { name: 'La Tornera Mayor', hp: 130, drop: 'hourglass', reward: 'Hora Sostenida: pulsa V para congelar el ciclo del Alba 8 s' },
     madre: { name: 'La Madre Moho', hp: 40, drop: 'vine', reward: 'Raíces Vivas: tras un pisotón, tu siguiente salto es más alto' },
     vesper: { name: 'Vesper, Señor del Ocaso', hp: 34, drop: 'eye', rival: 'aurora', reward: 'Ojo de la Noche: ves los secretos tras los muros agrietados y tu luz crece' },
     // Zona 2: el Capitán da la llave de la puerta de los funcionarios; el Farero y la Subastadora guardan las historias de Zaf y Malak; los Regentes cierran la Parte 2
@@ -244,7 +244,7 @@
     area('plz0', 'Plaza de la Puerta', Z3Z, 2, 8, 3, 1, [['cycle'], ['open'], ['calm'], ['altar', 10, 16], ['bell', 20, 16], ['cart', 14, 15], ['PH', 17, 14, 4, 'D'], ['tower', 26, 26], ['door', 32, 'cb0', 3, 'Entrar en la torre del Campanario'], ['facade', 56, 14, 'adobe', 'R']]);
     // Campanario: torre sobre el arco (tramo vertical con plataformas de fase y campanas). Se entra por la puerta de la torre y se sale por la misma
     area('cb0', 'Campanario: Pie de la Torre', Z3Z, 3, 7, 1, 1, [['cycle'], ['indoor'], ['calm'], ['bell', 6, 16], ['door', 3, 'plz0', 32, 'Salir a la plaza'], ['climb', 11, 4, 'norm', true]]);
-    area('cb1', 'Campanario: Escalera de Cuerda', Z3Z, 3, 5, 1, 2, [['cycle'], ['bell', 4, 34], ['ladder', 11, 4, i => (i % 3 === 0 ? 'ADO' : '')], ['E', 'bat', 8, 20], ['cry', 21, 30]]);
+    area('cb1', 'Campanario: Escalera de Cuerda', Z3Z, 3, 5, 1, 2, [['cycle'], ['bell', 4, 34], ['ladder', 11, 4, i => (i % 3 === 0 ? 'ADO' : '')], ['E', 'bat', 8, 20], ['cry', 21, 32]]);
     area('cb2', 'Campanario: Sombras del Badajo', Z3Z, 3, 3, 1, 2, [['cycle'], ['bell', 21, 34], ['ladder', 11, 4, i => (i % 3 === 1 ? 'NAO' : '')], ['E', 'bat', 8, 22], ['E', 'bat', 18, 12]]);
     area('cbT', 'Campanario: Cámara de las Campanas', Z3Z, 3, 1, 1, 2, [['cycle'], ['bell', 3, 34], ['bell', 22, 34], ['P', 5, 28, 4], ['PH', 10, 25, 4, 'A'], ['PH', 15, 22, 4, 'A'], ['P', 20, 19, 5], ['E', 'bat', 12, 14]]); // la salida a la Azotea está a 16 casillas del suelo: hay que cruzar las plataformas del Alba (20 s)
     // Azotea: terraza de piedra a la altura de la puerta y gran escalinata hasta la calle
@@ -286,7 +286,7 @@
     area('pal3', 'Palacio: Sala del Duelo', Z3Z, 31, 8, 2, 1, [['cycle'], ['open'], ['boss', 'planidera', 30, 10]]); // mini-jefa del ocaso
     // Muelle del Faro Seco (noche): un embarcadero de piedra sobre un canal seco de estacas, barcas varadas y un faro apagado
     area('mue1', 'Muelle del Faro Seco: Embarcadero', Z3Z, 33, 8, 3, 1, [['cycle'], ['open'],
-      ['pit', 8, 70], ['stairs', 2, 16, 'R', 2], ['B', 3, 15, 71, 2], ['stairs', 74, 16, 'L', 2], ['cart', 18, 13], ['cart', 34, 13], ['B', 56, 1, 8, 14], ['cry', 66, 12],
+      ['pit', 8, 70], ['stairs', 2, 16, 'R', 2], ['B', 3, 15, 71, 2], ['stairs', 74, 16, 'L', 2], ['cart', 18, 13], ['cart', 34, 13], ['deco', 'faro', 60], ['cry', 66, 12],
       ['E', 'gh', 24, 10], ['E', 'gh', 46, 10], ['E', 'bat', 14, 6], ['E', 'bat', 52, 6]]);
     area('mue2', 'Muelle del Faro Seco: Varadero', Z3Z, 36, 8, 2, 1, [['cycle'], ['open'], ['bell', 5, 16], ['facade', 8, 11, 'timber', 'R'], ['PB', 26, 1, 2, 16, 'ADO'], ['cart', 34, 15], ['cart', 41, 15], ['E', 'sk', 16, 16], ['E', 'gh', 22, 7], ['E', 'kn', 44, 16]]); // la reja del varadero (26 a 27) solo se abre de noche
     area('mue3', 'Muelle del Faro Seco: Fondeadero', Z3Z, 38, 8, 2, 1, [['cycle'], ['open'], ['boss', 'nasa', 30, 16]]); // mini-jefe de la noche
@@ -465,8 +465,8 @@
             for (let x = op[1]; x < op[1] + w; x++) if (free(a, x, gr - 4)) setF(a, x, gr - 4, K.ONEWAY);
             const ridge = w >= 9; if (ridge) for (let x = op[1] + 2; x < op[1] + w - 2; x++) if (free(a, x, gr - 7)) setF(a, x, gr - 7, K.ONEWAY);
             world.props.push({ kind: 'facade', area: a.id, gx: a.x0 + op[1], w, style: op[3] || 'adobe', eaveY: a.y0 + gr - 4, groundY: a.y0 + a.rh - 1, balX: a.x0 + bx, balW: bw, balY: a.y0 + gr - 2, ridge: ridge ? [a.x0 + op[1] + 2, w - 4, a.y0 + gr - 7] : null }); break; }
-          // ['tower', x, ancho]: torre-puerta sobre la calle: base sólida con un arco de 5 casillas por el que pasa la calle (los muros de ladrillo y el fondo quedan a la vista)
-          case 'tower': { const w = op[2]; for (let y = 1; y <= 11; y++) for (let x = op[1]; x < op[1] + w; x++) setF(a, x, y, K.SOLID); for (let y = 12; y < a.rh - 1; y++) for (let x = 0; x < 3; x++) { setF(a, op[1] + x, y, K.SOLID); setF(a, op[1] + w - 1 - x, y, K.SOLID); } a.keepbg = [op[1], op[1] + w - 1]; world.props.push({ kind: 'tower', area: a.id, gx: a.x0 + op[1], w }); break; }
+          // ['tower', x, ancho]: torre-puerta sobre la calle: base sólida a 5 casillas del suelo, como un puente-torre sobre la calle (sin pilares al nivel del suelo: la calle pasa por debajo) (los muros de ladrillo y el fondo quedan a la vista)
+          case 'tower': { const w = op[2]; for (let y = 1; y <= 11; y++) for (let x = op[1]; x < op[1] + w; x++) setF(a, x, y, K.SOLID); a.keepbg = [op[1], op[1] + w - 1]; world.props.push({ kind: 'tower', area: a.id, gx: a.x0 + op[1], w }); break; }
           case 'house': case 'crate': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); world.props.push({ kind: op[0], area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], h: op[4] }); break;
           // ['deco', 'cradle'|'portrait'|'table', x, color]: decorado sin colisión de la Morada (cunas, retratos de los cuatro y la mesa para seis)
           case 'deco': world.props.push({ kind: op[1], area: a.id, gx: a.x0 + op[2], gy: a.y0 + a.rh - 1, color: op[3] }); break;

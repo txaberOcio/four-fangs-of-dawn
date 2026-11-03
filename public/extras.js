@@ -401,7 +401,7 @@ Object.assign(CastleScene.prototype, {
     mc.gemGot.forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
     this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.quests = { anillo: (m.quests && m.quests.anillo) | 0, fin1: (m.quests && m.quests.fin1) | 0 }; this.syncNpcs();
-    if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
+    if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song', 'hourglass'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     const oldFruit = this.inv.fruit | 0; this.inv.fruit = 0; this.inv.fang = 0; this.inv.talis = 0; // eran objetos de inventario en partidas antiguas
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0) + oldFruit; this.hp = this.maxHp;
@@ -607,13 +607,13 @@ Object.assign(CastleScene.prototype, {
   readInput(K_) {
     const jd = k => Phaser.Input.Keyboard.JustDown(k);
     if (this.introLock) { const g0 = pollPad().edge || {}; if (jd(K_.E) || jd(K_.ENTER) || jd(K_.SPACE) || touchJust('interact') || touchJust('jump') || g0.interact || g0.jump) this.introNext(); return { J: {}, held: () => false }; }
-    const J = {}; ['UP', 'DOWN', 'W', 'S', 'E', 'ENTER', 'ESC', 'SPACE', 'X', 'J', 'Z', 'C', 'K', 'SHIFT', 'Q', 'R', 'TAB', 'M', 'N', 'B', 'LEFT', 'RIGHT', 'A', 'D'].forEach(n => { J[n] = jd(K_[n]); });
+    const J = {}; ['UP', 'DOWN', 'W', 'S', 'E', 'ENTER', 'ESC', 'SPACE', 'X', 'J', 'Z', 'C', 'K', 'SHIFT', 'Q', 'R', 'TAB', 'M', 'N', 'B', 'LEFT', 'RIGHT', 'A', 'D', 'V'].forEach(n => { J[n] = jd(K_[n]); });
     const g = pollPad().edge || {};
     if (g.up) J.UP = true; if (g.down) J.DOWN = true; if (g.jump) J.ENTER = true; if (g.back) J.ESC = true;
     return { J, held: (...ks) => ks.some(k => k.isDown),
       jumpPress: !!(J.UP && !g.up || J.W || J.SPACE || J.Z || touchJust('jump') || g.jump), attackPress: !!(J.X || J.J || touchJust('attack') || g.attack),
       dashPress: !!(J.C || J.K || J.SHIFT || touchJust('dash') || g.dash), ePress: !!(J.E || touchJust('interact') || g.interact),
-      usePress: !!(J.Q || touchJust('item') || g.item), cyclePress: !!(J.R || J.TAB || touchJust('cycle') || g.cycle), mapPress: !!(J.M || touchJust('map') || g.map), bookPress: !!(J.B || touchJust('book') || g.book) };
+      usePress: !!(J.Q || touchJust('item') || g.item), cyclePress: !!(J.R || J.TAB || touchJust('cycle') || g.cycle), holdPress: !!J.V, mapPress: !!(J.M || touchJust('map') || g.map), bookPress: !!(J.B || touchJust('book') || g.book) };
   },
 
   // ---- movimiento y acciones del jugador (cada frame)
@@ -701,7 +701,7 @@ Object.assign(CastleScene.prototype, {
     // ataque y objetos
     if (!ui && inp.attackPress && this.atkCd <= 0 && this.dashT <= 0 && this.stun <= 0) this.startAttack();
     if (this.atkT > 0) { this.atkT -= dt; this.doAttack(); } else this.heavy = false;
-    this.vineT -= dt; this.stolenT -= dt; this.songStep(dt, onFloor, ui); this.mistStep(); this.chargeStep(dt, held(K_.X, K_.J) || !!(touch && touch.attack) || !!(pad && pad.attack), ui);
+    this.vineT -= dt; this.stolenT -= dt; this.holdStep(dt, inp.holdPress && !ui); this.songStep(dt, onFloor, ui); this.mistStep(); this.chargeStep(dt, held(K_.X, K_.J) || !!(touch && touch.attack) || !!(pad && pad.attack), ui);
     if (!ui && inp.usePress) this.useItem();
     if (!ui && inp.cyclePress) this.cycleItem();
     this.updateArrows(dt);
@@ -817,7 +817,7 @@ Object.assign(CastleScene.prototype, {
       info.textContent = (pt ? pt.label + '   ·   ' : '') + (a ? a.name + ' (' + a.id + ')' : 'roca') + (here ? '   ·   estás en: ' + here.name : ''); };
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
-    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
+    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song', 'hourglass'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
     box.querySelector('#devSouls').onclick = () => { this.souls += 1000; SFX.pick(); this.toast('+1000 almas (modo desarrollo): ' + this.souls + ' en total'); };
     box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
@@ -991,6 +991,12 @@ Object.assign(CastleScene.prototype, {
     if (!solid(ex, fy)) return;
     if (solid(ex, fy - T) || solid(ex, fy - 2 * T) || solid(b.center.x, b.top - T) || solid(ex, b.top - T)) return; // más de 1 casilla de alto o sin hueco para la cabeza
     p.y -= T; b.setVelocityY(0); p.x += dir * 4;
+  },
+  holdStep(dt, press) { // Hora Sostenida: congela el ciclo del Alba 8 s (recarga 25 s); lo lleva el anfitrión
+    this.holdCd = (this.holdCd || 0) - dt; if (this.cycHold > 0) this.cycHold -= dt;
+    if (!press || !this.abil.hourglass || this.holdCd > 0 || !this.cycArea()) return;
+    this.holdCd = 25; this.floatText(this.player.x, this.player.y - 44, '¡Hora Sostenida!', '#ffe9a0'); SFX.boss();
+    if (this.isHost) this.cycHold = 8; else socket.emit('hold');
   },
   mistStep() { // Impulso de Niebla: el impulso hiere (1) a cada enemigo que atraviesa y te cura medio corazón la primera vez
     if (!this.abil.mist || this.dashT <= 0 || this.dead || !this.dashHit) return;
@@ -1688,8 +1694,11 @@ Object.assign(CastleScene.prototype, {
     // casas y cajas: sus casillas sólidas se ocultan y se dibuja el edificio encima
     const pg = this.add.graphics().setDepth(-4.9); this.propG = pg;
     // decorado de la Morada: cunas vacías, los cuatro retratos y la mesa para seis (sin colisión)
-    (w.props || []).filter(p => p.kind === 'cradle' || p.kind === 'portrait' || p.kind === 'table').forEach(p => {
+    (w.props || []).filter(p => p.kind === 'cradle' || p.kind === 'portrait' || p.kind === 'table' || p.kind === 'faro').forEach(p => {
       const x = (p.gx) * T, fy = p.gy * T;
+      if (p.kind === 'faro') { const by = fy - 2 * T; // el faro apagado: fuste de piedra que se estrecha, galería, linterna sin luz y cúpula (al fondo del embarcadero, sin colisión)
+        pg.fillStyle(0x5a554c, 1).fillPoints([{ x: x - 58, y: by }, { x: x + 58, y: by }, { x: x + 36, y: by - 360 }, { x: x - 36, y: by - 360 }], true);
+        pg.fillStyle(0x3e3a34, 1).fillRect(x - 40, by - 130, 80, 7).fillRect(x - 34, by - 250, 68, 7).fillStyle(0x2a2622, 1).fillRect(x - 50, by - 372, 100, 14).fillStyle(0x1a1c24, 1).fillRect(x - 26, by - 428, 52, 56).fillStyle(0x6a2c26, 1).fillTriangle(x - 34, by - 428, x + 34, by - 428, x, by - 470); return; }
       if (p.kind === 'cradle') { pg.fillStyle(0x5a3d26, 1).fillRect(x - 22, fy - 26, 44, 8).fillRect(x - 24, fy - 44, 6, 44).fillRect(x + 18, fy - 44, 6, 44).fillStyle(0x7a5430, 1).fillRect(x - 20, fy - 40, 40, 14).fillStyle(0xcdbf9e, 1).fillRect(x - 17, fy - 36, 34, 8).fillStyle(0x3a2616, 1).fillRect(x - 28, fy - 4, 56, 4); return; }
       if (p.kind === 'portrait') { const col = { red: 0xd84a4a, blue: 0x4a8ae8, green: 0x4ac87a, purple: 0xa86ae8 }[p.color] || 0xcccccc;
         pg.fillStyle(0x3a2a1c, 1).fillRect(x - 34, fy - 190, 68, 96).fillStyle(0xc8a05a, 1).fillRect(x - 30, fy - 186, 60, 88).fillStyle(0x16101a, 1).fillRect(x - 26, fy - 182, 52, 80).fillStyle(col, 0.75).fillCircle(x, fy - 150, 14).fillRect(x - 20, fy - 134, 40, 34); return; }
