@@ -222,13 +222,23 @@
   area('dep2', 'Galería de los Retratos Cubiertos', 11, 19, 11, 2, 1, [['climb', 40, 4, 'norm', true], ['E', 'kn', 20, 16], ['E', 'gh', 30, 9], ['E', 'sk', 46, 16]]);
   area('dep3', 'Despacho del Chambelán', 11, 19, 12, 2, 1, [['climb', 8, 4, 'norm', true], ['boss', 'chambelan', 28, 16]]);
   area('dep4', 'Antesala de los Regentes', 15, 19, 13, 2, 1, [['altar', 6, 16], ['forge', 24, 16], ['climb', 40, 4, 'norm', true]]);
-  area('tronos', 'Salón de los Dos Tronos', 15, 19, 14, 3, 2, [['climb', 8, 4, 'norm', true], ['boss', 'cadalso', 52, 34], ['boss', 'vigilia', 24, 34]]);
+  area('tronos', 'Salón de los Dos Tronos', 15, 19, 14, 3, 2, [['climb', 8, 4, 'norm', true], ['boss', 'cadalso', 52, 34], ['boss', 'vigilia', 24, 34], ['gdoor', 72, 'cb0', 23, 'cadalso,vigilia']]); // la Puerta Gigante de la Zona 3 se abre al caer los dos Regentes
+
+  // --- Campanario (Zona 3, tramo vertical de prueba): sala 'special' fuera del mapa y del validador; se llega solo con el panel F2 de desarrollo.
+  //   Sigue el ciclo del Alba: plataformas de fase (N noche, A alba, D día, O ocaso) y campanas que se golpean para pasar a la fase siguiente.
+  const CAMP_Z = 12; // de momento con la paleta de la Capilla del Cuartel; la Zona 3 tendrá la suya
+  area('cb0', 'Campanario: Pie de la Torre', CAMP_Z, 0, 15, 1, 1, [['special'], ['cycle'], ['indoor'], ['calm'], ['altar', 6, 16], ['bell', 20, 16], ['climb', 11, 4, 'norm', true], ['gdoor', 23, 'tronos', 72, '']]);
+  area('cb1', 'Campanario: Escalera de Cuerda', CAMP_Z, 0, 13, 1, 2, [['special'], ['cycle'], ['bell', 4, 34], ['ladder', 11, 4, i => (i % 3 === 0 ? 'ADO' : '')], ['E', 'bat', 8, 20], ['cry', 21, 30]]);
+  area('cb2', 'Campanario: Sombras del Badajo', CAMP_Z, 0, 11, 1, 2, [['special'], ['cycle'], ['bell', 21, 34], ['ladder', 11, 4, i => (i % 3 === 1 ? 'NAO' : '')], ['E', 'bat', 8, 22], ['E', 'bat', 18, 12]]);
+  area('cbT', 'Campanario: Cámara de las Campanas', CAMP_Z, 0, 9, 1, 2, [['special'], ['cycle'], ['bell', 3, 34], ['bell', 22, 34], ['P', 5, 28, 4], ['PH', 10, 25, 4, 'A'], ['PH', 15, 22, 4, 'A'], ['P', 20, 19, 5], ['E', 'bat', 12, 14]]); // la salida a la Azotea está a 16 casillas del suelo: hay que cruzar las plataformas del Alba (20 s)
+  area('azotea', 'Campanario: Azotea', CAMP_Z, 1, 9, 2, 2, [['special'], ['cycle'], ['altar', 6, 34], ['cry', 40, 33], ['P', 1, 19, 8], ['P', 12, 24, 5], ['P', 19, 29, 5], ['PH', 26, 27, 5, 'DO'], ['P', 34, 29, 5], ['E', 'bat', 30, 12]]);
 
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
   const E = (a, b, size = 3, o = {}) => LINKS.push({ t: 'E', a, b, size, ...o });
   // S(arriba, abajo, x, tamaño): hueco vertical; x es local al área de arriba
   const S = (a, b, x = 11, size = 4, o = {}) => LINKS.push({ t: 'S', a, b, x, size, ...o });
+  E('cbT', 'azotea', 3, { lift: 16 }); S('cbT', 'cb2'); S('cb2', 'cb1'); S('cb1', 'cb0'); // Campanario
   E('cripta', 'bodega'); E('bodega', 'vest'); E('vest', 'salon'); E('salon', 'corr'); E('corr', 'foso');
   E('foso', 'cubil', 5); E('cubil', 'osario', 1); E('corr', 'tunel'); E('tunel', 'pozo'); // puerta de 1 tile: hay que agacharse
   E('hidden', 'escal', 3, { crack: true });
@@ -272,12 +282,26 @@
     return ops;
   }
 
+  // ---------- Ciclo del Alba (Zona 3): reloj puro y escalera de plataformas de fase ----------
+  // Noche 55 s, Alba 20 s, Día 55 s, Ocaso 30 s (160 s). Una sala con ['cycle'] lo sigue; las plataformas ['PH',x,y,w,'NAD'] existen solo en las fases indicadas (N noche, A alba, D día, O ocaso)
+  const PHASES = [{ k: 'N', name: 'Noche', len: 55 }, { k: 'A', name: 'Alba', len: 20 }, { k: 'D', name: 'Día', len: 55 }, { k: 'O', name: 'Ocaso', len: 30 }];
+  const CYCLE = PHASES.reduce((s, p) => s + p.len, 0), PHASE_START = PHASES.map((p, i) => PHASES.slice(0, i).reduce((s, q) => s + q.len, 0));
+  function phaseAt(t) { const m = ((t % CYCLE) + CYCLE) % CYCLE; let i = 3; for (let k = 0; k < 4; k++) if (m < PHASE_START[k] + PHASES[k].len) { i = k; break; } return { i, left: PHASE_START[i] + PHASES[i].len - m, f: (m - PHASE_START[i]) / PHASES[i].len, name: PHASES[i].name }; }
+  function nextPhaseStart(t) { return t + phaseAt(t).left + 0.001; } // instante en que empieza la fase siguiente
+  // escalera de plataformas hacia un agujero del techo, igual que 'climb' pero con una máscara de fase por peldaño: maskOf(i) = '' (fija) o letras
+  function ladderOps(rw, rh, hx, hw, maskOf) {
+    const ops = [], hc = hx + (hw >> 1); let i = 0;
+    for (let y = rh - 4; y >= 5; y -= 3) { i++; const x = (i % 2 === 1) ? hc + 1 : hc - 6, m = maskOf(i); ops.push(m ? ['PH', Math.max(2, x), y, 5, m] : ['P', Math.max(2, x), y, 5]); }
+    ops.push(['P', hx - 1, 2, hw + 2]);
+    return ops;
+  }
+
   function build() {
     const Wt = COLS * CW, Ht = ROWS * CH + 2;
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], bleeds: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], lifts: [], roots: new Set() };
+    const world = { T, COLS, ROWS, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], bleeds: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], phased: [], bells: [], gdoors: [], lifts: [], roots: new Set() };
     let uid = 1;
     // 1) interior de cada área
     for (const a of AREAS) {
@@ -337,14 +361,19 @@
       const cnt = {}, sid = k => k + '_' + a.id + '_' + (cnt[k] = (cnt[k] || 0) + 1); // ids estables para guardar partida
       const has = k => a.ops.some(op => op[0] === k);
       a.safe = !has('unsafe') && a.ops.some(op => op[0] === 'npc' || op[0] === 'altar'); // zona segura: sin enemigos
-      a.special = has('special'); a.calm = has('calm'); a.interior = has('interior');
+      a.special = has('special'); a.calm = has('calm'); a.interior = has('interior'); a.cycle = has('cycle'); a.indoor = has('indoor');
       const ops = [];
-      for (const op of a.ops) { if (op[0] === 'climb') climbOps(a.rw, a.rh, op[1], op[2], op[3]).forEach(o => ops.push(o)); else ops.push(op); }
+      for (const op of a.ops) { if (op[0] === 'climb') climbOps(a.rw, a.rh, op[1], op[2], op[3]).forEach(o => ops.push(o)); else if (op[0] === 'ladder') ladderOps(a.rw, a.rh, op[1], op[2], op[3]).forEach(o => ops.push(o)); else ops.push(op); }
       for (const op of ops) {
         switch (op[0]) {
           case 'P': for (let x = op[1]; x < op[1] + op[3]; x++) if (free(a, x, op[2])) setF(a, x, op[2], K.ONEWAY); break;
           // ['TP', x, y, ancho, periodo, segundos visible, desfase]: plataforma que aparece y desaparece (para el validador siempre está)
           case 'TP': { const n = (cnt.tp = (cnt.tp || 0) + 1); world.timed.push({ id: 'tp_' + a.id + '_' + n, area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], period: op[4], on: op[5], phase: op[6] || 0, idx: a.z * 8 + K.ONEWAY }); for (let x = op[1]; x < op[1] + op[3]; x++) if (free(a, x, op[2])) setF(a, x, op[2], K.ONEWAY); break; }
+          // ['PH', x, y, ancho, 'NAD']: plataforma de fase (para el validador siempre está); ['bell', x, y]: campana que se golpea para pasar a la fase siguiente
+          case 'PH': { const n = (cnt.ph = (cnt.ph || 0) + 1); world.phased.push({ id: 'ph_' + a.id + '_' + n, area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], mask: op[4], idx: a.z * 8 + K.ONEWAY }); for (let x = op[1]; x < op[1] + op[3]; x++) if (free(a, x, op[2])) setF(a, x, op[2], K.ONEWAY); break; }
+          // ['gdoor', x, salaDestino, xDestino, 'jefe1,jefe2']: Puerta Gigante entre zonas; se abre cuando han caído los jefes indicados (vacío = siempre abierta)
+          case 'gdoor': { const b = world.areas[op[2]]; if (!b) throw new Error('Puerta gigante a área inexistente ' + op[2]); world.gdoors.push({ id: sid('gd'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, to: op[2], toX: (b.x0 + op[3] + 0.5) * T, toY: (b.y0 + b.rh - 1) * T, needs: op[4] ? op[4].split(',') : [] }); break; }
+          case 'bell': world.bells.push({ id: sid('b'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T }); break;
           case 'B': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); break;
           case 'K': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.CRACK);
             if (op[5]) { // quinto parámetro: jefe que, al caer, abre la grieta solo
@@ -415,7 +444,7 @@
     { bosses: ['chambelan'] },
     { bosses: ['cadalso', 'vigilia'] },
   ];
-  const api = { build, T, COLS, ROWS, CW, CH, PHYS, K, ROCK, kind, isSolidKind, ZONES, ABILITIES, BOSSES, gateOpen, PROGRESSION };
+  const api = { build, T, COLS, ROWS, CW, CH, PHYS, K, ROCK, kind, isSolidKind, ZONES, ABILITIES, BOSSES, gateOpen, PROGRESSION, PHASES, CYCLE, phaseAt, nextPhaseStart };
   root.World = api;
   if (typeof module !== 'undefined') module.exports = api;
 })(typeof window !== 'undefined' ? window : globalThis);

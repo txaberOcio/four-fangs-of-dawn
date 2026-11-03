@@ -357,6 +357,7 @@ Object.assign(CastleScene.prototype, {
       this.tweens.add({ targets: [spr, glow], y: gm.y - 4, yoyo: true, repeat: -1, duration: 950 + (gm.x % 300), ease: 'Sine.inOut' });
       return { ...gm, spr, glow };
     });
+    this.phased = (w.phased || []).map(t => ({ ...t, shown: true, ok: t.mask.split('').map(k => 'NADO'.indexOf(k)) })); this.bells = (w.bells || []).map(b => ({ ...b, cd: 0, ring: 0 })); this.bellG = this.add.graphics().setDepth(4); this.phG = this.add.graphics().setDepth(5); this.cycTxt = this.add.text(SW / 2, 40, '', { fontSize: fsz('14px'), fontFamily: 'Courier New', color: '#ffe9a0', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(30).setVisible(false);
     this.timed = (w.timed || []).map(t => ({ ...t, shown: true })); this.timedG = this.add.graphics().setDepth(5); // plataformas que aparecen y desaparecen
     this.sforgeObjs = (w.sforges || []).map(f => { // forja especial: poder elemental para el arma
       const sh = f.kind === 'shrine';
@@ -372,7 +373,7 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.buildHouses(); this.buildGateDoors(); this.buildBleeds(); if (this.floorBroken) this.dropThroneDecor(false);
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.buildHouses(); this.buildGateDoors(); this.buildGDoors(); this.buildBleeds(); if (this.floorBroken) this.dropThroneDecor(false);
     this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === 'vest') || this.altars[0];
@@ -1052,7 +1053,7 @@ Object.assign(CastleScene.prototype, {
       a.life -= dt; a.spr.x += a.vx * dt; a.spr.y += a.vy * dt;
       let dead = a.life <= 0;
       if (a.el === 'fire') this.fireTouch(a.spr.x, a.spr.y, 16, 10);
-      this.hitBreakables(a.spr.x, a.spr.y, 16, 10); this.silenceHit(a.spr.x, a.spr.y, 16, 10);
+      this.hitBreakables(a.spr.x, a.spr.y, 16, 10); this.silenceHit(a.spr.x, a.spr.y, 16, 10); this.bellTouch(a.spr.x, a.spr.y, 16, 10);
       if (!dead) {
         const t = this.fg.getTileAtWorldXY(a.spr.x, a.spr.y);
         if (t && t.index >= 0) {
@@ -1122,7 +1123,7 @@ Object.assign(CastleScene.prototype, {
     const p = this.player, f = this.facing, w = this.wstats(), wp = this.wpn;
     const cy = p.y - 2 + (this.crouching ? 7 : 0), bx = p.x + f * wp.off, bw = w.w, bh = wp.h;
     if (this.element === 'fire') this.fireTouch(bx, cy, bw, bh);
-    this.silenceHit(bx, cy, bw, bh);
+    this.silenceHit(bx, cy, bw, bh); this.bellTouch(bx, cy, bw, bh);
     this.hitBreakables(bx, cy, bw, bh);
     this.ents.forEach(e => {
       if (e.dead || this.swingHit.has(e.id)) return;
@@ -1319,6 +1320,7 @@ Object.assign(CastleScene.prototype, {
       sd.g.setVisible(!sd.gate.open);
       if (!sd.gate.open && Math.abs(sd.x - p.x) < 110 && Math.abs(sd.y - p.y) < 90) { this.promptTxt.setVisible(!(this.shopOpen || this.dlg || this.imbueOpen)).setPosition(sd.x, sd.y - sd.h / 2 - 24).setText('Puerta sellada: se abre al vencer ' + (GATE_BY[sd.gate.boss] || 'a un jefe')); }
     }
+    if (this.gdoorInteract(ePress)) return;
     // puertas de las casas
     for (const d of this.W.doors || []) {
       if (Math.abs(d.x - p.x) < 40 && Math.abs((d.y - 30) - p.y) < 60) {
@@ -1647,6 +1649,52 @@ Object.assign(CastleScene.prototype, {
     SFX.elem(); this.poof(from.x || this.player.x, (from.y || this.player.y) - 20, 12, col); this.cameras.main.flash(160, (col >> 16) & 255, (col >> 8) & 255, col & 255);
     this.toast(sel.id ? 'Arma imbuida de ' + ELEMENTS[sel.id].name + ': ' + ELEMENTS[sel.id].desc : 'Arma sin elemento', 5000); this.autoSave();
   },
+  // ---- Ciclo del Alba: plataformas de fase y campanas
+  phasedStep(time) { // las plataformas ['PH'] existen solo en las fases de su máscara; avisan (parpadeo) 0,8 s antes de desaparecer
+    if (!this.phased || !this.phased.length) return;
+    const ph = World.phaseAt(this.cyc.t), nx = (ph.i + 1) % 4, g = this.phG; g.clear();
+    for (const p of this.phased) {
+      const shown = p.ok.includes(ph.i), warn = shown && !p.ok.includes(nx) && ph.left < 0.8;
+      if (shown !== p.shown) {
+        p.shown = shown;
+        for (let i = 0; i < p.w; i++) {
+          if (shown) { const tl = this.fg.putTileAt(p.idx, p.gx + i, p.gy); if (tl) { tl.setCollision(false, false, true, false); this.map.calculateFacesAt(p.gx + i, p.gy); } }
+          else { this.fg.removeTileAt(p.gx + i, p.gy); this.map.calculateFacesAt(p.gx + i, p.gy); }
+        }
+        if (!LITE) this.poof((p.gx + p.w / 2) * T, (p.gy + 0.5) * T, 2, 0xffd6a0);
+      }
+      const ar = this.W.areas[p.area]; if (!this.myArea || (this.myArea !== p.area && !this.openNeighbors(this.myArea).has(p.area))) continue; // solo se dibuja en la sala actual y las vecinas
+      const x = p.gx * T, y = p.gy * T, wd = p.w * T;
+      if (shown) { if (warn && ((time >> 7) & 1)) g.fillStyle(0xffffff, 0.6).fillRect(x, y, wd, 8); else g.fillStyle(0xffd27a, 0.4).fillRect(x, y, wd, 4); }
+      else g.lineStyle(2, 0xffd27a, 0.3).strokeRect(x + 1, y + 1, wd - 2, 6);
+    }
+  },
+  bellStep(dt, time) { // campanas: se golpean para pasar a la fase siguiente (3 s de repique y 15 s de recarga)
+    if (!this.bells || !this.bells.length) return;
+    const g = this.bellG; g.clear();
+    for (const b of this.bells) {
+      b.cd -= dt;
+      if (b.ring > 0) { b.ring -= dt; if (b.ring <= 0 && this.isHost) this.cyc.t = World.nextPhaseStart(this.cyc.t); }
+      if (!this.myArea || this.W.areaOf(Math.floor(b.x / T), Math.floor((b.y - 8) / T)) !== this.W.areas[this.myArea]) continue;
+      const sw = b.ring > 0 ? Math.sin(time * 0.03) * 0.35 : 0, col = b.cd > 0 && b.ring <= 0 ? 0x8a7a5a : 0xffd27a;
+      g.lineStyle(3, 0x4a3a2a, 1).lineBetween(b.x, b.y - 44, b.x, b.y - 36);
+      g.fillStyle(col, 1).fillPoints([{ x: b.x - 6 + sw * 14, y: b.y - 36 }, { x: b.x + 6 + sw * 14, y: b.y - 36 }, { x: b.x + 12 + sw * 8, y: b.y - 16 }, { x: b.x - 12 + sw * 8, y: b.y - 16 }], true);
+      g.fillStyle(0x4a3a2a, 1).fillRect(b.x - 3 + sw * 22, b.y - 16, 6, 5);
+      if (b.ring > 0) g.lineStyle(2, 0xffe9a0, 0.4).strokeCircle(b.x, b.y - 26, 20 + (3 - b.ring) * 14);
+    }
+    if (!this.cycTxt) return;
+    const ca = this.cycArea();
+    if (!ca) { this.cycTxt.setVisible(false); return; }
+    const ph = World.phaseAt(this.cyc.t); this.cycTxt.setVisible(true).setText(ph.name.toUpperCase() + '  ' + Math.ceil(ph.left) + ' s');
+  },
+  bellTouch(x, y, w, h) { // un golpe o una flecha sobre una campana: repica 3 s y pasa a la fase siguiente
+    if (!this.bells) return;
+    for (const b of this.bells) {
+      if (b.cd > 0 || b.ring > 0 || !rectsOverlap(x, y, w, h, b.x, b.y - 26, 28, 36)) continue;
+      b.cd = 15; b.ring = 3; this.floatText(b.x, b.y - 56, '¡Dong!', '#ffe9a0'); this.cameras.main.shake(120, 0.003); SFX.boss();
+      if (!this.isHost) socket.emit('bell', { id: b.id });
+    }
+  },
   timedStep(time) { // plataformas temporales: aparecen y desaparecen con parpadeo de aviso (cada jugador las ve en su propio ritmo)
     if (!this.timed || !this.timed.length) return;
     const t = time / 1000, g = this.timedG; g.clear();
@@ -1673,6 +1721,44 @@ Object.assign(CastleScene.prototype, {
     if (this.doorBusy || this.dead) return; this.doorBusy = true; SFX.altar();
     const cam = this.cameras.main; cam.fadeOut(160, 0, 0, 0);
     this.time.delayedCall(170, () => { this.player.setPosition(d.toX, d.toY - 21); this.player.body.setVelocity(0, 0); cam.fadeIn(220, 0, 0, 0); this.doorBusy = false; });
+  },
+  gdoorOpen(d) { return d.needs.every(b => this.progress.bosses.includes(b)); },
+  buildGDoors() { // Puerta Gigante entre zonas: arco de piedra con dos hojas de hierro; cerrada hasta que caen sus jefes
+    this.gdoorObjs = (this.W.gdoors || []).map(d => {
+      const g = this.add.graphics().setDepth(-4.9), o = { d, g, open: null }; this.caveLamps = this.caveLamps || []; o.lamp = { x: d.x, y: d.y - 100, r: 150, gate: { open: true } }; o.lamp.gate.open = true; this.caveLamps.push(o.lamp); return o;
+    });
+    this.gdoorDraw(true);
+  },
+  gdoorDraw(first) { // redibuja una puerta solo cuando cambia de estado; al abrirse por primera vez avisa
+    for (const o of this.gdoorObjs || []) {
+      const open = this.gdoorOpen(o.d); if (open === o.open) continue;
+      const wasClosed = o.open === false; o.open = open; o.lamp.gate.open = !open; // la luz del umbral solo cuando está abierta
+      const g = o.g, cx = o.d.x, by = o.d.y, W = 4 * T, H = 7 * T, x0 = cx - W / 2, y0 = by - H; g.clear();
+      g.fillStyle(0x2a2030, 1).fillRect(x0 - 14, y0 - 14, W + 28, H + 14).fillStyle(0x4a3c54, 1).fillRect(x0 - 14, y0 - 14, W + 28, 8).fillStyle(0x140c16, 1).fillRect(x0, y0, W, H);
+      if (!open) { // hojas cerradas con tachuelas y el sello de los Regentes
+        for (let k = 0; k < 2; k++) { const lx = x0 + k * W / 2; g.fillStyle(0x3a2a20, 1).fillRect(lx + 2, y0, W / 2 - 4, H); for (let y = y0 + 10; y < by - 6; y += 22) { g.fillStyle(0x5a5a6a, 1).fillRect(lx + 4, y, W / 2 - 8, 6); g.fillStyle(0x9a9aaa, 1).fillRect(lx + 4, y, W / 2 - 8, 2); } }
+        g.fillStyle(0x5a1018, 1).fillCircle(cx, y0 + H / 2, 18).fillStyle(0xc8283a, 1).fillCircle(cx, y0 + H / 2, 14).fillStyle(0xff6a6a, 1).fillRect(cx - 2, y0 + H / 2 - 9, 4, 18).fillRect(cx - 9, y0 + H / 2 - 2, 18, 4);
+      } else { // abierta: las hojas se pliegan a los lados y el umbral brilla con una luz de alba
+        g.fillStyle(0x3a2a20, 1).fillRect(x0 - 4, y0, 8, H).fillRect(x0 + W - 4, y0, 8, H).fillStyle(0xffc07a, 0.55).fillRect(x0 + 8, y0 + 8, W - 16, H - 8).fillStyle(0xfff0c0, 0.5).fillRect(x0 + 24, y0 + 30, W - 48, H - 30);
+      }
+      if (open && wasClosed && !first) { this.toast('Se abre la Puerta Gigante: al otro lado amanece sobre la Calle de las Horas.', 7000); SFX.pick(); this.cameras.main.shake(400, 0.006); }
+    }
+  },
+  gdoorInteract(ePress) { // true si el jugador está ante una puerta gigante (y ha gestionado el aviso)
+    const p = this.player;
+    for (const o of this.gdoorObjs || []) {
+      const d = o.d; if (Math.abs(d.x - p.x) > 90 || Math.abs((d.y - 30) - p.y) > 120) continue;
+      if (!o.open) { this.promptTxt.setVisible(true).setPosition(d.x, d.y - 260).setText('Puerta Gigante sellada: se abre al vencer a ' + d.needs.map(b => (World.BOSSES[b] ? World.BOSSES[b].name : b)).join(' y ')); return true; }
+      this.promptTxt.setVisible(true).setPosition(d.x, d.y - 260).setText('{act}: cruzar la Puerta Gigante');
+      if (ePress) this.useGDoor(d);
+      return true;
+    }
+    return false;
+  },
+  useGDoor(d) { // fundido largo a negro y aparece al otro lado
+    if (this.doorBusy || this.dead) return; this.doorBusy = true; SFX.boss();
+    const cam = this.cameras.main; cam.fadeOut(700, 0, 0, 0);
+    this.time.delayedCall(780, () => { this.player.setPosition(d.toX, d.toY - 21); this.player.body.setVelocity(0, 0); cam.fadeIn(900, 0, 0, 0); this.doorBusy = false; this.autoSave && this.autoSave(); });
   },
   buildGateDoors() { // reja de hierro con sello rojo sobre cada puerta que abre un jefe (las grietas que se abren solas no)
     this.sealDoors = []; this.caveLamps = this.caveLamps || [];

@@ -308,6 +308,13 @@ io.on('connection', socket => {
     if (!r || !r.started || typeof id !== 'string' || id.length > 24 || r.host === socket.id) return;
     io.to(r.host).emit('ignite', { id });
   });
+  // Campana del ciclo del Alba: un jugador la golpea -> anfitrión (que lleva el reloj)
+  on('bell', data => {
+    const { id } = data && typeof data === 'object' ? data : {};
+    const r = myRoom();
+    if (!r || !r.started || typeof id !== 'string' || id.length > 24 || r.host === socket.id) return;
+    io.to(r.host).emit('bell', { id });
+  });
   // Palabra de Silencio: un jugador destruye un orbe enemigo -> anfitrión (que simula los proyectiles)
   on('zap', data => {
     const { id } = data && typeof data === 'object' ? data : {};

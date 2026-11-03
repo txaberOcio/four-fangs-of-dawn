@@ -254,7 +254,7 @@ class CastleScene extends Phaser.Scene {
     this.enemyGroup = this.physics.add.group(); this.physics.add.collider(this.enemyGroup, this.fg);
     this.nid = 1; this.simT = 0; this.activeT = 0; this.snapT = 0; this.curSeal = null; this.sealKey = null; this.floorState = 0; this.floorBroken = false;
     this.isHost = room.host === socket.id;
-    this.visited = new Set(); this.myArea = null; this.mmT = 0; this.showMap = false; this.hurtProjs = new Set();
+    this.cyc = { t: 58 }; this.visited = new Set(); this.myArea = null; this.mmT = 0; this.showMap = false; this.hurtProjs = new Set();
     this.mapCanvas = this.textures.createCanvas('mapcv', w.Wt, w.Ht); this.mapCtx = this.mapCanvas.getContext('2d');
 
     this.initLight();
@@ -423,6 +423,7 @@ class CastleScene extends Phaser.Scene {
     on('snap', s => this.onSnap(s));
     on('torch', ({ id, on: v }) => this.setTorch(id, v));
     on('ignite', ({ id }) => { if (!this.isHost) return; const p = this.projs.get(id); if (p && POISON.includes(p.type)) this.igniteProj(p); });
+    on('bell', ({ id }) => { if (!this.isHost) return; const b = (this.bells || []).find(q => q.id === id); if (b && b.cd <= 0 && b.ring <= 0) { b.cd = 15; b.ring = 3; } }); // un compañero golpea una campana: el anfitrión lleva el reloj
     on('zap', ({ id }) => { if (!this.isHost) return; const p = this.projs.get(id); if (p && SILENCE_TYPES.includes(p.type)) this.zapProj(p); });
     on('hit', h => { if (!this.isHost) return; const e = this.ents.get(h.id); if (e && e.sim) this.damageEnt(e, h.dmg, h.dir, h.from, h.el); });
     on('progress', p => this.applyProgress(p, false));
@@ -524,8 +525,16 @@ class CastleScene extends Phaser.Scene {
     this.litList = this.torchObjs.filter(o => o.lit).map(o => ({ x: o.x, y: o.y, r: o.r || 215 }));
     this.altars.filter(a => a.lit).forEach(a => this.litList.push({ x: a.x, y: a.y - 40, r: a.big && !a.mini ? 330 : 160 }));
   }
+  // ---- Ciclo del Alba: la sala actual lo sigue si tiene ['cycle']. Color y opacidad de la oscuridad por fase, con transición de 4 s, y luz de cielo
+  cycArea() { const a = this.W.areas[this.myArea]; return a && a.cycle ? a : null; }
+  cycSky() {
+    const SK = [{ c: [4, 2, 10], a: 0.9, sky: 0 }, { c: [58, 28, 74], a: 0.6, sky: 0.35 }, { c: [10, 12, 24], a: 0.2, sky: 0.85 }, { c: [52, 24, 12], a: 0.68, sky: 0.3 }];
+    const ph = World.phaseAt(this.cyc.t), cur = SK[ph.i], nx = SK[(ph.i + 1) % 4], k = ph.left < 4 ? 1 - ph.left / 4 : 0, L = (u, v) => u + (v - u) * k;
+    return { col: ((L(cur.c[0], nx.c[0]) | 0) << 16) | ((L(cur.c[1], nx.c[1]) | 0) << 8) | (L(cur.c[2], nx.c[2]) | 0), a: L(cur.a, nx.a), sky: L(cur.sky, nx.sky), ph };
+  }
   lightLevel(x, y) {
     let best = 0;
+    if (this.myArea) { const ca = this.W.areaOf(Math.floor(x / T), Math.floor(y / T)); if (ca && ca.cycle && !ca.indoor) best = this.cycSky().sky; } // el cielo alumbra los exteriores: fantasmas y murciélagos reaccionan al día y a la noche
     for (const L of this.litList) {
       const dx = x - L.x, dy = y - L.y; if (dx > L.r || dx < -L.r || dy > L.r || dy < -L.r) continue;
       const d = Math.hypot(dx, dy); if (d < L.r) best = Math.max(best, 1 - d / L.r);
@@ -558,7 +567,8 @@ class CastleScene extends Phaser.Scene {
     const p = this.player, w = this.W;
     const sx0 = Phaser.Math.Clamp(p.x - SW / 2, 0, w.Wt * T - SW), sy0 = Phaser.Math.Clamp(p.y - SH / 2, 0, (w.Ht - 2) * T + 8 - SH);
     const rt = this.dark, img = this.lightImg, q = this.darkQ;
-    rt.clear(); rt.fill(0x04020a, 0.9);
+    const ca0 = this.cycArea(), sk = ca0 && !ca0.indoor ? this.cycSky() : null;
+    rt.clear(); rt.fill(sk ? sk.col : 0x04020a, sk ? sk.a : 0.9);
     const lamp = (x, y, r, a = 1) => { const X = x - sx0, Y = y - sy0; if (X < -r || X > SW + r || Y < -r || Y > SH + r) return; img.setScale(r / 64 / q).setAlpha(a); rt.erase(img, X / q, Y / q); };
     this.torchObjs.forEach(o => { if (o.lit && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, (o.r || 215) * (1 + 0.03 * Math.sin(time * 0.009 + o.id)), 1); });
     this.altars.forEach(a => { if (a.lit) lamp(a.x, a.y - 40, a.big && !a.mini ? 330 : 160, 0.9); });
@@ -567,6 +577,8 @@ class CastleScene extends Phaser.Scene {
     this.forgeObjs.forEach(f => { if (!this.forgeGot.has(f.id) && !this.hiddenAt(f.x, f.y)) lamp(f.x, f.y, 70, 0.8); });
     (this.sforgeObjs || []).forEach(f => lamp(f.x, f.y, 120, 0.9));
     if (this.timedStep) this.timedStep(time);
+    if (this.gdoorDraw) this.gdoorDraw();
+    if (this.phasedStep) { this.phasedStep(time); this.bellStep(Math.min(0.1, Math.max(0, (time - (this.bellPrevT || time)) / 1000)), time); this.bellPrevT = time; }
     (this.caveLamps || []).forEach(L => { if (!(L.gate && L.gate.open)) lamp(L.x, L.y, L.r, 0.85); }); this.caveEmbers(time); this.mossSpores(time); this.liftStep(0.016);
     (this.gemObjs || []).forEach(o => { if (!this.gemGot.has(o.id) && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, 45, 0.8); });
     Object.values(this.remotes).forEach(r => lamp(r.spr.x, r.spr.y, 90, 0.8));
@@ -820,7 +832,7 @@ class CastleScene extends Phaser.Scene {
       const e = [], p = [];
       this.ents.forEach(en => e.push([en.id, en.type, Math.round(en.spr.x), Math.round(en.spr.y), en.hp, en.max, en.spr.flipX ? 1 : 0, (en.aggro ? 1 : 0) | (en.tele ? 2 : 0) | (en.shield ? 4 : 0) | (en.elite ? 8 : 0) | (en.melt ? 16 : 0), en.name || '']));
       this.projs.forEach(pr => p.push([pr.id, pr.type, Math.round(pr.spr.x), Math.round(pr.spr.y)]));
-      socket.volatile.emit('snap', { e, p, s: this.sealKey, f: this.floorState, l: this.luaState() });
+      socket.volatile.emit('snap', { e, p, s: this.sealKey, f: this.floorState, l: this.luaState(), cy: Math.round(this.cyc.t * 100) / 100 });
     }
   }
 
@@ -1303,6 +1315,7 @@ class CastleScene extends Phaser.Scene {
   // ===================================================== instantáneas (clientes)
   onSnap(s) {
     if (this.isHost) return;
+    if (typeof s.cy === 'number') this.cyc.t = s.cy; // reloj del ciclo del Alba: lo lleva el anfitrión
     const seen = new Set();
     s.e.forEach(([id, type, x, y, hp, max, flip, flags, name]) => {
       seen.add(id);
@@ -1350,6 +1363,7 @@ class CastleScene extends Phaser.Scene {
   update(time, delta) {
     if (!this.player) return;
     const dt = Math.min(delta / 1000, 0.05), K_ = this.keys, p = this.player, b = p.body;
+    this.cyc.t += dt; // el ciclo del Alba avanza en todos (el anfitrión lo corrige cada instantánea)
     const inp = this.readInput(K_);
 
     // ---- jugador
@@ -1359,6 +1373,7 @@ class CastleScene extends Phaser.Scene {
     // ---- zona actual y mapa
     const ar = this.W.areaOf(Math.floor(p.x / T), Math.floor(p.y / T));
     if (ar && ar.id !== this.myArea) { const firstVisit = !!this.visited && !this.visited.has(ar.id); this.myArea = ar.id; this.markVisited(ar); this.talkOnArea(ar.id);
+      if (firstVisit && ar.id === 'cb0') { this.centerTxt.setText('ZONA 3\n\nLA CALLE DE LAS HORAS'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 3')) this.centerTxt.setText(''); }); } // primera vez al otro lado de la Puerta Gigante
       if (firstVisit && ar.id === 'asc2') { this.mapGrow = true; this.centerTxt.setText('ZONA 2\n\nMÁS ALLÁ DE LA GRAN HOGUERA'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 2')) this.centerTxt.setText(''); }); } // primer descenso al segundo mapa
       this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle(); if (this.zoneEndCheck) this.zoneEndCheck(ar);
       const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
