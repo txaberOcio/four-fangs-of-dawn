@@ -294,7 +294,7 @@
     // La Última Esquina (Hora Quebrada): la calle gira; todo se mezcla. Al final, el umbral de la Morada
     area('esq1', 'La Última Esquina: Callejón de las Cunas', Z3Z, 40, 8, 2, 1, [['cycle'], ['open'], ['facade', 3, 10, 'adobe', 'R'], ['stairs', 16, 16, 'R', 5], ['B', 21, 12, 8, 5], ['stairs', 34, 16, 'L', 5], ['facade', 38, 12, 'timber', 'L'],
       ['cry', 25, 10], ['E', 'vazul', 12, 16], ['E', 'vverde', 30, 16], ['E', 'gh', 26, 6], ['E', 'vmorado', 46, 16], ['E', 'bat', 20, 5]]);
-    area('esq3', 'La Última Esquina: Torno de las Horas', Z3Z, 42, 8, 2, 1, [['cycle'], ['open'], ['boss', 'tornera', 30, 16]]); // mini-jefa de la Hora Quebrada: durante su combate el ciclo corre el triple de rápido
+    area('esq3', 'La Última Esquina: Torno de las Horas', Z3Z, 42, 8, 2, 1, [['cycle'], ['open'], ['ltorch', 8, 15, 6, 12, 7], ['ltorch', 24, 15, 21, 12, 7], ['ltorch', 40, 15, 36, 12, 7], ['boss', 'tornera', 30, 16]]); // mini-jefa de la Hora Quebrada: durante su combate el ciclo corre el triple de rápido
     area('esq2', 'Umbral de la Morada', Z3Z, 44, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]);
     // La Morada de Anhelia (el 20 % final): una casa, no un castillo. Cuatro cunas, cuatro retratos de altura y una mesa para seis; por dentro es el cuerpo de Anhelia y la sala final es su boca
     area('mor1', 'Morada: Zaguán de las Cunas', Z3Z, 45, 8, 2, 1, [['indoor'], ['calm'], ['altar', 6, 16], ['deco', 'cradle', 14], ['deco', 'cradle', 22], ['deco', 'cradle', 30], ['deco', 'cradle', 38], ['bell', 46, 16]]);
@@ -405,7 +405,7 @@
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { region, sky: region === 'z3', T, COLS: R.cols, ROWS: R.rows, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS_R, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], bleeds: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], phased: [], bells: [], gdoors: [], props: [], lifts: [], roots: new Set() };
+    const world = { region, sky: region === 'z3', T, COLS: R.cols, ROWS: R.rows, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS_R, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], bleeds: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], phased: [], bells: [], gdoors: [], props: [], litPlats: [], lifts: [], roots: new Set() };
     let uid = 1;
     // 1) interior de cada área
     for (const a of AREAS_R) {
@@ -509,6 +509,8 @@
           case 'tri': { const n = op[2]; for (let i = 0; i < n; i++) { const wd = n - i; for (let k = 0; k < wd; k++) setF(a, op[1] === 'tl' ? 1 + k : a.rw - 2 - k, 1 + i, K.SOLID); } break; }
           case 'forge': world.forges.push({ id: sid('f'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T }); break;
           case 'npc': world.npcs.push({ id: sid('n'), area: a.id, type: op[1], x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T }); break;
+          // ['ltorch', x, y, px, py, ancho]: una antorcha que EMPIEZA APAGADA y una plataforma que solo existe mientras está encendida (para el validador la plataforma siempre está)
+          case 'ltorch': { const tid = world.torches.length; world.torches.push({ id: tid, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T, z: a.z, area: a.id, lit: false, r: 170 }); world.litPlats.push({ torch: tid, area: a.id, gx: a.x0 + op[3], gy: a.y0 + op[4], w: op[5], idx: a.z * 8 + K.ONEWAY }); for (let x = op[3]; x < op[3] + op[5]; x++) if (free(a, x, op[4])) setF(a, x, op[4], K.ONEWAY); break; }
           case 'torch': world.torches.push({ id: world.torches.length, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T, z: a.z, area: a.id, lit: true, r: 150 }); break;
           case 'pit': for (let x = op[1]; x <= op[2]; x++) setF(a, x, a.rh - 1, K.SPIKES); break;
           case 'E': if (a.safe) break; world.spawns.push({ id: 'e' + (uid++), area: a.id, type: op[1], x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, opts: op[4] || null, zone: a.diff }); break;
@@ -530,7 +532,7 @@
       const doorXs = a.ops.filter(o => o[0] === 'door').map(o => o[1]); // ninguna antorcha sobre la fachada de una casa
       // algunas antorchas (una de cada tres en salas con enemigos) van altas: hay que encenderlas en mitad de un salto. Solo sobre suelo firme y con hueco libre debajo
       const highTorch = (x, k) => { if (quiet || k !== a.h - 1 || (x / 13 | 0) % 3 !== 1) return false; const fy = a.rh - 1; if (kind(fg[a.y0 + fy][a.x0 + x]) !== K.FLOOR) return false; for (let y = k * 18 + 9; y < fy; y++) if (!free(a, x, y)) return false; return true; };
-      if (!a.ops.some(o => o[0] === 'torch')) for (let x = 5; x < a.rw - 4; x += 13) for (let k = 0; k < a.h; k++) if (!doorXs.some(d => Math.abs(d - x) <= 5)) for (const dy of (highTorch(x, k) ? [10, 9] : [13, 12, 14, 11])) { const yy = k * 18 + dy; if (yy < a.rh - 1 && yy > 1 && free(a, x, yy)) { world.torches.push({ id: world.torches.length, x: (a.x0 + x + 0.5) * T, y: (a.y0 + yy + 0.5) * T, z: a.z, area: a.id, lit: quiet, r: 215 }); break; } }
+      if (!a.ops.some(o => o[0] === 'torch' || o[0] === 'ltorch')) for (let x = 5; x < a.rw - 4; x += 13) for (let k = 0; k < a.h; k++) if (!doorXs.some(d => Math.abs(d - x) <= 5)) for (const dy of (highTorch(x, k) ? [10, 9] : [13, 12, 14, 11])) { const yy = k * 18 + dy; if (yy < a.rh - 1 && yy > 1 && free(a, x, yy)) { world.torches.push({ id: world.torches.length, x: (a.x0 + x + 0.5) * T, y: (a.y0 + yy + 0.5) * T, z: a.z, area: a.id, lit: quiet, r: 215 }); break; } }
     }
     // una plataforma apoyada sobre roca se vuelve sólida: si no, al bajar atravesándola (↓ + saltar) te quedas dentro del bloque y caes a la sala de abajo
     for (let y = 0; y < Ht - 1; y++) for (let x = 0; x < Wt; x++) { const v = fg[y][x], b = fg[y + 1][x]; if (v >= 0 && v % 8 === K.ONEWAY && b >= 0 && (b % 8 === K.SOLID || b % 8 === K.CRACK)) fg[y][x] = v - K.ONEWAY + K.SOLID; }

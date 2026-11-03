@@ -365,7 +365,7 @@ Object.assign(CastleScene.prototype, {
       return { ...gm, spr, glow };
     });
     this.phased = (w.phased || []).map(t => ({ ...t, shown: true, ok: t.mask.split('').map(k => 'NADO'.indexOf(k)) })); this.bells = (w.bells || []).map(b => ({ ...b, cd: 0, ring: 0 })); this.bellG = this.add.graphics().setDepth(4); this.phG = this.add.graphics().setDepth(5); this.cycTxt = this.add.text(SW / 2, 40, '', { fontSize: fsz('14px'), fontFamily: 'Courier New', color: '#ffe9a0', stroke: '#000', strokeThickness: 4 }).setOrigin(0.5).setScrollFactor(0).setDepth(30).setVisible(false);
-    this.timed = (w.timed || []).map(t => ({ ...t, shown: true })); this.timedG = this.add.graphics().setDepth(5); // plataformas que aparecen y desaparecen
+    this.timed = (w.timed || []).map(t => ({ ...t, shown: true })); this.litPlats = (w.litPlats || []).map(p => ({ ...p, shown: true })); this.timedG = this.add.graphics().setDepth(5); // plataformas que aparecen y desaparecen
     this.sforgeObjs = (w.sforges || []).map(f => { // forja especial: poder elemental para el arma
       const sh = f.kind === 'shrine';
       const spr = this.add.image(f.x, f.y, sh ? 'altar' : 'forge').setScale(sh ? 3 : 3.6).setDepth(2).setTint(sh ? 0xb06aff : 0xff9a3b);
@@ -1827,6 +1827,24 @@ Object.assign(CastleScene.prototype, {
     }
   },
   // ---- Ciclo del Alba: plataformas de fase y campanas
+  litPlatStep(time) { // plataformas ['ltorch']: existen solo mientras su antorcha está encendida; apagada se ve solo su contorno
+    const lp = this.litPlats; if (!lp || !lp.length) return;
+    const g = this.lpG = this.lpG || this.add.graphics().setDepth(5); g.clear();
+    for (const p of lp) {
+      const tl = this.torchObjs[p.torch], lit = !!(tl && tl.lit);
+      if (lit !== p.shown) {
+        p.shown = lit;
+        for (let i = 0; i < p.w; i++) {
+          if (lit) { const t = this.fg.putTileAt(p.idx, p.gx + i, p.gy); if (t) { t.setCollision(false, false, true, false); this.map.calculateFacesAt(p.gx + i, p.gy); } }
+          else { this.fg.removeTileAt(p.gx + i, p.gy); this.map.calculateFacesAt(p.gx + i, p.gy); }
+        }
+        if (!LITE) this.poof((p.gx + p.w / 2) * T, (p.gy + 0.5) * T, 3, lit ? 0xffd27a : 0x666677);
+      }
+      const x = p.gx * T, y = p.gy * T, wd = p.w * T;
+      if (lit) g.fillStyle(0xffb347, 0.5).fillRect(x, y, wd, 5).fillStyle(0xffe9a0, 0.25).fillRect(x, y + 5, wd, 3);
+      else g.lineStyle(2, 0x8a7a9a, 0.35).strokeRect(x + 1, y + 1, wd - 2, 6);
+    }
+  },
   phasedStep(time) { // las plataformas ['PH'] existen solo en las fases de su máscara; avisan (parpadeo) 0,8 s antes de desaparecer
     if (!this.phased || !this.phased.length) return;
     const ph = World.phaseAt(this.cyc.t), nx = (ph.i + 1) % 4, g = this.phG; g.clear();

@@ -638,6 +638,7 @@ class CastleScene extends Phaser.Scene {
     if (this.timedStep) this.timedStep(time);
     if (this.gdoorDraw) this.gdoorDraw();
     if (this.skyStep) this.skyStep(time);
+    if (this.litPlatStep) this.litPlatStep(time);
     if (this.phasedStep) { this.phasedStep(time); this.bellStep(Math.min(0.1, Math.max(0, (time - (this.bellPrevT || time)) / 1000)), time); this.bellPrevT = time; }
     (this.caveLamps || []).forEach(L => { if (!(L.gate && L.gate.open)) lamp(L.x, L.y, L.r, 0.85); }); this.caveEmbers(time); this.mossSpores(time); this.liftStep(0.016);
     (this.gemObjs || []).forEach(o => { if (!this.gemGot.has(o.id) && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, 45, 0.8); });
@@ -1182,7 +1183,7 @@ class CastleScene extends Phaser.Scene {
         if (e.type === 'tasador') { const o = ['coins', 'gavel', 'fog', 'charge'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 2 ? 'summon' : pick(o); e.last = e.act; } // lluvia de monedas, martillazos y niebla
         if (e.type === 'planidera') { const o = ['eyes', 'fan', 'dive', 'tele'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; } // lágrimas que persiguen, abanicos y picados
         if (e.type === 'nasa') { const o = ['fog', 'rain', 'lunge', 'tele'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; } // niebla, redes (engranajes) y arpón
-        if (e.type === 'tornera') { const o = ['forms', 'axe', 'stomp', 'coins'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; } // muros de papeleo, hachazos y golpes de torno; el ciclo corre el triple de rápido mientras dura el combate
+        if (e.type === 'tornera') { const o = ['forms', 'axe', 'stomp', 'coins'].filter(x => x !== e.last), lit = this.torchObjs.filter(q => q.area === e.room && q.lit); e.act = lit.length && Math.random() < 0.6 && e.last !== 'snuff' ? 'snuff' : pick(o); e.last = e.act; } // muros de papeleo, hachazos y golpes de torno; el ciclo corre el triple de rápido mientras dura el combate
         if (e.type === 'anhelia') { // cuatro actos: sed de sangre (Cor), ceguera (Zaf), robo de almas (Malak) y sombra de la sombra (Matis)
           const f = e.hp / e.max, o = (f > 0.75 ? ['drain', 'fan', 'pillars', 'tele'] : f > 0.5 ? ['charge', 'beam', 'fog', 'fan'] : f > 0.25 ? ['siphon', 'tele', 'pillars', 'rain'] : ['ambush', 'fan', 'pillars', 'siphon']).filter(x => x !== e.last);
           e.act = f <= 0.25 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 3 ? 'summon' : pick(o); e.last = e.act;
@@ -1264,6 +1265,13 @@ class CastleScene extends Phaser.Scene {
         else if (e.t < 1.9) { e.tele = false; b.setVelocity(e.dirT * 430, (e.sy - y) * 4); if (x < a.x0 + 20 || x > a.x1 - 20) e.t = 1.9; }
         else if (e.t < 2.4) b.setVelocity(0, 0); else done(0.7);
         break;
+      case 'snuff': { // Tornera: va a la lámpara encendida más cercana y la apaga (las plataformas que dependían de ella desaparecen)
+        const tt = this.torchObjs.filter(o => o.area === e.room && o.lit).sort((p1, q1) => Math.abs(p1.x - x) - Math.abs(q1.x - x))[0];
+        if (!tt || e.t > 7) { e.tele = false; done(0.8); break; }
+        const dxT = tt.x - x;
+        if (Math.abs(dxT) > 36) { b.setVelocityX(Math.sign(dxT) * (rage ? 300 : 240)); e.spr.setFlipX(dxT < 0); e.tele = false; e.chan = 0; }
+        else { b.setVelocityX(0); e.tele = true; e.chan = (e.chan || 0) + dt; if (e.chan >= 0.7) { this.setTorch(tt.id, false); socket.emit('torch', { id: this.torchKey(tt.id), on: false }); this.poof(tt.x, tt.y, 8, 0x555566); e.tele = false; done(0.9); } }
+        break; }
       case 'relight': { // va a encender una antorcha apagada: mientras tanto está a oscuras
         const tt = this.torchObjs.filter(o => o.area === 'clkC' && !o.lit).sort((p1, q1) => Math.abs(p1.x - x) - Math.abs(q1.x - x))[0];
         if (!tt || e.t > 8) { done(0.4); break; }
@@ -1497,6 +1505,7 @@ class CastleScene extends Phaser.Scene {
     // ---- zona actual y mapa
     const ar = this.W.areaOf(Math.floor(p.x / T), Math.floor(p.y / T));
     if (ar && ar.id !== this.myArea) { const firstVisit = !!this.visited && !this.visited.has(ar.id); this.myArea = ar.id; this.markVisited(ar); this.talkOnArea(ar.id);
+      if (ar.id === 'esq3' && !this.progress.bosses.includes('tornera')) this.toast('Enciende las lámparas ({act}) para que aparezcan plataformas. La Tornera las irá apagando.', 7000);
       if (firstVisit && ar.id === 'cb0') { this.centerTxt.setText('ZONA 3\n\nLA CALLE DE LAS HORAS'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 3')) this.centerTxt.setText(''); }); } // primera vez al otro lado de la Puerta Gigante
       if (firstVisit && ar.id === 'asc2') { this.mapGrow = true; this.centerTxt.setText('ZONA 2\n\nMÁS ALLÁ DE LA GRAN HOGUERA'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 2')) this.centerTxt.setText(''); }); } // primer descenso al segundo mapa
       this.banner(`${this.W.region !== 'main' ? World.REGIONS[this.W.region].name : World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle(); if (this.zoneEndCheck) this.zoneEndCheck(ar);
