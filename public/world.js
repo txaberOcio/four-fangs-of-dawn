@@ -269,7 +269,21 @@
     // Puente de las Dos Voces: un foso de estacas y un puente de piedra con tramo levadizo que solo baja en el alba y en el ocaso
     area('pte1', 'Puente de las Dos Voces', Z3Z, 19, 8, 2, 1, [['cycle'], ['open'], ['bell', 4, 16], ['bell', 47, 16],
       ['pit', 12, 40], ['stairs', 6, 16, 'R', 2], ['B', 8, 15, 10, 2], ['PB', 18, 15, 14, 2, 'AO'], ['B', 32, 15, 14, 2], ['stairs', 47, 16, 'L', 2], ['E', 'bat', 25, 6], ['E', 'gh', 38, 8]]);
-    area('pte2', 'Orilla de las Dos Voces', Z3Z, 21, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]); // final provisional de este tramo
+    area('pte2', 'Orilla de las Dos Voces', Z3Z, 21, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]);
+    // Palacio de la Corte Primera (ocaso): fachadas de piedra, una columnata que se recorre por arriba y un jardín cuyo portón solo abre en el ocaso
+    area('pal1', 'Palacio: Avenida de las Columnas', Z3Z, 22, 8, 3, 1, [['cycle'], ['open'],
+      ['facade', 3, 14, 'stone', 'L'], ['stairs', 18, 16, 'R', 4], ['B', 22, 12, 2, 5], ['B', 30, 12, 2, 5], ['B', 38, 12, 2, 5], ['B', 46, 12, 2, 5], ['B', 22, 11, 27, 1], ['stairs', 53, 16, 'L', 5], ['cry', 35, 9],
+      ['facade', 56, 18, 'stone', 'R'], ['E', 'kn', 12, 16], ['E', 'kn', 28, 16], ['E', 'gh', 42, 8], ['E', 'kn', 50, 16], ['E', 'sk', 68, 16], ['E', 'bat', 33, 5]]);
+    area('pal2', 'Palacio: Jardín de la Corte', Z3Z, 25, 8, 2, 1, [['cycle'], ['open'], ['bell', 6, 16], ['facade', 10, 12, 'stone', 'L'], ['PB', 26, 1, 2, 16, 'NAD'], ['altar', 38, 16], ['E', 'kn', 18, 16], ['E', 'gh', 20, 7]]); // el portón del jardín (26 a 27) solo se abre en el ocaso
+    // Muelle del Faro Seco (noche): un embarcadero de piedra sobre un canal seco de estacas, barcas varadas y un faro apagado
+    area('mue1', 'Muelle del Faro Seco: Embarcadero', Z3Z, 27, 8, 3, 1, [['cycle'], ['open'],
+      ['pit', 8, 70], ['stairs', 2, 16, 'R', 2], ['B', 3, 15, 71, 2], ['stairs', 74, 16, 'L', 2], ['cart', 18, 13], ['cart', 34, 13], ['B', 56, 1, 8, 14], ['cry', 66, 12],
+      ['E', 'gh', 24, 10], ['E', 'gh', 46, 10], ['E', 'bat', 14, 6], ['E', 'bat', 52, 6]]);
+    area('mue2', 'Muelle del Faro Seco: Varadero', Z3Z, 30, 8, 2, 1, [['cycle'], ['open'], ['bell', 5, 16], ['facade', 8, 11, 'timber', 'R'], ['PB', 26, 1, 2, 16, 'ADO'], ['cart', 34, 15], ['cart', 41, 15], ['E', 'sk', 16, 16], ['E', 'gh', 22, 7], ['E', 'kn', 44, 16]]); // la reja del varadero (26 a 27) solo se abre de noche
+    // La Última Esquina (Hora Quebrada): la calle gira; todo se mezcla. Al final, el umbral de la Morada
+    area('esq1', 'La Última Esquina: Callejón de las Cunas', Z3Z, 32, 8, 2, 1, [['cycle'], ['open'], ['facade', 3, 10, 'adobe', 'R'], ['stairs', 16, 16, 'R', 5], ['B', 21, 12, 8, 5], ['stairs', 34, 16, 'L', 5], ['facade', 38, 12, 'timber', 'L'],
+      ['cry', 25, 10], ['E', 'kn', 12, 16], ['E', 'sk', 30, 16], ['E', 'gh', 26, 6], ['E', 'sk', 46, 16], ['E', 'bat', 20, 5]]);
+    area('esq2', 'Umbral de la Morada', Z3Z, 34, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]); // final provisional de la calle: más allá irá la Morada de Anhelia
   });
 
   const LINKS = [];
@@ -278,7 +292,7 @@
   // S(arriba, abajo, x, tamaño): hueco vertical; x es local al área de arriba
   const S = (a, b, x = 11, size = 4, o = {}) => LINKS.push({ t: 'S', a, b, x, size, region: CUR, ...o });
   inRegion('z3', () => {
-    E('zag', 'plz0', 14); E('plz0', 'cu1', 14); E('cu1', 'cu2', 14); E('cu2', 'cu3', 14); E('cu3', 'cot1', 14); E('cot1', 'cot2', 14); E('cot2', 'plz1', 14); E('plz1', 'pte1', 14); E('pte1', 'pte2', 14); // la calle es continua: pasos casi tan altos como la sala
+    E('zag', 'plz0', 14); E('plz0', 'cu1', 14); E('cu1', 'cu2', 14); E('cu2', 'cu3', 14); E('cu3', 'cot1', 14); E('cot1', 'cot2', 14); E('cot2', 'plz1', 14); E('plz1', 'pte1', 14); E('pte1', 'pte2', 14); E('pte2', 'pal1', 14); E('pal1', 'pal2', 14); E('pal2', 'mue1', 14); E('mue1', 'mue2', 14); E('mue2', 'esq1', 14); E('esq1', 'esq2', 14); // la calle es continua: pasos casi tan altos como la sala
     S('cb1', 'cb0'); S('cb2', 'cb1'); S('cbT', 'cb2'); E('cbT', 'azotea', 3, { lift: 16 }); // a la torre se entra por la puerta de su base
   });
   E('cripta', 'bodega'); E('bodega', 'vest'); E('vest', 'salon'); E('salon', 'corr'); E('corr', 'foso');
