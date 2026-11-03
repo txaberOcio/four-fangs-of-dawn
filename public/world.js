@@ -254,7 +254,22 @@
       ['facade', 62, 12, 'adobe', 'R'], ['cry', 66, 6], ['door', 13, 'intF', 5, 'Entrar en la Intendencia del Furriel'], ['door', 40, 'intG', 5, 'Entrar en la Garita del Cabo'], ['door', 68, 'intE', 5, 'Entrar en el Escondite del Armero'],
       ['E', 'kn', 16, 16], ['E', 'sk', 30, 16], ['E', 'kn', 51, 16], ['E', 'sk', 75, 16], ['E', 'bat', 40, 5]]);
     area('cu2', 'Cuartel Viejo: Patio del Relevo', Z3Z, 8, 8, 2, 1, [['cycle'], ['open'], ['bell', 8, 16], ['B', 3, 13, 1, 4], ['stairs', 16, 16, 'L', 4], ['P', 3, 12, 10], ['PB', 34, 1, 2, 16, 'NDO'], ['cart', 40, 15], ['PH', 44, 14, 5, 'ADO'], ['E', 'kn', 22, 16], ['E', 'kn', 28, 16], ['E', 'sk', 47, 16], ['E', 'bat', 20, 5]]); // el portón (34 a 35) solo se abre en el alba: hay que golpear la campana o esperar
-    area('cu3', 'Cuartel Viejo: Puerta del Relevo', Z3Z, 10, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]); // final provisional del primer tramo
+    area('cu3', 'Cuartel Viejo: Puerta del Relevo', Z3Z, 10, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]);
+    // Los Cotos (día): casas de caza de madera, cercados y jauría; la calle sube y baja por escaleras de piedra
+    area('cot1', 'Los Cotos: Calle de las Jaurías', Z3Z, 11, 8, 3, 1, [['cycle'], ['open'],
+      ['facade', 3, 10, 'timber', 'R'], ['stairs', 15, 16, 'L', 4], ['cart', 20, 15], ['PH', 23, 14, 4, 'D'],
+      ['facade', 30, 12, 'adobe', 'L'], ['facade', 44, 13, 'timber', 'R'], ['stairs', 60, 16, 'R', 3], ['B', 63, 14, 8, 3], ['cry', 66, 12],
+      ['E', 'sk', 10, 16], ['E', 'sk', 27, 16], ['E', 'kn', 40, 16], ['E', 'gh', 52, 8], ['E', 'sk', 74, 16], ['E', 'bat', 35, 5]]);
+    area('cot2', 'Los Cotos: Cercado de los Sabuesos', Z3Z, 14, 8, 2, 1, [['cycle'], ['open'], ['bell', 6, 16],
+      ['facade', 9, 11, 'adobe', 'R'], ['PB', 26, 1, 2, 16, 'NDO'], ['cart', 32, 15], ['PH', 36, 14, 5, 'ADO'], ['stairs', 44, 16, 'L', 3],
+      ['E', 'sk', 20, 16], ['E', 'sk', 23, 16], ['E', 'kn', 40, 16], ['E', 'gh', 14, 7]]); // el portón del cercado (26 a 27) solo se abre en el alba
+    // Plaza del Pregón: el centro de la calle (tienda, hoguera y campana), con la tarima del pregonero
+    area('plz1', 'Plaza del Pregón', Z3Z, 16, 8, 3, 1, [['cycle'], ['open'], ['calm'], ['npc', 'merchant', 8, 16], ['altar', 16, 16], ['bell', 30, 16],
+      ['facade', 36, 12, 'stone', 'L'], ['stairs', 54, 16, 'R', 3], ['B', 57, 14, 8, 3], ['facade', 66, 10, 'adobe', 'R']]);
+    // Puente de las Dos Voces: un foso de estacas y un puente de piedra con tramo levadizo que solo baja en el alba y en el ocaso
+    area('pte1', 'Puente de las Dos Voces', Z3Z, 19, 8, 2, 1, [['cycle'], ['open'], ['bell', 4, 16], ['bell', 47, 16],
+      ['pit', 12, 40], ['stairs', 6, 16, 'R', 2], ['B', 8, 15, 10, 2], ['PB', 18, 15, 14, 2, 'AO'], ['B', 32, 15, 14, 2], ['stairs', 47, 16, 'L', 2], ['E', 'bat', 25, 6], ['E', 'gh', 38, 8]]);
+    area('pte2', 'Orilla de las Dos Voces', Z3Z, 21, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]); // final provisional de este tramo
   });
 
   const LINKS = [];
@@ -263,7 +278,7 @@
   // S(arriba, abajo, x, tamaño): hueco vertical; x es local al área de arriba
   const S = (a, b, x = 11, size = 4, o = {}) => LINKS.push({ t: 'S', a, b, x, size, region: CUR, ...o });
   inRegion('z3', () => {
-    E('zag', 'plz0', 14); E('plz0', 'cu1', 14); E('cu1', 'cu2', 14); E('cu2', 'cu3', 14); // la calle es continua: pasos casi tan altos como la sala
+    E('zag', 'plz0', 14); E('plz0', 'cu1', 14); E('cu1', 'cu2', 14); E('cu2', 'cu3', 14); E('cu3', 'cot1', 14); E('cot1', 'cot2', 14); E('cot2', 'plz1', 14); E('plz1', 'pte1', 14); E('pte1', 'pte2', 14); // la calle es continua: pasos casi tan altos como la sala
     S('cb1', 'cb0'); S('cb2', 'cb1'); S('cbT', 'cb2'); E('cbT', 'azotea', 3, { lift: 16 }); // a la torre se entra por la puerta de su base
   });
   E('cripta', 'bodega'); E('bodega', 'vest'); E('vest', 'salon'); E('salon', 'corr'); E('corr', 'foso');

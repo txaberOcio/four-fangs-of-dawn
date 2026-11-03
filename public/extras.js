@@ -75,6 +75,7 @@ const SHOP_STOCK = {
   cap: [['pot', 0], ['pot2', 0], ['bomb', 0], ['lamp', 0], ['ward', 0], ['str', 0], ['spd', 0], ['rage', 0], ['tonic', 0], ['amu', 0], ['talis', 0], ['fruit', 0]]
 };
 SHOP_STOCK.intF = SHOP_STOCK.cap.slice(); // Intendencia del Furriel (Zona 3): lo mismo que el mercader de la Capilla del Cuartel, y solo atiende de día
+SHOP_STOCK.plz1 = SHOP_STOCK.cap.slice(); // Plaza del Pregón (Zona 3)
 SHOP_STOCK.dev = ITEMS.map(i => [i.id, 0]); // tienda del panel de desarrollo (F2)
 // Mejoras del mapa: los iconos que el mapa (M) enseña solo se ven si los compras. Cada mercader vende 2 más que el anterior (1, 3, 5, 7).
 // tier = primer mercader que la vende; clave = el icono que activa (los mismos que las casillas del panel F2)
@@ -87,14 +88,14 @@ const MAP_UPGRADES = [
   { id: 'map_forge', mapIcon: 'forge', tier: 4, price: 1250, name: 'Plano del Herrero', desc: 'Marca las forjas de arma que todavía no has usado.', lore: 'El Herrero dibujó dónde están sus yunques antes de perder el martillo.' },
   { id: 'map_lift', mapIcon: 'lift', tier: 4, price: 1500, name: 'Cadenas del Montacargas', desc: 'Marca los ascensores en el mapa.', lore: 'Quien tira de las cadenas sabe adónde bajan.' },
 ];
-const SHOP_MAP_TIER = { vest: 1, naveS: 2, casaM: 3, asc: 4, mer: 4, cap: 4, intF: 4, dev: 4 }; // hasta qué mejoras del mapa vende cada mercader
+const SHOP_MAP_TIER = { vest: 1, naveS: 2, casaM: 3, asc: 4, mer: 4, cap: 4, intF: 4, plz1: 4, dev: 4 }; // hasta qué mejoras del mapa vende cada mercader
 // dibujos de los iconos del mapa (7x7); el mismo juego los usa en el mapa (M) y en el panel de desarrollo (F2)
 const MAP_PATTERNS = {
   boss: ['.XXXXX.', 'XXXXXXX', 'XoXXXoX', 'XoXXXoX', 'XXXXXXX', '.XXXXX.', '..X.X..'], fire: ['...X...', '..XX...', '..XXX..', '.XXXXX.', 'XXXXXXX', 'XXXXXXX', '.XXXXX.'], cry: ['...X...', '..XXX..', '.XXXXX.', 'XXXXXXX', '.XXXXX.', '..XXX..', '...X...'],
   npc: ['..XXX..', '..XXX..', '...X...', '.XXXXX.', 'X.XXX.X', '..X.X..', '.XX.XX.'], forge: ['XXXXXXX', '.XXXXX.', '..XXX..', '..XXX..', '.XXXXX.', 'XXXXXXX', '.......'], lift: ['...X...', '..XXX..', '.XXXXX.', '...X...', '.XXXXX.', '..XXX..', '...X...'] };
 MAP_PATTERNS.gem = MAP_PATTERNS.cry;
 const MAP_COLORS = { boss: '#ffffff', fire: '#ffb347', npc: '#9be37a', cry: '#ff7aa0', gem: '#5fd8ff', forge: '#ffd23b', lift: '#ff6a6a' };
-const SHOP_ORDER = ['vest', 'naveS', 'casaM', 'asc', 'mer', 'cap', 'intF'];
+const SHOP_ORDER = ['vest', 'naveS', 'casaM', 'asc', 'mer', 'cap', 'intF', 'plz1'];
 // poderes elementales de la Forja de los Elementos: cambian el color del ataque y añaden un efecto
 const ELEMENTS = {
   fire: { name: 'Fuego', tint: 0xff7a2a, desc: 'quema al enemigo: daño extra durante 3 s', long: 'El filo arde. Cada golpe prende al enemigo: sufre 1 de daño cada 0,75 s durante 3 s (el fuego no se acumula, se renueva). Muy útil contra enemigos con mucha vida.' },
@@ -1732,6 +1733,7 @@ Object.assign(CastleScene.prototype, {
     });
     this.skyG = this.add.graphics().setScrollFactor(0).setDepth(-30); this.cityG = this.add.graphics().setScrollFactor(0.25, 1).setDepth(-29); this.skyKey = -1;
     const rnd = rndSeeded(77); this.stars = Array.from({ length: LITE ? 25 : 60 }, () => ({ x: rnd() * SW, y: rnd() * SH * 0.55, s: rnd() < 0.2 ? 3 : 2, p: rnd() * 6 }));
+    this.farX = Math.max(...w.areaList.map(a => (a.x0 + a.rw) * T)); // final de la calle: ahí se ve, en el horizonte, la Morada
     this.cityBld = []; // ciudad antigua y rudimentaria: casas bajas de madera y piedra con tejados a dos aguas, algún salón con entramado, torres cónicas, una iglesia y lienzos de muralla
     for (let x = -40; x < w.Wt * T * 0.25 + SW + 200;) {
       const r = rnd(); let b;
@@ -1792,6 +1794,11 @@ Object.assign(CastleScene.prototype, {
         cg.fillStyle(dark, 1); if (b.k === 'hall') { for (let x = b.x + 12; x < b.x + b.w - 4; x += 22) cg.fillRect(x, y0, 3, b.h); cg.fillRect(b.x, y0 + b.h * 0.45, b.w, 3); } // entramado de madera
         cg.fillRect(cx - 5, base - 22, 10, 22); win(b.x + 8, y0 + 8); if (b.w > 70) win(b.x + b.w - 14, y0 + 8);
       });
+      // la Morada de Anhelia: una casa-torre enorme y oscura al fondo de la calle, con dos alas y una aguja; solo asoma cuando te acercas al final
+      const mx = 560 + 0.25 * (this.farX - 400), mc = mix(col, 0x000000, 0.55), mw = (x, y) => { cg.fillStyle(0xffc060, lit * 0.8).fillRect(x, y, 7, 11); };
+      cg.fillStyle(mc, 1).fillRect(mx - 90, base - 280, 180, 280).fillTriangle(mx - 108, base - 280, mx + 108, base - 280, mx, base - 400).fillRect(mx - 26, base - 520, 52, 150).fillTriangle(mx - 36, base - 520, mx + 36, base - 520, mx, base - 610);
+      cg.fillRect(mx - 190, base - 150, 100, 150).fillTriangle(mx - 200, base - 150, mx - 80, base - 150, mx - 140, base - 220).fillRect(mx + 90, base - 190, 100, 190).fillTriangle(mx + 80, base - 190, mx + 200, base - 190, mx + 140, base - 270);
+      [[-50, -230], [30, -230], [-14, -330], [-14, -470], [-150, -100], [120, -140]].forEach(([wx, wy]) => mw(mx + wx, base + wy));
     }
   },
   // ---- Ciclo del Alba: plataformas de fase y campanas
