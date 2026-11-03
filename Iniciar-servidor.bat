@@ -25,5 +25,5 @@ start "" cmd /c "timeout /t 3 >nul & start http://localhost:3000/?dev=1"
 echo Para jugar desde otros equipos de la misma red, usa la direccion "En la red local" que aparece abajo.
 echo Deja esta ventana abierta mientras jugais. Cierrala para parar el servidor.
 echo.
-node server\index.js
+node server\index.js --dev
 pause

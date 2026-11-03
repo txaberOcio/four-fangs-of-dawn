@@ -27,6 +27,7 @@
   },
   "scripts": {
     "start": "node server/index.js",
+    "dev": "node server/index.js --dev",
     "validate": "node scripts/validate.js",
     "validate:rutas": "node scripts/validate.js rutas",
     "recorrido": "node scripts/recorrido.js",

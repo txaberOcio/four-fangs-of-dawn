@@ -95,6 +95,8 @@ if (process.env.TRUST_PROXY) app.set('trust proxy', 1);
 app.use((req, res, next) => { res.setHeader('X-Content-Type-Options', 'nosniff'); res.setHeader('Referrer-Policy', 'no-referrer'); res.setHeader('X-Frame-Options', 'DENY');
   res.setHeader('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; media-src 'self' data: blob:; connect-src 'self' ws: wss:; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-ancestors 'none'");
   next(); });
+// Modo desarrollador (lo activa Iniciar-servidor.bat o `npm run dev`): entrar en la raíz lleva siempre a ?dev=1. El ejecutable de jugadores no lo activa.
+if (process.env.FFD_DEV === '1' || process.argv.includes('--dev')) app.get('/', (req, res, next) => { if (req.query.dev !== undefined) return next(); res.redirect('/?dev=1'); });
 app.use('/vendor/phaser.min.js', express.static(path.join(__dirname, '..', 'node_modules', 'phaser', 'dist', 'phaser.min.js')));
 app.use('/vendor/socket.io.min.js', express.static(path.join(__dirname, '..', 'node_modules', 'socket.io', 'client-dist', 'socket.io.min.js')));
 app.use(express.static(path.join(__dirname, '..', 'public'), { etag: false, maxAge: 0 }));
