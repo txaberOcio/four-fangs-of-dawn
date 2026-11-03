@@ -119,6 +119,10 @@ const HINT_KEYS = { act: { key: 'E', pad: '△', touch: 'E' }, dash: { key: 'C',
 function hintText(s) { const m = inputMode(); return String(s).replace(/\{(act|dash|down)\}/g, (_, k) => HINT_KEYS[k][m]); }
 // ---------- Bestiario y diarios ----------
 const BESTIARY = {
+  vrojo: { name: 'Vampiro cazador', text: 'Un colmillo de capa roja que bebe de lo que hiere. Embiste con la espada y se cura cada vez que te toca.', tip: 'Esquívalo cuando se agache y golpéalo al terminar la embestida.' },
+  vazul: { name: 'Vampiro lancero', text: 'Un colmillo de capa azul: su lanza de luz alcanza más lejos de lo que parece.', tip: 'Fíjate en cuándo se queda quieto: viene la estocada. Acércate o salta por encima.' },
+  vverde: { name: 'Vampiro arquero', text: 'Un colmillo de capa verde que vigila desde lejos y suelta flechas rápidas.', tip: 'Avanza saltando o usa el impulso para cruzar sus flechas.' },
+  vmorado: { name: 'Vampiro guadañero', text: 'Un colmillo de capa morada con un gancho de sombra: te arrastra hacia su guadaña.', tip: 'Cuando levante la guadaña, salta: el gancho va a ras de suelo.' },
   sk: { name: 'Esqueleto', text: 'Soldados de la guardia caídos. Patrullan y, si te ven cerca, te persiguen. Son débiles pero muchos.', tip: 'Un par de golpes bastan.' },
   kn: { name: 'Caballero maldito', text: 'Armaduras vacías que aún obedecen al Conde. Lentos y pesados, golpean fuerte.', tip: 'Golpea y retrocede. Cuando brilla en azul tiene el escudo arriba y no le haces daño: espera a que lo baje o aplástalo con el Pisotón.' },
   bat: { name: 'Murciélago', text: 'Duermen en las bóvedas hasta que alguien se acerca. Temen la luz de las antorchas.', tip: 'Enciende antorchas ({act}) para mantenerlos a raya.' },
@@ -691,6 +695,7 @@ Object.assign(CastleScene.prototype, {
 
     this.hookStep(dt, onFloor, dir, ui);
 
+    if (this.pullT > 0 && !this.dead) { this.pullT -= dt; const ang = Math.atan2(this.pullTo.y - p.y, this.pullTo.x - p.x); b.setVelocity(Math.cos(ang) * 480, Math.sin(ang) * 260); } // el gancho del guadañero te atrae
     this.stepUp(dir, onFloor); // en la Zona 3: los escalones de 1 casilla se suben andando
     // impulso (dash)
     if (!ui && this.abil.dash && !(this.stolenT > 0) && inp.dashPress && this.dashCd <= 0 && this.dashAvail && this.stun <= 0 && (!this.crouching || this.canStand())) {
@@ -1234,13 +1239,14 @@ Object.assign(CastleScene.prototype, {
     this.ents.forEach(e => {
       if (e.dead || e.melt || (e.boss && !e.aggro) || (e.cfg.rez && e.shield)) return;
       const [ex, ey, ew, eh] = this.entBox(e);
-      if (rectsOverlap(p.x, cy, pw, ph, ex, ey, ew, eh)) this.hurt(e.cfg.dmg + (e.dmgBonus || 0), ex);
+      if (rectsOverlap(p.x, cy, pw, ph, ex, ey, ew, eh)) { this.hurt(e.cfg.dmg + (e.dmgBonus || 0), ex); if (e.cfg.lifesteal && this.isHost && !e.dead) e.hp = Math.min(e.max, e.hp + 1); }
     });
     this.projs.forEach((pr, id) => {
       if (this.hurtProjs.has(id)) return;
       const c = PR[pr.type]; if (c.slow) { if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1])) this.slowT = 0.6; return; }
       if (!c.dmg) return;
-      if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { if (!c.linger) this.hurtProjs.add(id); this.hurt(c.dmg + (this.pas.projPlus || 0), pr.spr.x); if (pr.type === 'siphon') { this.stolenT = 4; this.floatText(p.x, p.y - 44, '¡Te roba el impulso!', '#c8b0ff'); } }
+      if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { if (!c.linger) this.hurtProjs.add(id); this.hurt(c.dmg + (this.pas.projPlus || 0), pr.spr.x); if (pr.type === 'hookp') { const hk = [...this.ents.values()].filter(q => q.cfg.ab && q.cfg.ab.kind === 'hook' && !q.dead).sort((u, v) => Math.hypot(u.spr.x - p.x, u.spr.y - p.y) - Math.hypot(v.spr.x - p.x, v.spr.y - p.y))[0]; if (hk) { this.pullT = 0.35; this.pullTo = { x: hk.spr.x, y: hk.spr.y }; this.floatText(p.x, p.y - 44, '¡Gancho!', '#c8a0ff'); } }
+ if (pr.type === 'siphon') { this.stolenT = 4; this.floatText(p.x, p.y - 44, '¡Te roba el impulso!', '#c8b0ff'); } }
     });
     if (this.hurtProjs.size > 200) this.hurtProjs.clear();
   },

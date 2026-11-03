@@ -60,6 +60,18 @@ const MAPS = {
   hero: [
     '...HHHHHH...', '..HHHHHHHH..', '..HSSSSSSH..', '..SRSSSSRS..', '...SFSSFS...', '.CCCSSSSCCC.', 'CCCCAAAACCCC',
     'CCCAAWWAACCC', 'CC.AAAAAA.CC', '...AAAAAA...', '...AA..AA...', '...AA..AA...', '...DD..DD...', '..DDD..DDD..'],
+  vrojo: [ // vampiro cazador de sangre: capa roja y espada
+    '...KKKKKK...', '..KKKKKKKK..', '..KSSSSSSK..', '..KSESSESK..', '..KSSFFSSK..', '...KSSSSK..X', '..CCCCCCCC.X',
+    '.CCCAAAACCCX', '.CCCAAAACCCX', 'CCCCAAAACCCX', '.CCC.AA.CCC.', '..CCC..CCC..', '..KKK..KKK..', '.KKKK..KKKK.'],
+  vazul: [ // vampiro lancero: capa azul y lanza de luz
+    'T..KKKKKK...', 'X.KKKKKKKK..', 'X.KSSSSSSK..', 'X.KSESSESK..', 'X.KSSFFSSK..', 'X..KSSSSK...', 'X.CCCCCCCC..',
+    'XCCCAAAACCC.', 'XCCCAAAACCC.', 'XCCCAAAACCCC', 'XCCC.AA.CCC.', 'X.CCC..CCC..', 'X.KKK..KKK..', '.KKKK..KKKK.'],
+  vverde: [ // vampiro arquero: capa verde y arco
+    '...KKKKKK...', '..KKKKKKKK..', '..KSSSSSSK..', 'G.KSESSESK..', 'G.KSSFFSSK..', 'G..KSSSSK...', 'G.CCCCCCCC..',
+    'GCCCAAAACCC.', 'GCCCAAAACCC.', 'GCCCAAAACCCC', 'GCCC.AA.CCC.', '..CCC..CCC..', '..KKK..KKK..', '.KKKK..KKKK.'],
+  vmorado: [ // vampiro guadañero: capa morada y guadaña
+    '...KKKKKKXXX', '..KKKKKKKK.X', '..KSSSSSSK.X', '..KSESSESK.X', '..KSSFFSSK.X', '...KSSSSK..X', '..CCCCCCCC.X',
+    '.CCCAAAACCCX', '.CCCAAAACCCX', 'CCCCAAAACCCX', '.CCC.AA.CCC.', '..CCC..CCC..', '..KKK..KKK..', '.KKKK..KKKK.'],
   sk: [
     '...WWWWWW...', '..WWWWWWWW..', '..WDDWWDDW..', '..WDDWWDDW..', '...WWWWWW...', '....WWWW....', '..WWWWWWWW..',
     '...W.WW.W...', '..WWWWWWWW..', '...W.WW.W...', '....WWWW....', '....W..W....', '...WW..WW...', '...WW..WW...'],
@@ -195,6 +207,10 @@ MAPS.npcKing = npcVar({ 0: '.Y.Y.YY.Y.Y.', 6: '..HHMMMMHH..', 7: '..THHHHHHT..',
 MAPS.npcPrisoner = npcVar({ 10: '.I..TTTT..I.' }); // preso: grilletes en las muñecas
 MAPS.npcMoss = npcVar({ 1: 'HVHHHHHHVHHH', 7: '..VTTTTTTV..', 8: '.TTTVTTTTVT.' }); // preso del musgo: musgo en el pelo y los hombros
 const MAP_PAL = {
+  vrojo: { K: '#1a1014', S: '#d8c8c8', E: '#ff3a3a', F: '#ffffff', C: '#8a1a2a', A: '#c8283a', X: '#d8d8e8' },
+  vazul: { K: '#10141e', S: '#d8d0d8', E: '#7ad8ff', F: '#ffffff', C: '#2a4a8a', A: '#4a7ac8', X: '#7a5a3a', T: '#bfe8ff' },
+  vverde: { K: '#0e1a14', S: '#d0d8cc', E: '#9aff7a', F: '#ffffff', C: '#1a5a3a', A: '#2a8a58', G: '#7a5a2a' },
+  vmorado: { K: '#140e1e', S: '#d4cad8', E: '#d89aff', F: '#ffffff', C: '#4a2a7a', A: '#7a4aaa', X: '#c8c8d8' },
   sk: { W: '#e8e4d4', D: '#15101c' },
   bat1: { B: '#5b3a78', R: '#ff3b3b', D: '#15101c' }, bat2: { B: '#5b3a78', R: '#ff3b3b', D: '#15101c' },
   kn: { A: '#8e97ab', G: '#5b6477', R: '#ff3b3b', D: '#2a2f3d' },
@@ -496,7 +512,7 @@ function buildArt(scene) {
     c.refresh();
   };
   for (const col in HERO_COLORS) { MAPS['hero_' + col] = HERO_GAME_MAPS[col]; makeMap('hero_' + col, 'hero_' + col, heroPal(HERO_COLORS[col], col), 1); }
-  ['sk', 'bat1', 'bat2', 'kn', 'gh', 'garg', 'bishop', 'clock', 'conde', 'altar', 'crystal', 'relic', 'heart'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
+  ['sk', 'vrojo', 'vazul', 'vverde', 'vmorado', 'bat1', 'bat2', 'kn', 'gh', 'garg', 'bishop', 'clock', 'conde', 'altar', 'crystal', 'relic', 'heart'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
 
   // vampiros agachados (aplastados contra el suelo)
   for (const col in HERO_COLORS) {

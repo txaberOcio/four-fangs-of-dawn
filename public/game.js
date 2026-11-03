@@ -126,6 +126,11 @@ function endGame() { if (game) { game.destroy(true); game = null; } setupTouch(f
 
 // ---------- Configuración de entidades ----------
 const EN = {
+  // vampiros de la Calle de las Horas: uno por colmillo, con una habilidad de su vampiro (ab: ver eliteAbility)
+  vrojo: { tex: 'vrojo', sc: 3, body: [10, 13], hp: 5, dmg: 2, spd: 50, hb: [32, 44], kind: 'walk', lifesteal: true, ab: { kind: 'charge', range: 300, tele: 0.45, act: 0.5, cd: 3.2, spd: 380 } }, // Cor: sed de sangre, se cura al herirte
+  vazul: { tex: 'vazul', sc: 3, body: [10, 13], hp: 5, dmg: 1, spd: 44, hb: [32, 44], kind: 'walk', ab: { kind: 'thrust', range: 170, tele: 0.5, act: 0.1, cd: 2.6 } }, // Zaf: estocada larga de lanza con luz
+  vverde: { tex: 'vverde', sc: 3, body: [10, 13], hp: 4, dmg: 1, spd: 36, hb: [32, 44], kind: 'walk', ab: { kind: 'arrow', range: 400, tele: 0.55, act: 0.1, cd: 2.2 } }, // Malak: flechas
+  vmorado: { tex: 'vmorado', sc: 3, body: [10, 13], hp: 5, dmg: 2, spd: 42, hb: [32, 44], kind: 'walk', ab: { kind: 'hook', range: 340, tele: 0.6, act: 0.1, cd: 4 } }, // Matis: gancho que te atrae
   sk: { tex: 'sk', sc: 3, body: [10, 13], hp: 2, dmg: 1, spd: 55, hb: [26, 36], kind: 'walk' },
   kn: { tex: 'kn', sc: 3, body: [12, 15], hp: 5, dmg: 2, spd: 38, hb: [34, 44], kind: 'walk', shielded: true }, // shielded: levanta y baja el escudo (azul) por turnos
   bat: { tex: 'bat1', sc: 3, body: [10, 6], hp: 1, dmg: 1, spd: 90, hb: [28, 18], kind: 'bat' },
@@ -177,6 +182,8 @@ const SILENCE_TYPES = ['orb', 'thorn']; // proyectiles que destruye la Palabra d
 const POISON = ['toxin', 'cloud', 'spore']; // veneno y esporas (Alcaide, Madre Moho, hongos): inflamables
 const PR = {
   orb: { tex: 'orb', sc: 2, hb: [14, 14], dmg: 1 },
+  lance: { tex: 'shock', sc: 4, hb: [120, 12], dmg: 1, tint: 0x7ab8ff }, // estocada de lanza del vampiro lancero
+  hookp: { tex: 'shock', sc: 2, hb: [24, 12], dmg: 0.5, tint: 0xc8a0ff }, // gancho del guadañero: te atrae hacia él
   siphon: { tex: 'orb', sc: 3, hb: [22, 22], dmg: 1, tint: 0xc8b0ff }, // robo de almas de Anhelia: quita el impulso y el doble salto 4 s
   shock: { tex: 'shock', sc: 2, hb: [30, 14], dmg: 1 },
   gear: { tex: 'gear', sc: 2.5, hb: [26, 26], dmg: 1 },
@@ -858,7 +865,7 @@ class CastleScene extends Phaser.Scene {
 
   // habilidad propia de cada enemigo con nombre (nunca retroceden al ser golpeados)
   eliteAbility(e, dt, tg) {
-    const ab = ELITE_AB[e.name]; if (!ab) return false;
+    const ab = ELITE_AB[e.name] || e.cfg.ab; if (!ab) return false;
     const b = e.spr.body, x = e.spr.x, d = tg ? Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) : 1e9;
     e.abCd = (e.abCd === undefined ? 2 : e.abCd) - dt;
     if (ab.trail) { e.trailT = (e.trailT || 0) - dt; if (e.trailT <= 0 && (b.blocked.down || b.touching.down) && Math.abs(b.velocity.x) > 8) { e.trailT = 0.3; this.spawnProj('toxin', e.spr.x, b.bottom - 6, 0, 0, 3); } } // rastro de veneno al andar
@@ -884,7 +891,10 @@ class CastleScene extends Phaser.Scene {
     if (ab.kind === 'haste') {
       e.abN = (e.abN || 0) + 1; e.cloudTurn = e.abN % 2 === 0; // un ciclo furia, el siguiente nube de veneno
       if (e.cloudTurn) { const dist = Math.hypot(tg.x - x, tg.y - (y - 16)), sp = 230, pr = this.spawnProj('cloud', x, y - 16, Math.cos(an) * sp, Math.sin(an) * sp, dist / sp + 5); pr.brake = Math.min(1.3, dist / sp); }
-    } else if (ab.kind === 'orbs') { for (const o of [-0.3, 0, 0.3]) this.spawnProj('orb', x, y - 6, Math.cos(an + o) * 190, Math.sin(an + o) * 190, 3); }
+    } else if (ab.kind === 'thrust') { const dir = Math.sign(tg.x - x) || 1; this.spawnProj('lance', x + dir * 84, y + 6, 0, 0, 0.2); this.cameras.main.shake(80, 0.003); }
+    else if (ab.kind === 'arrow') { this.spawnProj('thorn', x, y - 4, Math.cos(an) * 330, Math.sin(an) * 330, 2.4); }
+    else if (ab.kind === 'hook') { const dir = Math.sign(tg.x - x) || 1; this.spawnProj('hookp', x + dir * 30, y, dir * 420, 0, 0.8); }
+    else if (ab.kind === 'orbs') { for (const o of [-0.3, 0, 0.3]) this.spawnProj('orb', x, y - 6, Math.cos(an + o) * 190, Math.sin(an + o) * 190, 3); }
     else if (ab.kind === 'quake') { this.cameras.main.shake(180, 0.006); 
       const feet = y + (e.cfg.body[1] * e.cfg.sc) / 2;
       for (const s of [-1, 1]) { // las ondas viajan pegadas al suelo que pisa el enemigo (también en plataformas)
@@ -917,7 +927,7 @@ class CastleScene extends Phaser.Scene {
       b.setVelocity((nx - e.spr.x) * 9, (ny - e.spr.y) * 9); return;
     }
     if (e.down > 0) { e.down -= dt; b.setVelocityX(0); if (e.down <= 0) { e.down = 0; e.shield = false; e.spr.setAngle(0); this.poof(e.spr.x, e.spr.y, 6, 0x8fd35a); } return; } // el prisionero caído se levanta
-    if (e.elite && this.eliteAbility(e, dt, tg)) return;
+    if ((e.elite || e.cfg.ab) && this.eliteAbility(e, dt, tg)) return;
     if (cfg.kind === 'turret') { // hongo: se hincha y suelta esporas que persiguen
       b.setVelocityX(0); e.cd = (e.cd === undefined ? 2 : e.cd) - dt * slow;
       if (!e.ph && e.cd <= 0 && tg && Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) < 300) { e.ph = 'tele'; e.abT = 0.8; }
