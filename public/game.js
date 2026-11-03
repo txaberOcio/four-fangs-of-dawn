@@ -153,6 +153,11 @@ const EN = {
   subastadora: { tex: 'subastadora', sc: 4, body: [12, 14], hp: 96, dmg: 2, hb: [50, 56], kind: 'boss' },
   chambelan: { tex: 'chambelan', sc: 4, body: [10, 14], hp: 72, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   cadalso: { tex: 'cadalso', sc: 4, body: [12, 15], hp: 72, dmg: 2, hb: [52, 60], kind: 'boss' },
+  reverberia: { tex: 'reverberia', sc: 4, body: [12, 15], hp: 90, dmg: 2, hb: [56, 62], kind: 'boss' },
+  tasador: { tex: 'tasador', sc: 4, body: [12, 15], hp: 100, dmg: 2, hb: [54, 62], kind: 'boss' },
+  planidera: { tex: 'planidera', sc: 4, body: [12, 14], hp: 100, dmg: 2, hb: [54, 60], kind: 'boss', fly: true },
+  nasa: { tex: 'nasa', sc: 4, body: [12, 15], hp: 110, dmg: 2, hb: [54, 62], kind: 'boss' },
+  tornera: { tex: 'tornera', sc: 5, body: [14, 15], hp: 130, dmg: 2, hb: [64, 74], kind: 'boss' },
   anhelia: { tex: 'anhelia', sc: 6, body: [14, 15], hp: 180, dmg: 2, hb: [78, 90], kind: 'boss', fearsome: true }, // jefa final de la Zona 3: cuatro actos, uno por colmillo
   vigilia: { tex: 'vigilia', sc: 4, body: [10, 14], hp: 80, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   // enemigos invulnerables: solo se esquivan
@@ -1040,6 +1045,7 @@ class CastleScene extends Phaser.Scene {
     if (e.type === 'farero') e.shield = this.lightLevel(e.spr.x, e.spr.y) <= 0.18; // al revés que el Guardián del Reloj: inmune a oscuras, hay que encender la luz
     const tg = tgs.reduce((m, t) => (Math.hypot(t.x - e.spr.x, t.y - e.spr.y) < Math.hypot(m.x - e.spr.x, m.y - e.spr.y) ? t : m), tgs[0]);
     const partner = e.type === 'cadalso' ? 'vigilia' : e.type === 'vigilia' ? 'cadalso' : null; // jefe doble: si cae uno, el otro se enfurece
+    if (e.type === 'tornera') this.cyc.t += dt * 2; // la Hora Quebrada: durante su combate el ciclo del Alba corre el triple de rápido
     const x = e.spr.x, y = e.spr.y, rage = e.hp < e.max * 0.5 || !!(partner && this.progress.bosses.includes(partner)), dirT = Math.sign(tg.x - x) || 1;
     e.spr.setFlipX(tg.x < x);
     if (e.type === 'madre') { // armadura de raíces: solo el Pisotón la rompe (o 15 golpes normales)
@@ -1090,6 +1096,11 @@ class CastleScene extends Phaser.Scene {
         if (e.type === 'subastadora') { const o = ['gavel', 'coins', 'tele', 'pillars'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 2 ? 'summon' : pick(o); e.last = e.act; }
         if (e.type === 'chambelan') { const o = ['forms', 'ambush', 'tele', 'pillars'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 ? 'summon' : pick(o); e.last = e.act; }
         if (e.type === 'cadalso') { const o = ['axe', 'stomp', 'charge', rage ? 'leap' : 'axe'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'reverberia') { const o = ['lunge', 'rays', 'beam', 'charge'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; } // luz de alba: rayos del techo, haz giratorio y estocadas
+        if (e.type === 'tasador') { const o = ['coins', 'gavel', 'fog', 'charge'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 2 ? 'summon' : pick(o); e.last = e.act; } // lluvia de monedas, martillazos y niebla
+        if (e.type === 'planidera') { const o = ['eyes', 'fan', 'dive', 'tele'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; } // lágrimas que persiguen, abanicos y picados
+        if (e.type === 'nasa') { const o = ['fog', 'rain', 'lunge', 'tele'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; } // niebla, redes (engranajes) y arpón
+        if (e.type === 'tornera') { const o = ['forms', 'axe', 'stomp', 'coins'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; } // muros de papeleo, hachazos y golpes de torno; el ciclo corre el triple de rápido mientras dura el combate
         if (e.type === 'anhelia') { // cuatro actos: sed de sangre (Cor), ceguera (Zaf), robo de almas (Malak) y sombra de la sombra (Matis)
           const f = e.hp / e.max, o = (f > 0.75 ? ['drain', 'fan', 'pillars', 'tele'] : f > 0.5 ? ['charge', 'beam', 'fog', 'fan'] : f > 0.25 ? ['siphon', 'tele', 'pillars', 'rain'] : ['ambush', 'fan', 'pillars', 'siphon']).filter(x => x !== e.last);
           e.act = f <= 0.25 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 3 ? 'summon' : pick(o); e.last = e.act;

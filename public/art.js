@@ -160,6 +160,21 @@ const MAPS = {
   cadalso: [ // Cadalso, el Verdugo Mudo: capucha con la boca cosida, torso desnudo cruzado de cadenas y hacha enorme
     '.....KKKKKK..XX.', '....KKKKKKKK.XXX', '...KKKKKKKKKKXXX', '...KKKEKKEKKK.XR', '...KKKKKKKKKK..R', '...KKKTTTTKKK..R', '.KKKKKKKKKKKKK.R', 'KSSSSSSSSSSSSSKR',
     'KSSKIISssSIIKSKR', 'KSSKSIIssIISKSKR', 'KSSKSSIIIISSKSKR', '.KKAAAAAAAAAAKKR', '..KAAAAAAAAAAK.R', '..KAAAAAAAAAAK.R', '...KKK....KKK..R', '..KKKK....KKKK.R'],
+  reverberia: [ // Reverberia, Capitana del Primer Rayo: armadura dorada, cimera de luz y lanza de alba
+    '.....YYYYYY.....', '....YaaaaaaY....', '...AAAAAAAAAA...', '...AKKKKKKKKA...', '...AKEKKKKEKA...', '...AKKKKKKKKA...', '..AAAAAAAAAAAA..', '.AAaAAAAAAAAaAA.',
+    '.AAaAAAAAAAAaAA.', '..AARRRRRRRRAA..', '..AARAAAAAARAA..', '..AAAAAAAAAAAA..', '...AAK....KAA...', '...AAK....KAA...', '..KKKK....KKKK..', '..KKKK....KKKK..'],
+  tasador: [ // El Tasador Mayor: sombrero de ala ancha, lentes dorados, levita de botones y una balanza
+    '.....KKKKKK.....', '...KKKKKKKKKK...', '....SSSSSSSS....', '....SEESSEES....', '....SSSSSSSS....', '.....SSMMSS.....', '...KKKKKKKKKK...', '..KKGKKKKKKGKK..',
+    '..KKGKKKKKKGKK..', '.KKKGKKKKKKGKKK.', '.KKKGKKKKKKGKKK.', '.KKKKKKKKKKKKKK.', '.XKKKKKKKKKKKKX.', '.XX.KKKKKKKK.XX.', '....KK....KK....', '...KKK....KKK...'],
+  planidera: [ // La Plañidera Mayor: velo negro, rostro pálido con una lágrima y ropajes largos; flota
+    '.....VVVVVV.....', '....VVVVVVVV....', '...VVVVVVVVVV...', '...VVSSSSSSVV...', '...VVSKSSKSVV...', '...VVSSSSSSVV...', '...VVVSBBSVVV...', '..VVVVVBBVVVVV..',
+    '.VVVVVVVVVVVVVV.', 'VVVTVVVVVVVVTVVV', 'VVVTVVVVVVVVTVVV', 'VVVVVVVVVVVVVVVV', '.VVVVTVVVVTVVVV.', '..VVVVVVVVVVVV..', '...VVV.VV.VVV...', '....V..VV..V....'],
+  nasa: [ // Nasa, el Pescador de Noche: capucha de lona, red de pesca sobre los hombros y escamas
+    '.....HHHHHH.....', '....HHHHHHHH....', '...HHHHHHHHHH...', '...HHKKKKKKHH...', '...HHKEKKEKHH...', '...HHKKKKKKHH...', '..HHHCCCCCCHHH..', '.HHHCCNNNNCCHHH.',
+    '.HHCCNnNNnNCCHH.', '.HCCCNNnnNNCCCH.', '.HCCNnNNNNnNCCH.', '..CCNNnNNnNNCC..', '..CCCNNNNNNCCC..', '..CCCCC..CCCCC..', '..DDDD....DDDD..', '.DDDDD....DDDDD.'],
+  tornera: [ // La Tornera Mayor: toca de hierro, llaves y el torno de las Horas como falda
+    '....CCCCCCCC....', '...CCCCCCCCCC...', '...CSSSSSSSSC...', '...CSEKSSKESC...', '...CSSSMMSSSC...', '....CCSSSSCC....', '..WWWWWWWWWWWW..', '.WWWWWWWWWWWWWW.',
+    'WWWWGGGWWGGGWWWW', 'WWWGGWGGGGWGGWWW', 'WWWGGWGGGGWGGWWW', 'WWWWGGGWWGGGWWWW', '.WWWWWWWWWWWWWW.', '..WWWKKKKKKWWW..', '...WWK....KWW...', '...KKK....KKK...'],
   anhelia: [ // Anhelia, la Primera Sed: figura enorme de vestido de raíces de sangre seca, sin ojos y con la boca abierta con cuatro huecos sangrantes
     '.....RRRRRR.....', '...RRRRRRRRRR...', '..RRSSSSSSSSRR..', '..RSSSSSSSSSSR..', '..RSSSSSSSSSSR..', '..RSSSMMMMSSSR..', '..RSMBMBMBMBSR..', '..RSSMMMMMMSSR..',
     '...RSSSSSSSSR...', '..RRRSSSSSSRRR..', '.RRRRRRRRRRRRRR.', 'RRrRRRRRRRRRRrRR', 'RRrRRRrRRrRRRrRR', 'RrRRRRRrRRRRRRrR', 'RRRRrRRRRRRrRRRR', 'RRrRRRRRRRRRRrRR'],
@@ -205,6 +220,11 @@ const MAP_PAL = {
   subastadora: { W: '#d8d0e8', S: '#e8d4c4', E: '#ffd23b', M: '#b02a4a', Y: '#d8b040', G: '#2a6a4a', R: '#6a4a2a', J: '#6dffd0', j: '#e0fff4', D: '#0e1a14' },
   chambelan: { K: '#1a1424', F: '#e4dcd0', f: '#b8aea4', G: '#d8b040', W: '#f0ecf4', P: '#6a3a8a', Y: '#ffd23b' },
   cadalso: { K: '#1c1418', S: '#a8887a', s: '#6a4a44', E: '#ff5a3a', T: '#d8d0b8', I: '#9a9aa8', A: '#5a3a28', X: '#c9ced8', R: '#5a3a28' },
+  reverberia: { Y: '#ffe9a0', a: '#f0d890', A: '#c8a050', K: '#1a1020', E: '#fff6c0', R: '#8a2a34' },
+  tasador: { K: '#2a2230', S: '#d8c0a8', E: '#ffe066', M: '#7a3a3a', G: '#d8b040', X: '#c8c8d8' },
+  planidera: { V: '#3a2a4a', S: '#d8cfd8', K: '#10101a', B: '#7ad8ff', T: '#8a6aa8' },
+  nasa: { H: '#2a3a4a', K: '#0a1018', E: '#9ae8ff', C: '#3a566a', N: '#a8b8a0', n: '#6a7a68', D: '#1a2a38' },
+  tornera: { C: '#4a4a58', S: '#d8c4b8', E: '#ffd23b', K: '#1a1418', M: '#8a3a3a', W: '#5a4a6a', G: '#d8b040' },
   anhelia: { R: '#6a1e28', r: '#3a0e14', S: '#e0cfc8', M: '#140808', B: '#d8283a' },
   vigilia: { H: '#1a4a5a', S: '#dcd8f0', E: '#ffffff', T: '#e8f0ff', t: '#9aa8d0', G: '#2a6a8a', g: '#6ac0d8', W: '#e8f8ff' },
   altar: { Y: '#ffd23b', O: '#ff7a1c', W: '#b8bdc9', D: '#6a6f7e' },
@@ -506,7 +526,7 @@ function buildArt(scene) {
   ['limo', 'preso', 'raiz', 'esporas', 'hongo', 'carcelero', 'driade', 'magma'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
   makeMap('npc_prisionero_musgo', 'npcMoss', madPal('#3f7a3a', '#3a4a36'), 1);
   ['archon', 'reina', 'aurora', 'vesper'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // dibujos propios de los jefes nuevos
-  ['capitan', 'farero', 'subastadora', 'chambelan', 'cadalso', 'vigilia', 'anhelia'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // jefes de la Zona 2 (16x16, como los que sustituyen): la textura se llama igual que el jefe
+  ['capitan', 'farero', 'subastadora', 'chambelan', 'cadalso', 'vigilia', 'anhelia', 'reverberia', 'tasador', 'planidera', 'nasa', 'tornera'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // jefes de la Zona 2 (16x16, como los que sustituyen): la textura se llama igual que el jefe
   // fotograma de reposo: el torso baja un píxel (respiración)
   for (const col in HERO_COLORS) {
     const src = tx.get('hero_' + col).getSourceImage(); const c = tx.createCanvas('hero_' + col + '_i', 12, 14); const g = c.getContext('2d');

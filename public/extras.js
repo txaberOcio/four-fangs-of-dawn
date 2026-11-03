@@ -56,12 +56,12 @@ const STORY_INTRO = ['Antes del primer amanecer, dos hermanos se repartían el c
 const STORY_ZONE1_END = ['La Gran Hoguera arde sin leña. Más allá, el camino baja hacia tierras que el castillo ya no gobierna.', 'Habéis recuperado parte de lo que os quitaron. El resto está más lejos.'];
 const STORY_RING = 'Llevas el Anillo del Rey: la Reina Isolda está en algún lugar de ese camino.';
 // a quién hay que vencer para abrir cada puerta sellada (clave = gate de world.js)
-const GATE_BY = { bishop: 'al Obispo Caído', clock: 'al Guardián del Reloj', conde: 'al Conde', sellos: 'al Archimago y a la Reina (sus dos sellos)', alba: 'a Aurora o a Vesper', madre: 'a la Madre Moho', capitan: 'al Capitán de Hierro', chambelan: 'al Chambelán Sin Rostro' };
+const GATE_BY = { reverberia: 'a Reverberia', tasador: 'al Tasador Mayor', planidera: 'a la Plañidera Mayor', nasa: 'a Nasa', tornera: 'a la Tornera Mayor', bishop: 'al Obispo Caído', clock: 'al Guardián del Reloj', conde: 'al Conde', sellos: 'al Archimago y a la Reina (sus dos sellos)', alba: 'a Aurora o a Vesper', madre: 'a la Madre Moho', capitan: 'al Capitán de Hierro', chambelan: 'al Chambelán Sin Rostro' };
 // objetos que se usan con Q: las mejoras permanentes (perm) y el amuleto (se gasta solo al morir) no entran en el inventario de uso
 const MOSS_SLOW = 0.85, MOSS_FIRE = 1.2; // Calabozos Profundos: el suelo de musgo frena al andar y sus enemigos reciben un 20 % más de daño de fuego
 const usableItem = it => !it.perm && it.id !== 'amu';
 // Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
-const GEMS_BOSS = { anhelia: 12, garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4, capitan: 4, farero: 5, subastadora: 6, chambelan: 4, cadalso: 5, vigilia: 8 }; // gemas que suelta cada jefe la primera vez
+const GEMS_BOSS = { anhelia: 12, reverberia: 5, tasador: 5, planidera: 5, nasa: 6, tornera: 7, garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4, capitan: 4, farero: 5, subastadora: 6, chambelan: 4, cadalso: 5, vigilia: 8 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
 // [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
 // Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
