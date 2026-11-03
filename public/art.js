@@ -19,6 +19,7 @@ const ZONE_PAL = [
   { base: '#5a2a3a', dark: '#341822', light: '#8a4a5e', mortar: '#1c0c14', bg: '#1a0c12', bgd: '#12080d', glow: '#ff5a7a' }, // 15 Los Tronos
   // Zona 3
   { base: '#6b5a48', dark: '#3e3226', light: '#9a8468', mortar: '#231a12', bg: '#1d1712', bgd: '#14100c', glow: '#ffb347' }, // 16 La Calle de las Horas: adobe y piedra tosca cálida
+  { base: '#3f5a52', dark: '#243832', light: '#6f948a', mortar: '#101c19', bg: '#0e1714', bgd: '#09100e', glow: '#7affc8' }, // 17 La Ciudad Baja: ladrillo verdoso y húmedo bajo la calle
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
@@ -187,6 +188,9 @@ const MAPS = {
   tornera: [ // La Tornera Mayor: toca de hierro, llaves y el torno de las Horas como falda
     '....CCCCCCCC....', '...CCCCCCCCCC...', '...CSSSSSSSSC...', '...CSEKSSKESC...', '...CSSSMMSSSC...', '....CCSSSSCC....', '..WWWWWWWWWWWW..', '.WWWWWWWWWWWWWW.',
     'WWWWGGGWWGGGWWWW', 'WWWGGWGGGGWGGWWW', 'WWWGGWGGGGWGGWWW', 'WWWWGGGWWGGGWWWW', '.WWWWWWWWWWWWWW.', '..WWWKKKKKKWWW..', '...WWK....KWW...', '...KKK....KKK...'],
+  cobrador: [ // El Cobrador Mayor: capucha negra, libro de cuentas encendido, cadenas de monedas y llaves de oro
+    '.....KKKKKK.....', '....KKKKKKKK....', '...KKKKKKKKKK...', '...KKSSSSSSKK...', '...KKSEKKESKK...', '...KKSSSSSSKK...', '....KKSMMSKK....', '..GGKKKKKKKKGG..',
+    '.GGKKKGGGGKKKGG.', 'GGKKKKGYYGKKKKGG', 'GKKKKKKYYKKKKKKG', '.KKKKKKKKKKKKKK.', '.KKRRKKKKKKRRKK.', '.KKRRKKKKKKRRKK.', '..KKK..KK..KKK..', '..KKK..KK..KKK..'],
   anhelia: [ // Anhelia, la Primera Sed: figura enorme de vestido de raíces de sangre seca, sin ojos y con la boca abierta con cuatro huecos sangrantes
     '.....RRRRRR.....', '...RRRRRRRRRR...', '..RRSSSSSSSSRR..', '..RSSSSSSSSSSR..', '..RSSSSSSSSSSR..', '..RSSSMMMMSSSR..', '..RSMBMBMBMBSR..', '..RSSMMMMMMSSR..',
     '...RSSSSSSSSR...', '..RRRSSSSSSRRR..', '.RRRRRRRRRRRRRR.', 'RRrRRRRRRRRRRrRR', 'RRrRRRrRRrRRRrRR', 'RrRRRRRrRRRRRRrR', 'RRRRrRRRRRRrRRRR', 'RRrRRRRRRRRRRrRR'],
@@ -241,6 +245,7 @@ const MAP_PAL = {
   planidera: { V: '#3a2a4a', S: '#d8cfd8', K: '#10101a', B: '#7ad8ff', T: '#8a6aa8' },
   nasa: { H: '#2a3a4a', K: '#0a1018', E: '#9ae8ff', C: '#3a566a', N: '#a8b8a0', n: '#6a7a68', D: '#1a2a38' },
   tornera: { C: '#4a4a58', S: '#d8c4b8', E: '#ffd23b', K: '#1a1418', M: '#8a3a3a', W: '#5a4a6a', G: '#d8b040' },
+  cobrador: { K: '#1a1420', S: '#d8c8b8', E: '#ffd23b', M: '#7a2a2a', G: '#d8b040', Y: '#ffe9a0', R: '#8a2a34' },
   anhelia: { R: '#6a1e28', r: '#3a0e14', S: '#e0cfc8', M: '#140808', B: '#d8283a' },
   vigilia: { H: '#1a4a5a', S: '#dcd8f0', E: '#ffffff', T: '#e8f0ff', t: '#9aa8d0', G: '#2a6a8a', g: '#6ac0d8', W: '#e8f8ff' },
   altar: { Y: '#ffd23b', O: '#ff7a1c', W: '#b8bdc9', D: '#6a6f7e' },
@@ -326,7 +331,9 @@ const ZONE_STYLE = {
   13: { wall: 'long', floor: 'wet', fx: 'salt' }, // Faro: costra de sal y humedad
   14: { floor: 'cobble', fx: 'plaster' }, // Mercado: adoquines y enlucido
   15: { wall: 'long', floor: 'checker', fx: 'gold' }, // Los Tronos: oscuro con oro
-  16: { wall: 'long', floor: 'cobble' }, // La Calle de las Horas: sillares toscos y adoquines
+  16: { wall: 'long', floor: 'cobble' },
+  17: { wall: 'long', floor: 'wet' }, // La Ciudad Baja: sillares y suelo húmedo
+ // La Calle de las Horas: sillares toscos y adoquines
 };
 const ART_GLASS = { 2: ['#5a86d8', '#9a5ab8', '#d8b050'], 5: ['#c83a3a', '#d8b050'], 7: ['#f0a0c0', '#f8d890'], 11: ['#9a5ab8', '#5a3a8a'], 13: ['#8ad8ff', '#d8f0ff'], 15: ['#c83a5a', '#d8b050'] }; // vidrieras
 
@@ -542,7 +549,7 @@ function buildArt(scene) {
   ['limo', 'preso', 'raiz', 'esporas', 'hongo', 'carcelero', 'driade', 'magma'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
   makeMap('npc_prisionero_musgo', 'npcMoss', madPal('#3f7a3a', '#3a4a36'), 1);
   ['archon', 'reina', 'aurora', 'vesper'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // dibujos propios de los jefes nuevos
-  ['capitan', 'farero', 'subastadora', 'chambelan', 'cadalso', 'vigilia', 'anhelia', 'reverberia', 'tasador', 'planidera', 'nasa', 'tornera'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // jefes de la Zona 2 (16x16, como los que sustituyen): la textura se llama igual que el jefe
+  ['capitan', 'farero', 'subastadora', 'chambelan', 'cadalso', 'vigilia', 'anhelia', 'reverberia', 'tasador', 'planidera', 'nasa', 'tornera', 'cobrador'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // jefes de la Zona 2 (16x16, como los que sustituyen): la textura se llama igual que el jefe
   // fotograma de reposo: el torso baja un píxel (respiración)
   for (const col in HERO_COLORS) {
     const src = tx.get('hero_' + col).getSourceImage(); const c = tx.createCanvas('hero_' + col + '_i', 12, 14); const g = c.getContext('2d');

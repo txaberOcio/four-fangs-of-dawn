@@ -4,14 +4,14 @@
 (function (root) {
   'use strict';
   const T = 32, CW = 26, CH = 18, COLS = 22, ROWS = 16;
-  const REGIONS = { main: { cols: COLS, rows: ROWS, entry: 'vest' }, z3: { cols: 52, rows: 12, entry: 'zag' } }; // cada región es un mundo aparte (su propio mapa de tiles)
+  const REGIONS = { main: { cols: COLS, rows: ROWS, entry: 'vest', tOff: 0, name: 'El Castillo' }, z3: { cols: 52, rows: 12, entry: 'zag', tOff: 5000, name: 'La Calle de las Horas' }, z4: { cols: 44, rows: 12, entry: 'ca1', tOff: 10000, name: 'La Ciudad Baja' } }; // cada región es un mundo aparte (su propio mapa de tiles)
   const PHYS = {
     gravity: 900, speed: 165, jump: -470, djump: -420,
     dashSpeed: 560, dashTime: 0.18, dashCd: 0.5, // Impulso: unos 100 px (antes 0.25 s = 140 px)
     wjY: -430, wjX: 190, wjLock: 0.18, slide: 110, maxFall: 700,
     bodyW: 30, bodyH: 39,
   };
-  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos', 'Patíbulo Exterior', 'Dependencias de los Funcionarios', 'Capilla del Cuartel', 'La Milla Verde', 'La Despensa', 'Los Tronos', 'La Calle de las Horas'];
+  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos', 'Patíbulo Exterior', 'Dependencias de los Funcionarios', 'Capilla del Cuartel', 'La Milla Verde', 'La Despensa', 'Los Tronos', 'La Calle de las Horas', 'La Ciudad Baja'];
   const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche', pound: 'Pisotón de Raíces', silence: 'Palabra de Silencio', mist: 'Impulso de Niebla', axe: 'Hachazo del Verdugo', bone: 'Paso de Hueso', vine: 'Raíces Vivas', song: 'Canto de la Hondura', hourglass: 'Hora Sostenida' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
@@ -34,6 +34,7 @@
     tasador: { name: 'El Tasador Mayor', hp: 100, drop: null },
     planidera: { name: 'La Plañidera Mayor', hp: 100, drop: null },
     nasa: { name: 'Nasa, el Pescador de Noche', hp: 110, drop: null },
+    cobrador: { name: 'El Cobrador Mayor', hp: 140, drop: null },
     tornera: { name: 'La Tornera Mayor', hp: 130, drop: 'hourglass', reward: 'Hora Sostenida: pulsa V para congelar el ciclo del Alba 8 s' },
     madre: { name: 'La Madre Moho', hp: 40, drop: 'vine', reward: 'Raíces Vivas: tras un pisotón, tu siguiente salto es más alto' },
     vesper: { name: 'Vesper, Señor del Ocaso', hp: 34, drop: 'eye', rival: 'aurora', reward: 'Ojo de la Noche: ves los secretos tras los muros agrietados y tu luz crece' },
@@ -272,7 +273,7 @@
       ['E', 'vmorado', 20, 16], ['E', 'vrojo', 23, 16], ['E', 'vazul', 40, 16], ['E', 'gh', 14, 7]]); // el portón del cercado (26 a 27) solo se abre en el alba
     area('cot3', 'Los Cotos: Lonja de los Cotos', Z3Z, 18, 8, 2, 1, [['cycle'], ['open'], ['boss', 'tasador', 30, 16]]); // mini-jefe del día
     // Plaza del Pregón: el centro de la calle (tienda, hoguera y campana), con la tarima del pregonero
-    area('plz1', 'Plaza del Pregón', Z3Z, 20, 8, 3, 1, [['cycle'], ['open'], ['calm'], ['npc', 'merchant', 8, 16], ['altar', 16, 16], ['bell', 30, 16],
+    area('plz1', 'Plaza del Pregón', Z3Z, 20, 8, 3, 1, [['cycle'], ['open'], ['calm'], ['npc', 'merchant', 8, 16], ['altar', 16, 16], ['well', 23, 'z4'], ['bell', 30, 16],
       ['facade', 36, 12, 'stone', 'L'], ['stairs', 54, 16, 'R', 3], ['B', 57, 14, 8, 3], ['facade', 66, 10, 'adobe', 'R']]);
     // Puente de las Dos Voces: un foso de estacas y un puente de piedra con tramo levadizo que solo baja en el alba y en el ocaso
     area('pte1', 'Puente de las Dos Voces', Z3Z, 23, 8, 2, 1, [['cycle'], ['open'], ['bell', 4, 16], ['bell', 47, 16],
@@ -303,6 +304,26 @@
     area('mor4', 'Morada: Sala de la Primera Sed', Z3Z, 47, 10, 3, 2, [['indoor'], ['deco', 'table', 30], ['boss', 'anhelia', 36, 34]]);
   });
 
+  // ===== Zona 4: La Ciudad Baja (región 'z4'): la ciudad de los pagados bajo la Calle de las Horas; se entra por el pozo de la Plaza del Pregón =====
+  const Z4Z = 17;
+  inRegion('z4', () => {
+    area('ca1', 'Pie del Pozo', Z4Z, 0, 8, 1, 1, [['calm'], ['altar', 18, 16], ['well', 7, 'z3']]);
+    area('ca2', 'Canal de Entrada', Z4Z, 1, 8, 3, 1, [['pit', 8, 68], ['stairs', 6, 16, 'R', 2], ['B', 8, 15, 62, 2], ['stairs', 71, 16, 'L', 2], ['E', 'gh', 24, 10], ['E', 'gh', 48, 10], ['E', 'bat', 16, 6], ['E', 'vrojo', 76, 16]]);
+    area('ca3', 'Barrio Colgado I', Z4Z, 4, 8, 3, 1, [['facade', 4, 11, 'stone', 'R'], ['stairs', 17, 16, 'L', 4], ['cart', 22, 15], ['facade', 28, 12, 'timber', 'L'], ['stairs', 44, 16, 'R', 3], ['B', 47, 14, 6, 3], ['facade', 56, 14, 'stone', 'R'],
+      ['E', 'vazul', 14, 16], ['E', 'vverde', 40, 16], ['E', 'vmorado', 66, 16], ['E', 'bat', 36, 6]]);
+    area('ca4', 'Mercado de los Pagados', Z4Z, 7, 8, 3, 1, [['calm'], ['npc', 'merchant', 10, 16], ['altar', 38, 16], ['facade', 16, 12, 'timber', 'R'], ['cart', 30, 15], ['facade', 46, 12, 'stone', 'L'], ['cart', 62, 15], ['cry', 20, 9]]);
+    area('ca5', 'Canal de las Deudas', Z4Z, 10, 8, 3, 1, [['pit', 8, 68], ['stairs', 5, 16, 'R', 2], ['B', 7, 15, 11, 2], ['B', 22, 15, 10, 2], ['B', 38, 15, 12, 2], ['B', 54, 15, 8, 2], ['B', 66, 15, 9, 2], ['stairs', 76, 16, 'L', 2], ['E', 'gh', 30, 10], ['E', 'gh', 52, 9], ['E', 'vverde', 60, 14], ['E', 'bat', 20, 6]]);
+    area('ca6', 'Barrio Colgado II', Z4Z, 13, 8, 3, 1, [['facade', 3, 12, 'timber', 'L'], ['stairs', 16, 16, 'R', 5], ['stairs', 50, 16, 'L', 4], ['facade', 54, 14, 'stone', 'R'], ['cry', 20, 10],
+      ['E', 'vrojo', 12, 16], ['E', 'vazul', 34, 16], ['E', 'vmorado', 48, 16], ['E', 'vverde', 70, 16], ['E', 'bat', 30, 6]]);
+    area('ca7', 'Cámara de las Cuentas', Z4Z, 13, 9, 2, 1, [['calm'], ['cry', 20, 15], ['cry', 30, 15], ['climb', 40, 3, 'norm', true]]); // sala secreta bajo el Barrio Colgado II: se entra rompiendo un muro agrietado
+    area('ca8', 'Pasaje del Gremio', Z4Z, 16, 8, 3, 1, [['facade', 5, 10, 'stone', 'R'], ['cart', 20, 15], ['stairs', 26, 16, 'R', 3], ['B', 29, 14, 14, 3], ['stairs', 46, 16, 'L', 3], ['facade', 52, 12, 'timber', 'R'],
+      ['E', 'vrojo', 14, 16], ['E', 'vverde', 24, 16], ['E', 'vazul', 50, 16], ['E', 'vmorado', 70, 16], ['E', 'gh', 36, 9]]);
+    area('ca9', 'Embalse Negro', Z4Z, 19, 8, 2, 1, [['pit', 8, 42], ['stairs', 5, 16, 'R', 2], ['B', 7, 15, 38, 2], ['stairs', 47, 16, 'L', 2], ['E', 'gh', 20, 10], ['E', 'gh', 34, 10], ['E', 'bat', 26, 6]]);
+    area('ca10', 'Antesala del Cobrador', Z4Z, 21, 8, 1, 1, [['calm'], ['altar', 13, 16]]);
+    area('ca11', 'Salón del Cobrador', Z4Z, 22, 8, 2, 1, [['boss', 'cobrador', 30, 16]]);
+    area('ca12', 'Tesoro de los Pagados', Z4Z, 24, 8, 1, 1, [['calm'], ['altar', 6, 16], ['cry', 14, 15], ['cry', 20, 15]]);
+  });
+
   const LINKS = [];
   // E(oeste, este, tamañoPuerta, opts): puerta horizontal pegada al suelo
   const E = (a, b, size = 3, o = {}) => LINKS.push({ t: 'E', a, b, size, region: CUR, ...o });
@@ -311,6 +332,10 @@
   inRegion('z3', () => {
     E('zag', 'plz0', 14); E('plz0', 'cu1', 14); E('cu1', 'cu2', 14); E('cu2', 'cu3', 14); E('cu3', 'cu4', 14); E('cu4', 'cot1', 14, { gate: 'reverberia' }); E('cot1', 'cot2', 14); E('cot2', 'cot3', 14); E('cot3', 'plz1', 14, { gate: 'tasador' }); E('plz1', 'pte1', 14); E('pte1', 'pte2', 14); E('pte2', 'pal1', 14); E('pal1', 'pal2', 14); E('pal2', 'pal3', 14); E('pal3', 'mue1', 14, { gate: 'planidera' }); E('mue1', 'mue2', 14); E('mue2', 'mue3', 14); E('mue3', 'esq1', 14, { gate: 'nasa' }); E('esq1', 'esq3', 14); E('esq3', 'esq2', 14, { gate: 'tornera' }); E('esq2', 'mor1', 6); E('mor1', 'mor2', 8); E('mor2', 'mor3', 8); S('mor3', 'mor4', 11, 4); // la calle es continua: pasos casi tan altos como la sala
     S('cb1', 'cb0'); S('cb2', 'cb1'); S('cbT', 'cb2'); E('cbT', 'azotea', 3, { lift: 16 }); // a la torre se entra por la puerta de su base
+  });
+  inRegion('z4', () => {
+    E('ca1', 'ca2', 14); E('ca2', 'ca3', 14); E('ca3', 'ca4', 14); E('ca4', 'ca5', 14); E('ca5', 'ca6', 14); E('ca6', 'ca8', 14); E('ca8', 'ca9', 14); E('ca9', 'ca10', 14); E('ca10', 'ca11', 14);
+    E('ca11', 'ca12', 14, { gate: 'cobrador' }); S('ca6', 'ca7', 40, 3);
   });
   E('cripta', 'bodega'); E('bodega', 'vest'); E('vest', 'salon'); E('salon', 'corr'); E('corr', 'foso');
   E('foso', 'cubil', 5); E('cubil', 'osario', 1); E('corr', 'tunel'); E('tunel', 'pozo'); // puerta de 1 tile: hay que agacharse
@@ -470,6 +495,8 @@
           case 'house': case 'crate': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); world.props.push({ kind: op[0], area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], h: op[4] }); break;
           // ['deco', 'cradle'|'portrait'|'table', x, color]: decorado sin colisión de la Morada (cunas, retratos de los cuatro y la mesa para seis)
           case 'deco': world.props.push({ kind: op[1], area: a.id, gx: a.x0 + op[2], gy: a.y0 + a.rh - 1, color: op[3] }); break;
+          // ['well', x, region]: un pozo (en la Calle de las Horas) o la escalera que sube (en la Ciudad Baja) que cambia de mapa
+          case 'well': world.gdoors.push({ id: sid('gd'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, toRegion: op[2], needs: [], kind: region === 'z3' ? 'well' : 'ladder' }); break;
           case 'bell': world.bells.push({ id: sid('b'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T }); break;
           case 'B': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); break;
           case 'K': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.CRACK);

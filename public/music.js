@@ -29,6 +29,7 @@ const Music = (() => {
     { root: 44, bpm: 78, pad: 'square', tick: true },       // 14 La Despensa (feria rota)
     { root: 40, bpm: 60, pad: 'square', organ: true, royal: true }, // 15 Los Tronos (órgano de teatro apagado)
     { root: 45, bpm: 66, pad: 'triangle', organ: true },    // 16 La Calle de las Horas (órgano suave y paso de marcha lejana)
+    { root: 33, bpm: 46, pad: 'triangle', drone: true, drip: true }, // 17 La Ciudad Baja (agua negra y goteo, grave)
     { root: 43, bpm: 50, pad: 'triangle', calm: true },     // Calma: salas tranquilas y casas (sol mayor, lento, sin bajo grave y con campanas)
   ];
   const CALM = ZONES.length - 1;

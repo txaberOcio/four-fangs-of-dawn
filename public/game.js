@@ -45,6 +45,7 @@ const SFX = {
 
 // ---------- UI y red ----------
 let me = null, room = null, game = null, progress = null, selColor = null, saves = {}, saveMe = null;
+const regionOf = v => (v === 'z3' || v === 'z4' ? v : 'main'); // mapas: 'main' (castillo y Zona 2), 'z3' (Calle de las Horas) y 'z4' (Ciudad Baja)
 let REGION = 'main', FROM_REGION = null, SWITCHING = false; // mapa actual ('main' o 'z3'), de dónde se viene y si se está cruzando la Puerta Gigante
 const COLOR_LIST = ['red', 'blue', 'green', 'purple'];
 function show(screen) { ['auth', 'menu', 'lobby'].forEach(s => $('s-' + s).classList.toggle('hidden', s !== screen)); $('ui').classList.remove('hidden'); }
@@ -100,12 +101,12 @@ function renderLobby() {
   updateContRow();
 }
 socket.on('room', r => { room = r; if (!game) { renderLobby(); show('lobby'); } });
-socket.on('started', payload => { room = payload.room; progress = payload.progress; saveMe = payload.me || null; REGION = progress && progress.region === 'z3' ? 'z3' : 'main'; FROM_REGION = null; SWITCHING = false; startGame(); });
+socket.on('started', payload => { room = payload.room; progress = payload.progress; saveMe = payload.me || null; REGION = regionOf(progress && progress.region); FROM_REGION = null; SWITCHING = false; startGame(); });
 // la Puerta Gigante: todos pasan a otro mapa; cada uno se lleva su estado personal tal cual lo tiene
 socket.on('region', p => {
   if (!game || !p) return; const sc = game.scene.getScenes(true)[0];
   if (sc && sc.personalPayload) saveMe = sc.personalPayload(null, true);
-  progress = p.progress; REGION = p.region === 'z3' ? 'z3' : 'main'; FROM_REGION = p.from; SWITCHING = true; startGame();
+  progress = p.progress; REGION = regionOf(p.region); FROM_REGION = p.from; SWITCHING = true; startGame();
 });
 
 function startGame() {
@@ -163,6 +164,7 @@ const EN = {
   planidera: { tex: 'planidera', sc: 4, body: [12, 14], hp: 100, dmg: 2, hb: [54, 60], kind: 'boss', fly: true },
   nasa: { tex: 'nasa', sc: 4, body: [12, 15], hp: 110, dmg: 2, hb: [54, 62], kind: 'boss' },
   tornera: { tex: 'tornera', sc: 5, body: [14, 15], hp: 130, dmg: 2, hb: [64, 74], kind: 'boss' },
+  cobrador: { tex: 'cobrador', sc: 5, body: [14, 15], hp: 140, dmg: 2, hb: [64, 74], kind: 'boss' },
   anhelia: { tex: 'anhelia', sc: 6, body: [14, 15], hp: 180, dmg: 2, hb: [78, 90], kind: 'boss', fearsome: true }, // jefa final de la Zona 3: cuatro actos, uno por colmillo
   vigilia: { tex: 'vigilia', sc: 4, body: [10, 14], hp: 80, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   // enemigos invulnerables: solo se esquivan
@@ -205,7 +207,7 @@ const PR = {
 const OTHER_ROOM_DARK = 0.86; // cuánto se oscurecen las salas en las que no estás (0 = nada, 1 = negro)
 const NEAR_ROOM_DARK = 0.3; // salas vecinas con el paso abierto: se ven al 70 %
 const ROOM_FADE = 0.7; // segundos que tarda una sala en aclararse u oscurecerse al cambiar de sala
-const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7, 1.9, 2.2, 2.0, 2.1, 2.1, 1, 2.4]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
+const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7, 1.9, 2.2, 2.0, 2.1, 2.1, 1, 2.4, 2.6]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 
@@ -216,7 +218,7 @@ class CastleScene extends Phaser.Scene {
     buildArt(this);
     this.progress = progress || { abilities: {}, bosses: [], broken: [] };
     this.abil = { dash: false, dj: false, wj: false }; // las habilidades son de cada vampiro
-    (this.progress.broken || []).forEach(k => { const s = String(k), z3k = s.startsWith('z3:'); if (z3k !== (REGION === 'z3')) return; const [gx, gy] = s.replace('z3:', '').split(',').map(Number); if (w.fg[gy] && w.fg[gy][gx] !== undefined) w.fg[gy][gx] = -1; });
+    (this.progress.broken || []).forEach(k => { const s = String(k), mk = s.match(/^([a-z0-9]+):/); if ((mk ? mk[1] : 'main') !== REGION) return; const [gx, gy] = s.replace(/^[a-z0-9]+:/, '').split(',').map(Number); if (w.fg[gy] && w.fg[gy][gx] !== undefined) w.fg[gy][gx] = -1; });
 
     // mapa de tiles (fondo + primer plano)
     const bgMap = this.make.tilemap({ data: w.bg.map(r => r.slice()), tileWidth: T, tileHeight: T });
@@ -343,7 +345,7 @@ class CastleScene extends Phaser.Scene {
   // Pinta un área en el lienzo del minimapa (solo se ve lo explorado)
   mapTitle() { // título del mapa grande (M) con la sala en la que estás
     const a = this.W.areas[this.myArea];
-    this.bigTitle.setText('MAPA DEL CASTILLO  (M para cerrar)' + (a ? '\nEstás en: ' + (this.W.region === 'z3' ? 'La Calle de las Horas — ' : (World.ZONES[a.z] ? World.ZONES[a.z] + ' — ' : '')) + a.name : ''));
+    this.bigTitle.setText('MAPA DEL CASTILLO  (M para cerrar)' + (a ? '\nEstás en: ' + (this.W.region !== 'main' ? World.REGIONS[this.W.region].name + ' — ' : (World.ZONES[a.z] ? World.ZONES[a.z] + ' — ' : '')) + a.name : ''));
   }
   markVisited(a) {
     if (this.visited.has(a.id)) return;
@@ -442,7 +444,7 @@ class CastleScene extends Phaser.Scene {
       { const ar = this.W.areaOf(Math.floor(s.x / T), Math.floor(s.y / T)); if (ar) this.markVisited(ar); }
     });
     on('snap', s => this.onSnap(s));
-    on('torch', ({ id, on: v }) => { const off = this.W.region === 'z3' ? 5000 : 0; if (id >= off && id < off + 5000) this.setTorch(id - off, v); });
+    on('torch', ({ id, on: v }) => { const off = World.REGIONS[this.W.region].tOff || 0; if (id >= off && id < off + 5000) this.setTorch(id - off, v); });
     on('ignite', ({ id }) => { if (!this.isHost) return; const p = this.projs.get(id); if (p && POISON.includes(p.type)) this.igniteProj(p); });
     on('bell', ({ id }) => { if (!this.isHost) return; const b = (this.bells || []).find(q => q.id === id); if (b && b.cd <= 0 && b.ring <= 0) { b.cd = 15; b.ring = 3; } }); // un compañero golpea una campana: el anfitrión lleva el reloj
     on('hold', () => { if (this.isHost) this.cycHold = 8; });
@@ -577,7 +579,7 @@ class CastleScene extends Phaser.Scene {
     for (const t of this.targets()) { if (this.inLight(t.x, t.y)) continue; const d = Math.hypot(t.x - x, t.y - y); if (d < bd) { bd = d; best = t; } }
     return best;
   }
-  torchKey(id) { return id + (this.W.region === 'z3' ? 5000 : 0); } // las antorchas de la Zona 3 se guardan con 5000 de más: son otro mapa
+  torchKey(id) { return id + (World.REGIONS[this.W.region].tOff || 0); } // las antorchas de la Zona 3 se guardan con 5000 de más: son otro mapa
   setTorch(id, on) {
     const o = this.torchObjs[id]; if (!o || o.lit === !!on) return;
     o.lit = !!on; o.flame.setVisible(o.lit); o.glow.setVisible(o.lit && !LITE); this.torchOn[this.torchKey(id)] = o.lit; this.rebuildLights();
@@ -1078,7 +1080,7 @@ class CastleScene extends Phaser.Scene {
     const gear = () => this.spawnProj('gear', Phaser.Math.Between(a.x0 + 20, a.x1 - 20), a.y0 + 12, 0, 240, Math.max(3.5, (a.floor - a.y0 - 12) / 240 + 0.4), 0); // en salas altas (Dos Tronos) la vida del proyectil alcanza hasta el suelo
     const ring = (n, sp, off) => { for (let i = 0; i < n; i++) { const an = off + i * Math.PI * 2 / n, pr = this.spawnProj('spore', x, y - 10, Math.cos(an) * sp, Math.sin(an) * sp, 4); pr.brake = 1.0; } };
     const sporeFan = (n0) => { const list = tgs.length >= 2 ? tgs.slice(0, 4) : [tg], n = Math.max(2, n0 - (list.length - 1)); list.forEach(tt => { const base = Math.atan2(tt.y - y, tt.x - x) - 0.25; for (let i = 0; i < n; i++) { const an = base + (i - (n - 1) / 2) * 0.3, pr = this.spawnProj('spore', x, y - 30, Math.cos(an) * 260, Math.sin(an) * 260, 4.5); pr.brake = 0.75; pr.homing = 38; } }); }; // salen hacia el jugador y se paran lejos del jefe: así no arden junto a él
-    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'anhelia' ? 'gh' : e.type === 'reina' || e.type === 'capitan' ? 'sk' : e.type === 'alcaide' ? 'shroom' : e.type === 'madre' ? (i < 2 ? 'shroom' : 'slug') : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
+    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'anhelia' || e.type === 'cobrador' ? 'gh' : e.type === 'reina' || e.type === 'capitan' ? 'sk' : e.type === 'alcaide' ? 'shroom' : e.type === 'madre' ? (i < 2 ? 'shroom' : 'slug') : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
 
     if (!e.act) {
       e.cd -= dt;
@@ -1107,6 +1109,7 @@ class CastleScene extends Phaser.Scene {
         if (e.type === 'subastadora') { const o = ['gavel', 'coins', 'tele', 'pillars'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 2 ? 'summon' : pick(o); e.last = e.act; }
         if (e.type === 'chambelan') { const o = ['forms', 'ambush', 'tele', 'pillars'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 ? 'summon' : pick(o); e.last = e.act; }
         if (e.type === 'cadalso') { const o = ['axe', 'stomp', 'charge', rage ? 'leap' : 'axe'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'cobrador') { const f = e.hp / e.max, o = (f > 0.5 ? ['coins', 'gavel', 'stomp', 'fog'] : ['coins', 'siphon', 'gavel', 'rain']).filter(x => x !== e.last); e.act = f <= 0.5 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 3 ? 'summon' : pick(o); e.last = e.act; } // cuentas pendientes: monedas marcadas, martillazos, golpes, niebla y orbes que cobran el impulso; llama a fantasmas
         if (e.type === 'reverberia') { const o = ['lunge', 'rays', 'beam', 'charge'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; } // luz de alba: rayos del techo, haz giratorio y estocadas
         if (e.type === 'tasador') { const o = ['coins', 'gavel', 'fog', 'charge'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 2 ? 'summon' : pick(o); e.last = e.act; } // lluvia de monedas, martillazos y niebla
         if (e.type === 'planidera') { const o = ['eyes', 'fan', 'dive', 'tele'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; } // lágrimas que persiguen, abanicos y picados
@@ -1428,7 +1431,7 @@ class CastleScene extends Phaser.Scene {
     if (ar && ar.id !== this.myArea) { const firstVisit = !!this.visited && !this.visited.has(ar.id); this.myArea = ar.id; this.markVisited(ar); this.talkOnArea(ar.id);
       if (firstVisit && ar.id === 'cb0') { this.centerTxt.setText('ZONA 3\n\nLA CALLE DE LAS HORAS'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 3')) this.centerTxt.setText(''); }); } // primera vez al otro lado de la Puerta Gigante
       if (firstVisit && ar.id === 'asc2') { this.mapGrow = true; this.centerTxt.setText('ZONA 2\n\nMÁS ALLÁ DE LA GRAN HOGUERA'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 2')) this.centerTxt.setText(''); }); } // primer descenso al segundo mapa
-      this.banner(`${this.W.region === 'z3' ? 'La Calle de las Horas' : World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle(); if (this.zoneEndCheck) this.zoneEndCheck(ar);
+      this.banner(`${this.W.region !== 'main' ? World.REGIONS[this.W.region].name : World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle(); if (this.zoneEndCheck) this.zoneEndCheck(ar);
       const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
       if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche (ves tras los muros agrietados).', 9000); }
     this.mmT -= dt;

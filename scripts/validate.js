@@ -3,7 +3,7 @@
    Las puertas por jefe empiezan CERRADAS y se abren al caer cada jefe alcanzable, así que además comprueba
    el orden real de jefes contra World.PROGRESSION. Variante del Alba: PICK=aurora (por defecto) o PICK=vesper. */
 const World = require('../public/world.js');
-const REGION = process.env.REGION || (process.argv[2] === 'z3' ? 'z3' : 'main'); // REGION=z3 valida La Calle de las Horas (mapa aparte): se entra con el impulso, el doble salto y el salto de pared del castillo; las puertas con rótulo cuentan como pasos
+const REGION = process.env.REGION || (['z3', 'z4'].includes(process.argv[2]) ? process.argv[2] : 'main'); // REGION=z3 valida La Calle de las Horas (mapa aparte): se entra con el impulso, el doble salto y el salto de pared del castillo; las puertas con rótulo cuentan como pasos
 const w = World.build(REGION);
 // los portones con horario (['PB'] altos) se abren en alguna fase del ciclo: para el alcance se tratan como abiertos; los tramos bajos de puente (levadizos) se dejan puestos
 (w.phased || []).filter(p => !p.oneway && p.h >= 8).forEach(p => { for (let j = 0; j < p.h; j++) for (let i = 0; i < p.w; i++) w.fg[p.gy + j][p.gx + i] = -1; });
@@ -207,12 +207,12 @@ if (process.argv[2] === 'dbg') { // depuración: node validate.js dbg <gx> <gy> 
   console.log([...res.entries()].map(e => e[0] + ' <- ' + e[1]).join('\n')); process.exit();
 }
 // ---- Fases de progreso ----
-const abil = REGION === 'z3' ? { dash: true, dj: true, wj: true } : { dash: false, dj: false, wj: false };
+const abil = REGION !== 'main' ? { dash: true, dj: true, wj: true } : { dash: false, dj: false, wj: false };
 const Z3_PROGRESSION = [{ bosses: ['reverberia'] }, { bosses: ['tasador'] }, { bosses: ['planidera'] }, { bosses: ['nasa'] }, { bosses: ['tornera'] }, { bosses: ['anhelia'] }]; // orden previsto de los jefes de la Zona 3
-const PROG = REGION === 'z3' ? Z3_PROGRESSION : World.PROGRESSION;
+const PROG = REGION === 'z3' ? Z3_PROGRESSION : REGION === 'z4' ? [{ bosses: ['cobrador'] }] : World.PROGRESSION;
 // alcance: en la Zona 3 las puertas (torre del Campanario, casas) son pasos: desde cada puerta alcanzada se parte otra búsqueda en su destino
 function reach(abil, start) {
-  if (REGION !== 'z3') return bfs(abil, start);
+  if (REGION === 'main') return bfs(abil, start);
   const starts = [start], seen = new Set([start.x + ',' + start.y]); let all = [];
   for (let i = 0; i < starts.length; i++) {
     const nodes = bfs(abil, starts[i]); all = all.concat(nodes);
@@ -249,7 +249,7 @@ const allRooms = Object.keys(w.areas).filter(r => !w.areas[r].special);
 // Con Vesper (sin Alas del Alba) la Cueva del Abismo y lo que exige planear sobre los pinchos son opcionales: no cuentan como error
 const OPT_ROOMS = PICK === 'vesper' ? ['caida', 'fragua', 'gran'] : [], OPT_ITEMS = PICK === 'vesper' ? ['cripta', 'cumbre', 'fragua'] : [];
 const missing = allRooms.filter(r => !(r in firstStage) && !OPT_ROOMS.includes(r));
-const names = REGION === 'z3' ? { 0: 'inicio (hasta Reverberia)', 1: 'tras Reverberia', 2: 'tras el Tasador', 3: 'tras la Plañidera', 4: 'tras Nasa', 5: 'tras la Tornera' } : { 0: 'inicio', 1: 'tras la Gárgola (Impulso)', 2: 'tras el Obispo (Doble salto)', 3: 'tras el Guardián del Reloj (Salto de pared)', 4: 'tras el Conde', 5: 'tras Aurora/Vesper', 6: 'tras el Alcaide (Pisotón)' };
+const names = REGION === 'z4' ? { 0: 'inicio (hasta el Cobrador)', 1: 'tras el Cobrador' } : REGION === 'z3' ? { 0: 'inicio (hasta Reverberia)', 1: 'tras Reverberia', 2: 'tras el Tasador', 3: 'tras la Plañidera', 4: 'tras Nasa', 5: 'tras la Tornera' } : { 0: 'inicio', 1: 'tras la Gárgola (Impulso)', 2: 'tras el Obispo (Doble salto)', 3: 'tras el Guardián del Reloj (Salto de pared)', 4: 'tras el Conde', 5: 'tras Aurora/Vesper', 6: 'tras el Alcaide (Pisotón)' };
 console.log('\nSalas por fase en la que se alcanzan:');
 for (let s = 0; s < stage; s++) {
   const list = allRooms.filter(r => firstStage[r] === s).map(r => w.areas[r].name + ' (' + r + ')');

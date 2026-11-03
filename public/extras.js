@@ -56,12 +56,12 @@ const STORY_INTRO = ['Antes del primer amanecer, dos hermanos se repartían el c
 const STORY_ZONE1_END = ['La Gran Hoguera arde sin leña. Más allá, el camino baja hacia tierras que el castillo ya no gobierna.', 'Habéis recuperado parte de lo que os quitaron. El resto está más lejos.'];
 const STORY_RING = 'Llevas el Anillo del Rey: la Reina Isolda está en algún lugar de ese camino.';
 // a quién hay que vencer para abrir cada puerta sellada (clave = gate de world.js)
-const GATE_BY = { reverberia: 'a Reverberia', tasador: 'al Tasador Mayor', planidera: 'a la Plañidera Mayor', nasa: 'a Nasa', tornera: 'a la Tornera Mayor', bishop: 'al Obispo Caído', clock: 'al Guardián del Reloj', conde: 'al Conde', sellos: 'al Archimago y a la Reina (sus dos sellos)', alba: 'a Aurora o a Vesper', madre: 'a la Madre Moho', capitan: 'al Capitán de Hierro', chambelan: 'al Chambelán Sin Rostro' };
+const GATE_BY = { cobrador: 'al Cobrador Mayor', reverberia: 'a Reverberia', tasador: 'al Tasador Mayor', planidera: 'a la Plañidera Mayor', nasa: 'a Nasa', tornera: 'a la Tornera Mayor', bishop: 'al Obispo Caído', clock: 'al Guardián del Reloj', conde: 'al Conde', sellos: 'al Archimago y a la Reina (sus dos sellos)', alba: 'a Aurora o a Vesper', madre: 'a la Madre Moho', capitan: 'al Capitán de Hierro', chambelan: 'al Chambelán Sin Rostro' };
 // objetos que se usan con Q: las mejoras permanentes (perm) y el amuleto (se gasta solo al morir) no entran en el inventario de uso
 const MOSS_SLOW = 0.85, MOSS_FIRE = 1.2; // Calabozos Profundos: el suelo de musgo frena al andar y sus enemigos reciben un 20 % más de daño de fuego
 const usableItem = it => !it.perm && it.id !== 'amu';
 // Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
-const GEMS_BOSS = { anhelia: 12, reverberia: 5, tasador: 5, planidera: 5, nasa: 6, tornera: 7, garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4, capitan: 4, farero: 5, subastadora: 6, chambelan: 4, cadalso: 5, vigilia: 8 }; // gemas que suelta cada jefe la primera vez
+const GEMS_BOSS = { cobrador: 15, anhelia: 12, reverberia: 5, tasador: 5, planidera: 5, nasa: 6, tornera: 7, garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4, capitan: 4, farero: 5, subastadora: 6, chambelan: 4, cadalso: 5, vigilia: 8 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
 // [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
 // Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
@@ -832,7 +832,7 @@ Object.assign(CastleScene.prototype, {
     box.querySelector('#devLoad').onclick = () => { let pos = this.devPos; try { pos = pos || JSON.parse(localStorage.getItem('devPos_' + this.color) || 'null'); } catch (e) { /* ok */ } toggle(); this.revertToCheckpoint(); if (pos) { this.player.setPosition(pos.x, pos.y); this.player.body.setVelocity(0, 0); this.invuln = 2; } this.hp = this.maxHp; this.toast('Partida cargada (modo desarrollo)'); };
     { // selector de zonas y salas: teletransporta a la sala elegida (agrupadas por zona y región; hoy solo existe la Zona 1)
       const sel = box.querySelector('#devZone'); let html = '<option value="">Ir a zona / sala...</option>';
-      const zoneOf = a => a.zona || (W.region === 'z3' ? 3 : 1), groups = {};
+      const zoneOf = a => a.zona || ({ z3: 3, z4: 4 }[W.region] || 1), groups = {};
       W.areaList.filter(a => !a.interior).forEach(a => { const k = 'Zona ' + zoneOf(a) + ' · ' + (World.ZONES[a.z] || 'Otros'); (groups[k] = groups[k] || []).push(a); });
       Object.keys(groups).forEach(k => { html += '<optgroup label="' + k + '">' + groups[k].map(a => '<option value="' + a.id + '">' + a.name + '</option>').join('') + '</optgroup>'; });
       sel.innerHTML = html; sel.onchange = () => { if (sel.value) { this.devTeleport(sel.value); sel.value = ''; toggle(); } };
@@ -989,7 +989,7 @@ Object.assign(CastleScene.prototype, {
   },
   // ---- habilidades de los jefes de la Zona 1 y 2 sin recompensa
   stepUp(dir, onFloor) { // subir escalón: si andando se choca con un bloque de 1 casilla de alto y hay hueco encima, se sube sin saltar (solo en la Zona 3: en el castillo un reborde de 1 casilla es obstáculo)
-    if (this.W.region !== 'z3' || !onFloor || !dir || this.crouching || this.dashT > 0 || this.stun > 0 || this.dead) return;
+    if (this.W.region === 'main' || !onFloor || !dir || this.crouching || this.dashT > 0 || this.stun > 0 || this.dead) return;
     const p = this.player, b = p.body; if (!(dir > 0 ? b.blocked.right : b.blocked.left)) return;
     const solid = (x, y) => { const t = this.fg.getTileAtWorldXY(x, y); if (!t || t.index < 0) return false; const k = t.index % 8; return k === K.SOLID || k === K.FLOOR || k === K.CRACK; };
     const ex = dir > 0 ? b.right + 3 : b.left - 3, fy = b.bottom - 3; // casilla de delante a la altura de los pies
@@ -1432,7 +1432,7 @@ Object.assign(CastleScene.prototype, {
   },
   revertWorld(sw) { // el mundo vuelve a como estaba al guardar (solo en partidas de un jugador)
     const cur = this.progress, keepAbil = Object.assign({}, cur.abilities);
-    (cur.broken || []).forEach(k => { if (!sw.broken.includes(k) && String(k).startsWith('z3:') === (this.W.region === 'z3')) { const [gx, gy] = String(k).replace('z3:', '').split(',').map(Number), a = this.W.areaOf(gx, gy); if (a) this.fg.putTileAt(a.z * 8 + K.CRACK, gx, gy); } }); // los muros rotos vuelven
+    (cur.broken || []).forEach(k => { if (!sw.broken.includes(k) && ((String(k).match(/^([a-z0-9]+):/) || [0, 'main'])[1] === this.W.region)) { const [gx, gy] = String(k).replace(/^[a-z0-9]+:/, '').split(',').map(Number), a = this.W.areaOf(gx, gy); if (a) this.fg.putTileAt(a.z * 8 + K.CRACK, gx, gy); } }); // los muros rotos vuelven
     this.progress = { abilities: keepAbil, bosses: [...sw.bosses], broken: [...sw.broken], torches: Object.assign({}, sw.torches) };
     socket.emit('revertWorld', { bosses: this.progress.bosses, broken: this.progress.broken, torches: this.progress.torches });
     (this.W.gates || []).forEach(gt => { if (gt.open && !this.gateOk(gt)) { gt.open = false; gt.tiles.forEach(t => { const a = this.W.areaOf(t.gx, t.gy); if (a) this.fg.putTileAt(a.z * 8 + (gt.crack ? K.CRACK : K.SOLID), t.gx, t.gy); }); } }); // las puertas se vuelven a cerrar
@@ -1683,10 +1683,10 @@ Object.assign(CastleScene.prototype, {
   // ---- Cielo de la Zona 3: la calle es exterior. Se oculta la roca sobre el suelo y el techo y las paredes de las salas abiertas (siguen siendo sólidos), y detrás
   // se pinta un cielo en degradado según la fase, con estrellas, luna o sol y una ciudad de siluetas que se mueve más despacio que la cámara
   skyBuild() {
-    const w = this.W; if (!w.sky) return;
-    const open = w.areaList.filter(a => a.open); if (!open.length) return;
-    const ground = this.skyGround = Math.max(...open.map(a => a.y0 + a.rh - 1)); // el suelo de la calle (la sala abierta más baja)
-    this.fg.forEachTile(t => { if (t.index >= 0 && (t.index >> 3) === World.ROCK && t.y < ground) t.alpha = 0; });
+    const w = this.W; if (!w.sky && !(w.props || []).length && !(w.doors || []).some(d => d.label)) return;
+    const open = w.sky ? w.areaList.filter(a => a.open) : []; if (w.sky && !open.length) return;
+    const ground = this.skyGround = w.sky ? Math.max(...open.map(a => a.y0 + a.rh - 1)) : 0; // el suelo de la calle (la sala abierta más baja)
+    if (w.sky) this.fg.forEachTile(t => { if (t.index >= 0 && (t.index >> 3) === World.ROCK && t.y < ground) t.alpha = 0; });
     open.forEach(a => {
       const cs = a.castle || 0; // fachada del castillo: se deja a la vista el muro de ladrillo, el techo y la pared izquierda
       this.bgLayer.forEachTile(t => { if (!a.keepbg || t.x < a.x0 + a.keepbg[0] || t.x > a.x0 + a.keepbg[1]) t.alpha = 0; }, this, a.x0 + cs, a.y0, a.rw - cs, a.rh); // (la torre-puerta conserva su fondo de ladrillo)
@@ -1710,7 +1710,7 @@ Object.assign(CastleScene.prototype, {
         pg.fillStyle(0x3a2a1c, 1).fillRect(x - 34, fy - 190, 68, 96).fillStyle(0xc8a05a, 1).fillRect(x - 30, fy - 186, 60, 88).fillStyle(0x16101a, 1).fillRect(x - 26, fy - 182, 52, 80).fillStyle(col, 0.75).fillCircle(x, fy - 150, 14).fillRect(x - 20, fy - 134, 40, 34); return; }
       pg.fillStyle(0x4a3220, 1).fillRect(x - 60, fy - 40, 120, 8).fillRect(x - 54, fy - 40, 8, 40).fillRect(x + 46, fy - 40, 8, 40); for (let i = 0; i < 6; i++) pg.fillStyle(i === 5 ? 0x2a1c10 : 0xcdbf9e, 1).fillRect(x - 54 + i * 19, fy - 50, 12, 10); // mesa para seis; la sexta silla, vacía
     });
-    (w.props || []).filter(p => open.some(a => a.id === p.area)).forEach(p => {
+    (w.props || []).filter(p => !w.sky || open.some(a => a.id === p.area)).forEach(p => {
       if (p.kind === 'stairs' || p.kind === 'tower') return; // de ladrillo: se ven sus casillas
       if (p.kind === 'facade') { this.drawFacade(pg, p); return; }
       this.fg.forEachTile(t => { t.alpha = 0; }, this, p.gx, p.gy, p.w, p.h);
@@ -1754,6 +1754,7 @@ Object.assign(CastleScene.prototype, {
       pg.fillStyle(0x5a5a62, 1).fillTriangle(x - 40, fy - 112, x + 40, fy - 112, x, fy - 140); // dintel en arco
       this.caveLamps = this.caveLamps || []; this.caveLamps.push({ x, y: fy - 60, r: 90 });
     });
+    if (!w.sky) return; // la Ciudad Baja no tiene cielo
     this.skyG = this.add.graphics().setScrollFactor(0).setDepth(-30); this.cityG = this.add.graphics().setScrollFactor(0.25, 1).setDepth(-29); this.skyKey = -1;
     const rnd = rndSeeded(77); this.stars = Array.from({ length: LITE ? 25 : 60 }, () => ({ x: rnd() * SW, y: rnd() * SH * 0.55, s: rnd() < 0.2 ? 3 : 2, p: rnd() * 6 }));
     this.farX = Math.max(...w.areaList.map(a => (a.x0 + a.rw) * T)); // final de la calle: ahí se ve, en el horizonte, la Morada
@@ -1916,6 +1917,14 @@ Object.assign(CastleScene.prototype, {
       const open = this.gdoorOpen(o.d); if (open === o.open) continue;
       const wasClosed = o.open === false; o.open = open; o.lamp.gate.open = !open; // la luz del umbral solo cuando está abierta
       const g = o.g, cx = o.d.x, by = o.d.y, W = 4 * T, H = 7 * T, x0 = cx - W / 2, y0 = by - H; g.clear();
+      if (o.d.kind === 'well') { // brocal de piedra con tejadillo, polea y cubo; baja a la Ciudad Baja
+        g.fillStyle(0x3e3a34, 1).fillRect(cx - 46, by - 40, 92, 40).fillStyle(0x6a665c, 1).fillRect(cx - 46, by - 40, 92, 8).fillStyle(0x0a0e10, 1).fillRect(cx - 34, by - 36, 68, 10).fillStyle(0x4a3220, 1).fillRect(cx - 50, by - 124, 6, 84).fillRect(cx + 44, by - 124, 6, 84).fillRect(cx - 54, by - 130, 108, 8).fillStyle(0x6a2c26, 1).fillTriangle(cx - 64, by - 128, cx + 64, by - 128, cx, by - 168);
+        g.lineStyle(3, 0x2a1c10, 1).lineBetween(cx, by - 122, cx, by - 70); g.fillStyle(0x6a4a2c, 1).fillRect(cx - 9, by - 70, 18, 16); this.cavLampsAdd = 1; o.open = true; this.caveLamps.push({ x: cx, y: by - 40, r: 110 }); continue;
+      }
+      if (o.d.kind === 'ladder') { // escalera de cuerda que sube por un hueco de luz hasta la calle
+        g.fillStyle(0x9ac8d8, 0.18).fillRect(cx - 40, by - 360, 80, 360); g.lineStyle(3, 0x4a3220, 1).lineBetween(cx - 14, by - 360, cx - 14, by).lineBetween(cx + 14, by - 360, cx + 14, by); for (let yy = by - 340; yy < by; yy += 22) g.lineBetween(cx - 14, yy, cx + 14, yy);
+        o.open = true; this.caveLamps.push({ x: cx, y: by - 120, r: 130 }); continue;
+      }
       g.fillStyle(0x2a2030, 1).fillRect(x0 - 14, y0 - 14, W + 28, H + 14).fillStyle(0x4a3c54, 1).fillRect(x0 - 14, y0 - 14, W + 28, 8).fillStyle(0x140c16, 1).fillRect(x0, y0, W, H);
       if (!open) { // hojas cerradas con tachuelas y el sello de los Regentes
         for (let k = 0; k < 2; k++) { const lx = x0 + k * W / 2; g.fillStyle(0x3a2a20, 1).fillRect(lx + 2, y0, W / 2 - 4, H); for (let y = y0 + 10; y < by - 6; y += 22) { g.fillStyle(0x5a5a6a, 1).fillRect(lx + 4, y, W / 2 - 8, 6); g.fillStyle(0x9a9aaa, 1).fillRect(lx + 4, y, W / 2 - 8, 2); } }
@@ -1931,7 +1940,7 @@ Object.assign(CastleScene.prototype, {
     for (const o of this.gdoorObjs || []) {
       const d = o.d; if (Math.abs(d.x - p.x) > 90 || Math.abs((d.y - 30) - p.y) > 120) continue;
       if (!o.open) { this.promptTxt.setVisible(true).setPosition(d.x, d.y - 260).setText('Puerta Gigante sellada: se abre al vencer a ' + d.needs.map(b => (World.BOSSES[b] ? World.BOSSES[b].name : b)).join(' y ')); return true; }
-      this.promptTxt.setVisible(true).setPosition(d.x, d.y - 260).setText('{act}: cruzar la Puerta Gigante');
+      this.promptTxt.setVisible(true).setPosition(d.x, d.y - (d.kind ? 150 : 260)).setText(d.kind === 'well' ? '{act}: bajar por el pozo (la Ciudad Baja)' : d.kind === 'ladder' ? '{act}: subir a la Calle de las Horas' : '{act}: cruzar la Puerta Gigante');
       if (ePress) this.useGDoor(d);
       return true;
     }
