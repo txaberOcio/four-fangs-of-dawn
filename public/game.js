@@ -347,23 +347,50 @@ class CastleScene extends Phaser.Scene {
       g.fillRect(gx, gy, 1, 1);
     }
   }
+  // El mapa grande parece, al empezar, que la Zona 1 es todo el castillo; al llegar a la Zona 2 se amplía y aparece todo junto
+  mapZ2() { return [...this.visited].some(id => { const a = this.W.areas[id]; return a && a.z >= 10; }); }
+  mapTarget() { // parte del lienzo (en tiles) que se enseña ahora
+    return this.mapZ2() ? { x: 0, y: 0, w: this.W.Wt, h: this.W.Ht } : this.z1View();
+  }
+  z1View() { // el rectángulo que ocupa la Zona 1
+    const W = this.W;
+    if (!this.z1Box) {
+      const l = W.areaList.filter(a => a.z < 10 && !a.interior && !a.special);
+      const x0 = Math.min(...l.map(a => a.x0)) - 2, y0 = Math.min(...l.map(a => a.y0)) - 2, x1 = Math.max(...l.map(a => a.x0 + a.rw)) + 2, y1 = Math.max(...l.map(a => a.y0 + a.rh)) + 2;
+      this.z1Box = { x: Math.max(0, x0), y: Math.max(0, y0), w: Math.min(W.Wt, x1) - Math.max(0, x0), h: Math.min(W.Ht, y1) - Math.max(0, y0) };
+    }
+    return { ...this.z1Box };
+  }
+  layoutBigMap(v) { // coloca y escala el mapa grande para que la vista v (en tiles) llene el marco
+    const sc = this.mapAnim ? Math.min(3, (SW - 52) / v.w, 380 / v.h) : Math.floor(Math.min(3, (SW - 52) / v.w, 380 / v.h) * 10) / 10, bx = Math.round((SW - v.w * sc) / 2), by = 90 + Math.max(0, Math.round((380 - v.h * sc) / 2)); // en reposo el zoom va en pasos de 0,1 (píxeles limpios)
+    this.bigPos = { x: v.x, y: v.y, w: v.w, h: v.h, sc, bx, by };
+    this.bigImg.setCrop(v.x, v.y, v.w, v.h).setScale(sc).setPosition(bx - v.x * sc, by - v.y * sc);
+    this.bigFrame.setPosition(bx - 4, by - 4).setSize(v.w * sc + 8, v.h * sc + 8);
+  }
+  growBigMap() { // animación: de «la Zona 1 es todo» al castillo completo
+    const W = this.W, v = { ...this.z1View() };
+    this.mapGrow = false; this.mapAnim = true;
+    this.tweens.add({ targets: v, x: 0, y: 0, w: W.Wt, h: W.Ht, duration: 1400, ease: 'Sine.easeInOut', onUpdate: () => this.layoutBigMap(v), onComplete: () => { this.mapAnim = false; this.layoutBigMap(this.mapTarget()); } });
+  }
   updateMaps() {
     const p = this.player, tx = p.x / T, ty = p.y / T;
     if (this.showMap) {
       const g = this.bigDots; g.clear();
-      const W = this.W, mx = x => 26 + x * this.bigS, my = y => 90 + y * this.bigS;
-      if (this.objective && ((this.time.now >> 8) & 1)) g.fillStyle(0x6bff8a, 1).fillRect(mx(this.objective.x / T) - 4, my(this.objective.y / T) - 4, 8, 8);
+      if (!this.bigPos) this.layoutBigMap(this.mapTarget());
+      const bp = this.bigPos, mx = x => bp.bx + (x - bp.x) * bp.sc, my = y => bp.by + (y - bp.y) * bp.sc, inV = (x, y) => x >= bp.x && x < bp.x + bp.w && y >= bp.y && y < bp.y + bp.h;
+      if (this.objective && inV(this.objective.x / T, this.objective.y / T) && ((this.time.now >> 8) & 1)) g.fillStyle(0x6bff8a, 1).fillRect(mx(this.objective.x / T) - 4, my(this.objective.y / T) - 4, 8, 8);
       this.mapIconList().forEach(i => { // iconos de las mejoras del mapa que has comprado
+        if (!inV(i.x, i.y)) return;
         const rows = MAP_PATTERNS[i.k], cx = Math.round(mx(i.x)), cy = Math.round(my(i.y)), col = parseInt(i.col.slice(1), 16);
         g.fillStyle(0x000000, 0.75).fillRect(cx - 4, cy - 4, 9, 9);
         rows.forEach((row, ry) => { for (let rx = 0; rx < 7; rx++) if (row[rx] !== '.') g.fillStyle(row[rx] === 'o' ? 0x000000 : col, 1).fillRect(cx - 3 + rx, cy - 3 + ry, 1, 1); });
       });
-      Object.values(this.remotes).forEach(r => g.fillStyle(parseInt(HERO_COLORS[r.color].slice(1), 16), 1).fillRect(mx(r.spr.x / T) - 2, my(r.spr.y / T) - 2, 5, 5));
-      if ((this.time.now >> 8) & 1) g.fillStyle(0xffffff, 1).fillRect(mx(tx) - 2, my(ty) - 2, 5, 5);
+      Object.values(this.remotes).forEach(r => { if (inV(r.spr.x / T, r.spr.y / T)) g.fillStyle(parseInt(HERO_COLORS[r.color].slice(1), 16), 1).fillRect(mx(r.spr.x / T) - 2, my(r.spr.y / T) - 2, 5, 5); });
+      if ((this.time.now >> 8) & 1 && inV(tx, ty)) g.fillStyle(0xffffff, 1).fillRect(mx(tx) - 2, my(ty) - 2, 5, 5);
       return;
     }
-    // ventana de 100x50 tiles alrededor del jugador
-    const cx0 = Phaser.Math.Clamp(Math.floor(tx - 35), 0, this.W.Wt - 70), cy0 = Phaser.Math.Clamp(Math.floor(ty - 17), 0, this.W.Ht - 34);
+    // ventana de 70x34 tiles alrededor del jugador (sin salirse de la parte del mapa que se ve)
+    const mv = this.mapTarget(), cx0 = Phaser.Math.Clamp(Math.floor(tx - 35), mv.x, Math.max(mv.x, mv.x + mv.w - 70)), cy0 = Phaser.Math.Clamp(Math.floor(ty - 17), mv.y, Math.max(mv.y, mv.y + mv.h - 34));
     this.mmImg.setCrop(cx0, cy0, 70, 34).setPosition(SW - 216 - cx0 * 3, 8 - cy0 * 3);
     const g = this.mmDots; g.clear();
     const mx = x => SW - 216 + (x - cx0) * 3, my = y => 8 + (y - cy0) * 3;
@@ -1327,7 +1354,7 @@ class CastleScene extends Phaser.Scene {
     // ---- zona actual y mapa
     const ar = this.W.areaOf(Math.floor(p.x / T), Math.floor(p.y / T));
     if (ar && ar.id !== this.myArea) { const firstVisit = !!this.visited && !this.visited.has(ar.id); this.myArea = ar.id; this.markVisited(ar); this.talkOnArea(ar.id);
-      if (firstVisit && ar.id === 'asc2') { this.centerTxt.setText('ZONA 2\n\nMÁS ALLÁ DE LA GRAN HOGUERA'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 2')) this.centerTxt.setText(''); }); } // primer descenso al segundo mapa
+      if (firstVisit && ar.id === 'asc2') { this.mapGrow = true; this.centerTxt.setText('ZONA 2\n\nMÁS ALLÁ DE LA GRAN HOGUERA'); this.time.delayedCall(4500, () => { if (this.centerTxt.text.startsWith('ZONA 2')) this.centerTxt.setText(''); }); } // primer descenso al segundo mapa
       this.banner(`${World.ZONES[ar.z]} — ${ar.name}`); Music.setZone(ar.calm ? Music.CALM : ar.z); this.mapTitle(); if (this.zoneEndCheck) this.zoneEndCheck(ar);
       const pbr = this.progress.bosses; // aviso antes de elegir rival (decisión irreversible)
       if ((ar.id === 'albaA' || ar.id === 'albaB') && !pbr.includes('aurora') && !pbr.includes('vesper')) this.toast(ar.id === 'albaA' ? 'Cámara de Aurora: si la vences, Vesper se la llevará y no podrás enfrentarte a él. Premio: Alas del Alba (planear).' : 'Cámara de Vesper: si lo vences, Aurora se lo llevará y no podrás enfrentarte a ella. Premio: Ojo de la Noche (ves tras los muros agrietados).', 9000); }
@@ -1337,6 +1364,7 @@ class CastleScene extends Phaser.Scene {
       this.showMap = !this.showMap;
       [this.bigBg, this.bigFrame, this.bigImg, this.bigTitle, this.bigStats].forEach(o => o.setVisible(this.showMap));
       this.mapTitle();
+      if (this.showMap) { if (this.mapGrow) { this.layoutBigMap(this.z1View()); this.growBigMap(); } else this.layoutBigMap(this.mapTarget()); }
       [this.mmBg, this.mmImg, this.mmDots].forEach(o => o.setVisible(!this.showMap));
       this.bigDots.clear(); this.updateMaps();
     }
