@@ -380,7 +380,7 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.skyBuild(); this.buildHouses(); this.buildGateDoors(); this.buildGDoors(); this.buildBleeds(); if (this.floorBroken) this.dropThroneDecor(false);
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.skyBuild(); this.buildHouses(); this.buildGateDoors(); this.buildGDoors(); this.buildLuaCell(); this.buildBleeds(); if (this.floorBroken) this.dropThroneDecor(false);
     this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === this.W.spawnPoint.area) || this.altars[0];
@@ -2069,10 +2069,43 @@ Object.assign(CastleScene.prototype, {
   // La simula el anfitrión y viaja en la instantánea ('l'); todos la dibujan. Su látigo mata enemigos débiles cercanos (no élites ni jefes). No recibe daño.
   luaOn() { return !!(this.progress && (this.progress.bosses || []).includes('farero')); },
   luaWeak(e) { const c = EN[e.type]; return !!c && !e.dead && !e.boss && !e.elite && !c.inv && !e.shield && c.hp <= 4; },
+  // Las Cárceles: tres celdas al fondo de la sala y Lúa, la hermana de Zaf, encerrada en la del medio. Se la ve (sentada tras los barrotes) desde que entras;
+  // al caer el Último Farero (que guarda la llave) los barrotes se abren y sale a unirse al grupo.
+  buildLuaCell() {
+    const a = this.W.areas.carc; if (!a || this.W.region !== 'main') return;
+    const fy = (a.y0 + a.rh - 1) * T, top = fy - 5 * T, cellX = [8, 12, 16].map(lx => (a.x0 + lx) * T), cw = 4 * T, g = this.add.graphics().setDepth(-4.8);
+    this.luaCell = { g, a, cx: cellX[1] + cw / 2, cy: fy - 20, open: false, cells: cellX, cw, top, fy };
+    this.drawLuaCell(false);
+    if (!this.luaOn()) {
+      this.luaCell.spr = this.add.image(this.luaCell.cx, fy - 22, 'npc_lua').setScale(3).setDepth(-4.7);
+      this.luaCell.name = this.add.text(this.luaCell.cx, top - 8, 'Lúa', { fontSize: '11px', fontFamily: 'Courier New', color: '#9ad0ff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(-4.6);
+      this.tweens.add({ targets: this.luaCell.spr, y: this.luaCell.spr.y - 3, yoyo: true, repeat: -1, duration: 1400, ease: 'Sine.inOut' }); // respira
+    } else this.luaCell.open = true;
+    if (this.luaCell.open) this.drawLuaCell(true);
+  },
+  drawLuaCell(open) {
+    const C = this.luaCell; if (!C) return; const g = C.g; g.clear();
+    C.cells.forEach((x, i) => {
+      g.fillStyle(0x0e0a10, 1).fillRect(x, C.top, C.cw, C.fy - C.top).fillStyle(0x3a3036, 1).fillRect(x - 6, C.top - 8, C.cw + 12, 8).fillRect(x - 6, C.top, 6, C.fy - C.top).fillRect(x + C.cw, C.top, 6, C.fy - C.top);
+      g.fillStyle(0x4a3a22, 1).fillRect(x + 6, C.fy - 8, C.cw - 12, 8); // paja del suelo
+      const mine = i === 1;
+      if (mine && open) { g.fillStyle(0x5a5a6a, 1).fillRect(x + 4, C.top, 5, C.fy - C.top - 8); return; } // reja abierta: queda un batiente a un lado
+      for (let bx = x + 6; bx < x + C.cw - 2; bx += 13) { g.fillStyle(0x5a5a6a, 1).fillRect(bx, C.top, 5, C.fy - C.top); g.fillStyle(0x9a9aaa, 1).fillRect(bx, C.top, 2, C.fy - C.top); }
+      g.fillStyle(0x4a4a58, 1).fillRect(x, C.top + 28, C.cw, 6).fillRect(x, C.fy - 40, C.cw, 6);
+    });
+  },
+  luaCellStep() { // aviso al acercarse a la celda y apertura cuando cae el Farero
+    const C = this.luaCell; if (!C) return;
+    if (!C.open && this.luaOn()) { C.open = true; this.drawLuaCell(true); SFX.pick(); this.poof(C.cx, C.cy, 8, 0xcfd8ff); }
+    if (C.open || !C.spr) return;
+    const p = this.player;
+    if (Math.abs(p.x - C.cx) < 170 && Math.abs(p.y - C.cy) < 150 && !this.shopOpen && !this.dlg) this.promptTxt.setVisible(true).setPosition(C.cx, C.top - 30).setText('Lúa, la hermana de Zaf, está presa. El Farero tiene la llave.');
+  },
   luaFrame(dt) {
     if (!this.luaOn()) { if (this.lua) { this.lua.spr.destroy(); this.lua.name.destroy(); this.lua = null; } return; }
     if (!this.lua) {
-      const p = this.player, x = p.x - 44, y = p.y;
+      const p = this.player, C = this.luaCell, fromCell = !!(C && C.spr && Math.abs(p.x - C.cx) < 900 && Math.abs(p.y - C.cy) < 500), x = fromCell ? C.cx : p.x - 44, y = fromCell ? C.cy : p.y; // si está la celda cerca, sale de ella
+      if (C && C.spr) { C.spr.destroy(); C.name.destroy(); C.spr = null; }
       this.lua = { x, y, tx: x, ty: y, f: 0, cd: 1, whip: 0, seenWhip: 0, spr: this.add.image(x, y - 6, 'npc_lua').setScale(3).setDepth(5),
         name: this.add.text(x, y - 40, 'Lúa', { fontSize: '11px', fontFamily: 'Courier New', color: '#9ad0ff', stroke: '#000', strokeThickness: 3 }).setOrigin(0.5).setDepth(27) };
     }

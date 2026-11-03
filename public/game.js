@@ -639,6 +639,7 @@ class CastleScene extends Phaser.Scene {
     if (this.gdoorDraw) this.gdoorDraw();
     if (this.skyStep) this.skyStep(time);
     if (this.litPlatStep) this.litPlatStep(time);
+    if (this.luaCellStep) this.luaCellStep();
     if (this.phasedStep) { this.phasedStep(time); this.bellStep(Math.min(0.1, Math.max(0, (time - (this.bellPrevT || time)) / 1000)), time); this.bellPrevT = time; }
     (this.caveLamps || []).forEach(L => { if (!(L.gate && L.gate.open)) lamp(L.x, L.y, L.r, 0.85); }); this.caveEmbers(time); this.mossSpores(time); this.liftStep(0.016);
     (this.gemObjs || []).forEach(o => { if (!this.gemGot.has(o.id) && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, 45, 0.8); });
