@@ -461,7 +461,7 @@ class CastleScene extends Phaser.Scene {
       const dead = (p.bosses || []).includes(id), key = 'seal_' + id;
       if (!dead) this.scenes.delete(key); else if (!this.scenes.has(key)) { this.scenes.add(key); if (!silent) this.sealBreakScene(id); }
     });
-    this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye', 'pound', 'silence', 'mist', 'axe'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
+    this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
   }
   bossGone(b) { const r = World.BOSSES[b.id] && World.BOSSES[b.id].rival; return this.progress.bosses.includes(b.id) || !!(r && this.progress.bosses.includes(r)); }
   gateOk(gt) { return World.gateOpen(gt.boss, this.progress.bosses); }
@@ -493,7 +493,7 @@ class CastleScene extends Phaser.Scene {
   }
   grantAbility(a) {
     this.abil[a] = true; SFX.pick();
-    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.', pound: 'En el aire, mantén abajo para caer en picado: rompe los suelos de raíces y aturde a los enemigos.', silence: 'Tus golpes y flechas destruyen los orbes enemigos.', mist: 'Tu impulso hiere a los enemigos que atraviesa y te cura un poco.', axe: 'Mantén el ataque para cargar un tajo de doble daño (no rompe escudos azules, salvo la guardia del Capitán).' })[a], 6000);
+    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.', pound: 'En el aire, mantén abajo para caer en picado: rompe los suelos de raíces y aturde a los enemigos.', silence: 'Tus golpes y flechas destruyen los orbes enemigos.', mist: 'Tu impulso hiere a los enemigos que atraviesa y te cura un poco.', axe: 'Mantén el ataque para cargar un tajo de doble daño (no rompe escudos azules, salvo la guardia del Capitán).', bone: 'Pulsa el impulso otra vez en el aire para un segundo impulso.', vine: 'Tras un pisotón, tu siguiente salto es un 40 % más alto.', song: 'Agáchate y quédate quieto 1,5 s: una onda aturde a los enemigos cercanos.' })[a], 6000);
     this.wallBroken();
     this.syncRelics(); this.applyProgress(this.progress, true); this.autoSave();
   }

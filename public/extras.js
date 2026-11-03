@@ -396,7 +396,7 @@ Object.assign(CastleScene.prototype, {
     (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
     this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.quests = { anillo: (m.quests && m.quests.anillo) | 0, fin1: (m.quests && m.quests.fin1) | 0 }; this.syncNpcs();
-    if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
+    if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     const oldFruit = this.inv.fruit | 0; this.inv.fruit = 0; this.inv.fang = 0; this.inv.talis = 0; // eran objetos de inventario en partidas antiguas
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0) + oldFruit; this.hp = this.maxHp;
@@ -632,7 +632,7 @@ Object.assign(CastleScene.prototype, {
     if (onFloor && !this.wasFloor && (this.lastVy || 0) > 260) SFX.land();
     if (onFloor && !ui && Math.abs(b.velocity.x) > 40 && (this.stepT = (this.stepT || 0) - dt) <= 0) { this.stepT = 0.3; SFX.step(); }
     this.wasFloor = onFloor; this.lastVy = b.velocity.y;
-    if (onFloor) { this.coyote = 0.1; this.jumpsUsed = 0; this.dashAvail = true; if (!this.nearSpikes() && !this.overSpikes()) { this.lastGround.x = p.x; this.lastGround.y = p.y; } } else this.coyote -= dt;
+    if (onFloor) { this.coyote = 0.1; this.jumpsUsed = 0; this.dashAvail = true; this.boneUsed = false; if (!this.nearSpikes() && !this.overSpikes()) { this.lastGround.x = p.x; this.lastGround.y = p.y; } } else this.coyote -= dt;
     const left = !ui && (held(K_.LEFT, K_.A) || touch.left || pad.left), right = !ui && (held(K_.RIGHT, K_.D) || touch.right || pad.right);
     const crouchHeld = (!ui && (held(K_.DOWN, K_.S) || touch.down || pad.down)) || (!!this.cut && this.cut.phase === 'dive');
     const dir = (right ? 1 : 0) - (left ? 1 : 0);
@@ -665,7 +665,7 @@ Object.assign(CastleScene.prototype, {
     }
     if (!ui && inp.jumpPress && !dropped) this.jumpBuf = 0.1; else if (!dropped) this.jumpBuf -= dt;
     if (this.jumpBuf > 0 && this.stun <= 0 && this.dashT <= 0 && !ui) {
-      if (this.coyote > 0) { b.setVelocityY(P.jump); this.jumpsUsed = 1; this.coyote = 0; this.jumpBuf = 0; SFX.jump(); }
+      if (this.coyote > 0) { b.setVelocityY(this.vineT > 0 ? P.jump * 1.4 : P.jump); if (this.vineT > 0) { this.vineT = 0; this.poof(p.x, p.y + 16, 6, 0x8fd35a); } this.jumpsUsed = 1; this.coyote = 0; this.jumpBuf = 0; SFX.jump(); }
       else if (this.abil.wj && wall && !onFloor) { b.setVelocity(-wall * P.wjX, P.wjY); this.wjLock = P.wjLock; this.facing = -wall; this.jumpsUsed = 1; this.jumpBuf = 0; SFX.jump(); }
       else if (this.abil.dj && this.jumpsUsed < 2) { b.setVelocityY(P.djump); this.jumpsUsed = 2; this.jumpBuf = 0; this.poof(p.x, p.y + 16, 4); SFX.jump(); }
     }
@@ -689,13 +689,13 @@ Object.assign(CastleScene.prototype, {
     // impulso (dash)
     if (!ui && this.abil.dash && inp.dashPress && this.dashCd <= 0 && this.dashAvail && this.stun <= 0 && (!this.crouching || this.canStand())) {
       if (this.crouching) this.setCrouch(false);
-      this.dashT = P.dashTime; this.dashCd = P.dashCd; this.dashDir = dir || this.facing; if (!onFloor) this.dashAvail = false; this.dashHit = new Set(); this.mistHealed = false;
+      this.dashT = P.dashTime; this.dashCd = P.dashCd; this.dashDir = dir || this.facing; if (!onFloor) { if (this.abil.bone && !this.boneUsed) { this.boneUsed = true; this.poof(p.x, p.y, 5, 0xf2ead8); } else this.dashAvail = false; } this.dashHit = new Set(); this.mistHealed = false;
       this.invuln = Math.max(this.invuln, P.dashTime + 0.1); SFX.dash(); this.poof(p.x, p.y, 3, 0x9fd4ff);
     }
     // ataque y objetos
     if (!ui && inp.attackPress && this.atkCd <= 0 && this.dashT <= 0 && this.stun <= 0) this.startAttack();
     if (this.atkT > 0) { this.atkT -= dt; this.doAttack(); } else this.heavy = false;
-    this.mistStep(); this.chargeStep(dt, held(K_.X, K_.J) || !!(touch && touch.attack) || !!(pad && pad.attack), ui);
+    this.vineT -= dt; this.songStep(dt, onFloor, ui); this.mistStep(); this.chargeStep(dt, held(K_.X, K_.J) || !!(touch && touch.attack) || !!(pad && pad.attack), ui);
     if (!ui && inp.usePress) this.useItem();
     if (!ui && inp.cyclePress) this.cycleItem();
     this.updateArrows(dt);
@@ -811,7 +811,7 @@ Object.assign(CastleScene.prototype, {
       info.textContent = (pt ? pt.label + '   ·   ' : '') + (a ? a.name + ' (' + a.id + ')' : 'roca') + (here ? '   ·   estás en: ' + here.name : ''); };
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
-    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
+    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
     box.querySelector('#devSouls').onclick = () => { this.souls += 1000; SFX.pick(); this.toast('+1000 almas (modo desarrollo): ' + this.souls + ' en total'); };
     box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
@@ -966,7 +966,7 @@ Object.assign(CastleScene.prototype, {
     const tg = this.hookFind(dir);
     if (!tg) return;
     this.hook = { tx: tg.tx, ty: tg.ty, hx: tg.tx, hy: tg.ty + b.height / 2 + 1, t: 0, g: this.add.graphics().setDepth(9) };
-    this.hookUsed = true; this.dashAvail = true; SFX.dash(); this.poof(tg.tx, tg.ty + 14, 3, 0xd9b3ff);
+    this.hookUsed = true; this.dashAvail = true; this.boneUsed = false; SFX.dash(); this.poof(tg.tx, tg.ty + 14, 3, 0xd9b3ff);
   },
 
   // ---- armas
@@ -987,6 +987,17 @@ Object.assign(CastleScene.prototype, {
       this.dashHit.add(e.id); this.hitEnemy(e, this.dashDir, 1, '');
       if (!this.mistHealed && this.hp < this.maxHp) { this.mistHealed = true; this.hp = Math.min(this.maxHp, this.hp + 0.5); this.poof(p.x, p.y - 10, 4, 0xc8b0ff); }
     });
+  },
+  songStep(dt, onFloor, ui) { // Canto de la Hondura: agachado y quieto 1,5 s, una onda aturde (2,5 s) a los enemigos cercanos; se repite cada 10 s
+    this.songCd = (this.songCd || 0) - dt;
+    const p = this.player, still = this.crouching && onFloor && !ui && !this.dead && Math.abs(p.body.velocity.x) < 8;
+    if (!this.abil.song || !still) { this.songT = 0; return; }
+    this.songT = (this.songT || 0) + dt;
+    if (this.songT < 1.5 || this.songCd > 0) return;
+    this.songT = 0; this.songCd = 10; SFX.boss(); this.cameras.main.shake(200, 0.004);
+    for (let i = 0; i < 12; i++) { const an = i * Math.PI / 6; this.poof(p.x + Math.cos(an) * 60, p.y + Math.sin(an) * 40, 1, 0xc8b0ff); }
+    this.floatText(p.x, p.y - 44, '¡Canto!', '#c8b0ff');
+    this.ents.forEach(e => { if (e.dead || e.boss || e.elite || e.cfg.inv) return; const [ex, ey] = this.entBox(e); if (Math.hypot(ex - p.x, ey - p.y) > 170) return; if (this.isHost) this.damageEnt(e, 0, 1, socket.id, 'song'); else socket.emit('hit', { id: e.id, dmg: 1, dir: 1, el: 'song' }); });
   },
   silenceHit(x, y, w, h) { // Palabra de Silencio: tus golpes y flechas apagan los orbes enemigos
     if (!this.abil.silence) return;
@@ -1062,7 +1073,7 @@ Object.assign(CastleScene.prototype, {
   poundLand() { // onda del Pisotón: daño en 88 px, aturde a los que caminan y rompe el suelo de raíces bajo los pies
     if (this.cut) this.endCut();
     this.pounding = false; this.poundCd = 0.5; const p = this.player, b = p.body; this.hitBreakables(p.x, p.y + 24, 200, 70); b.setMaxVelocityY(P.maxFall); this.invuln = Math.max(this.invuln, 0.2);
-    this.cameras.main.shake(160, 0.008); SFX.boss(); this.poof(p.x, p.y + 20, 10, 0x8fd35a);
+    this.cameras.main.shake(160, 0.008); SFX.boss(); this.poof(p.x, p.y + 20, 10, 0x8fd35a); if (this.abil.vine) { this.vineT = 1.6; this.floatText(p.x, p.y - 44, '¡Raíces vivas!', '#8fd35a'); }
     const fy = b.bottom, dmg = 2 + this.dmgBonus();
     this.ents.forEach(en => {
       if (en.dead || (en.boss && !en.aggro) || en.cfg.inv) return;
@@ -1131,6 +1142,7 @@ Object.assign(CastleScene.prototype, {
     if (e.cfg.inv) return; // invulnerables
     if (e.down > 0) { if (el === 'pound') { e.down = 0; e.rez = true; e.hp = 0; this.killEnt(e, by); } return; } // el prisionero caído solo muere aplastado
     if (e.melt) return; // la Madre Moho diluida es intocable
+    if (el === 'song') { if (!e.boss && !e.elite) { e.stun = 2.5; e.spr.body.setVelocity(0, 0); e.flash = 0.2; } return; } // el Canto de la Hondura solo aturde, sin daño
     if (el === 'axe') { if (e.type === 'capitan' && e.shield) { e.shield = false; e.act = null; e.cd = 1.4; e.tele = false; e.spr.body.setVelocityX(0); this.floatText(e.spr.x, e.spr.y - 70, '¡Guardia rota!', '#ffb36a'); this.cameras.main.shake(160, 0.006); } el = ''; } // el tajo del Hachazo solo rompe la guardia del Capitán
     if (el === 'pound' && e.cfg.shielded && !e.boss) { e.shield = false; e.shT = 2.2; } // el Pisotón rompe el escudo azul un rato
     if (e.type === 'alcaide' && e.shield) return; // hundido bajo el suelo
