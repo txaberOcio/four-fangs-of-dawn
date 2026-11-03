@@ -4,7 +4,7 @@
 (function (root) {
   'use strict';
   const T = 32, CW = 26, CH = 18, COLS = 22, ROWS = 16;
-  const REGIONS = { main: { cols: COLS, rows: ROWS, entry: 'vest' }, z3: { cols: 40, rows: 12, entry: 'zag' } }; // cada región es un mundo aparte (su propio mapa de tiles)
+  const REGIONS = { main: { cols: COLS, rows: ROWS, entry: 'vest' }, z3: { cols: 48, rows: 12, entry: 'zag' } }; // cada región es un mundo aparte (su propio mapa de tiles)
   const PHYS = {
     gravity: 900, speed: 165, jump: -470, djump: -420,
     dashSpeed: 560, dashTime: 0.18, dashCd: 0.5, // Impulso: unos 100 px (antes 0.25 s = 140 px)
@@ -29,6 +29,7 @@
     aurora: { name: 'Aurora, Dama del Alba', hp: 34, drop: 'wings', rival: 'vesper', reward: 'Alas del Alba: mantén saltar en el aire para planear' },
     // Calabozos Profundos: el Alcaide guarda el Pisotón de Raíces y la Madre Moho cierra la zona
     alcaide: { name: 'Alcaide Verdín', hp: 36, drop: 'pound', reward: 'Pisotón de Raíces: en el aire, mantén abajo para caer en picado y romper los suelos de raíces' },
+    anhelia: { name: 'Anhelia, la Primera Sed', hp: 180, drop: null },
     madre: { name: 'La Madre Moho', hp: 40, drop: 'vine', reward: 'Raíces Vivas: tras un pisotón, tu siguiente salto es más alto' },
     vesper: { name: 'Vesper, Señor del Ocaso', hp: 34, drop: 'eye', rival: 'aurora', reward: 'Ojo de la Noche: ves los secretos tras los muros agrietados y tu luz crece' },
     // Zona 2: el Capitán da la llave de la puerta de los funcionarios; el Farero y la Subastadora guardan las historias de Zaf y Malak; los Regentes cierran la Parte 2
@@ -283,7 +284,13 @@
     // La Última Esquina (Hora Quebrada): la calle gira; todo se mezcla. Al final, el umbral de la Morada
     area('esq1', 'La Última Esquina: Callejón de las Cunas', Z3Z, 32, 8, 2, 1, [['cycle'], ['open'], ['facade', 3, 10, 'adobe', 'R'], ['stairs', 16, 16, 'R', 5], ['B', 21, 12, 8, 5], ['stairs', 34, 16, 'L', 5], ['facade', 38, 12, 'timber', 'L'],
       ['cry', 25, 10], ['E', 'kn', 12, 16], ['E', 'sk', 30, 16], ['E', 'gh', 26, 6], ['E', 'sk', 46, 16], ['E', 'bat', 20, 5]]);
-    area('esq2', 'Umbral de la Morada', Z3Z, 34, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]); // final provisional de la calle: más allá irá la Morada de Anhelia
+    area('esq2', 'Umbral de la Morada', Z3Z, 34, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]);
+    // La Morada de Anhelia (el 20 % final): una casa, no un castillo. Cuatro cunas, cuatro retratos de altura y una mesa para seis; por dentro es el cuerpo de Anhelia y la sala final es su boca
+    area('mor1', 'Morada: Zaguán de las Cunas', Z3Z, 35, 8, 2, 1, [['indoor'], ['calm'], ['altar', 6, 16], ['deco', 'cradle', 14], ['deco', 'cradle', 22], ['deco', 'cradle', 30], ['deco', 'cradle', 38], ['bell', 46, 16]]);
+    area('mor2', 'Morada: Galería de los Cuatro Retratos', Z3Z, 37, 8, 2, 1, [['indoor'], ['deco', 'portrait', 6, 'red'], ['deco', 'portrait', 18, 'blue'], ['deco', 'portrait', 30, 'green'], ['deco', 'portrait', 42, 'purple'],
+      ['pit', 10, 40], ['B', 3, 15, 7, 2], ['PB', 10, 15, 8, 2, 'NAD'], ['B', 18, 15, 6, 2], ['PB', 24, 15, 8, 2, 'NAO'], ['B', 32, 15, 8, 2], ['stairs', 2, 16, 'R', 2], ['stairs', 49, 16, 'L', 2], ['E', 'gh', 14, 9], ['E', 'gh', 28, 9], ['E', 'bat', 36, 6]]);
+    area('mor3', 'Morada: Pozo de la Copa', Z3Z, 39, 8, 1, 2, [['indoor'], ['bell', 20, 16], ['B', 1, 16, 9, 2], ['E', 'gh', 16, 24], ['E', 'bat', 8, 28]]);
+    area('mor4', 'Morada: Sala de la Primera Sed', Z3Z, 37, 10, 3, 2, [['indoor'], ['deco', 'table', 30], ['boss', 'anhelia', 36, 34]]);
   });
 
   const LINKS = [];
@@ -292,7 +299,7 @@
   // S(arriba, abajo, x, tamaño): hueco vertical; x es local al área de arriba
   const S = (a, b, x = 11, size = 4, o = {}) => LINKS.push({ t: 'S', a, b, x, size, region: CUR, ...o });
   inRegion('z3', () => {
-    E('zag', 'plz0', 14); E('plz0', 'cu1', 14); E('cu1', 'cu2', 14); E('cu2', 'cu3', 14); E('cu3', 'cot1', 14); E('cot1', 'cot2', 14); E('cot2', 'plz1', 14); E('plz1', 'pte1', 14); E('pte1', 'pte2', 14); E('pte2', 'pal1', 14); E('pal1', 'pal2', 14); E('pal2', 'mue1', 14); E('mue1', 'mue2', 14); E('mue2', 'esq1', 14); E('esq1', 'esq2', 14); // la calle es continua: pasos casi tan altos como la sala
+    E('zag', 'plz0', 14); E('plz0', 'cu1', 14); E('cu1', 'cu2', 14); E('cu2', 'cu3', 14); E('cu3', 'cot1', 14); E('cot1', 'cot2', 14); E('cot2', 'plz1', 14); E('plz1', 'pte1', 14); E('pte1', 'pte2', 14); E('pte2', 'pal1', 14); E('pal1', 'pal2', 14); E('pal2', 'mue1', 14); E('mue1', 'mue2', 14); E('mue2', 'esq1', 14); E('esq1', 'esq2', 14); E('esq2', 'mor1', 6); E('mor1', 'mor2', 8); E('mor2', 'mor3', 8); S('mor3', 'mor4', 11, 4); // la calle es continua: pasos casi tan altos como la sala
     S('cb1', 'cb0'); S('cb2', 'cb1'); S('cbT', 'cb2'); E('cbT', 'azotea', 3, { lift: 16 }); // a la torre se entra por la puerta de su base
   });
   E('cripta', 'bodega'); E('bodega', 'vest'); E('vest', 'salon'); E('salon', 'corr'); E('corr', 'foso');
@@ -451,6 +458,8 @@
           // ['tower', x, ancho]: torre-puerta sobre la calle: base sólida con un arco de 5 casillas por el que pasa la calle (los muros de ladrillo y el fondo quedan a la vista)
           case 'tower': { const w = op[2]; for (let y = 1; y <= 11; y++) for (let x = op[1]; x < op[1] + w; x++) setF(a, x, y, K.SOLID); for (let y = 12; y < a.rh - 1; y++) for (let x = 0; x < 3; x++) { setF(a, op[1] + x, y, K.SOLID); setF(a, op[1] + w - 1 - x, y, K.SOLID); } a.keepbg = [op[1], op[1] + w - 1]; world.props.push({ kind: 'tower', area: a.id, gx: a.x0 + op[1], w }); break; }
           case 'house': case 'crate': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); world.props.push({ kind: op[0], area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], h: op[4] }); break;
+          // ['deco', 'cradle'|'portrait'|'table', x, color]: decorado sin colisión de la Morada (cunas, retratos de los cuatro y la mesa para seis)
+          case 'deco': world.props.push({ kind: op[1], area: a.id, gx: a.x0 + op[2], gy: a.y0 + a.rh - 1, color: op[3] }); break;
           case 'bell': world.bells.push({ id: sid('b'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T }); break;
           case 'B': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); break;
           case 'K': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.CRACK);

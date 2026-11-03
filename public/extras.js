@@ -61,7 +61,7 @@ const GATE_BY = { bishop: 'al Obispo Caído', clock: 'al Guardián del Reloj', c
 const MOSS_SLOW = 0.85, MOSS_FIRE = 1.2; // Calabozos Profundos: el suelo de musgo frena al andar y sus enemigos reciben un 20 % más de daño de fuego
 const usableItem = it => !it.perm && it.id !== 'amu';
 // Dos monedas: las almas (◆) se ganan matando enemigos y compran objetos corrientes; las gemas (✦) se encuentran por el mapa y compran mejoras permanentes y objetos importantes.
-const GEMS_BOSS = { garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4, capitan: 4, farero: 5, subastadora: 6, chambelan: 4, cadalso: 5, vigilia: 8 }; // gemas que suelta cada jefe la primera vez
+const GEMS_BOSS = { anhelia: 12, garg: 1, bishop: 2, clock: 2, archon: 4, reina: 2, conde: 3, aurora: 3, vesper: 3, alcaide: 3, madre: 4, capitan: 4, farero: 5, subastadora: 6, chambelan: 4, cadalso: 5, vigilia: 8 }; // gemas que suelta cada jefe la primera vez
 // Mercancía de cada mercader (clave = sala), en el orden en que se muestra.
 // [objeto, jefes derrotados necesarios, vampiro que lo tiene desde el principio (opcional)]
 // Para añadir un mercader o ampliar el stock basta con tocar esta tabla.
@@ -672,7 +672,7 @@ Object.assign(CastleScene.prototype, {
     if (this.jumpBuf > 0 && this.stun <= 0 && this.dashT <= 0 && !ui) {
       if (this.coyote > 0) { b.setVelocityY(this.vineT > 0 ? P.jump * 1.4 : P.jump); if (this.vineT > 0) { this.vineT = 0; this.poof(p.x, p.y + 16, 6, 0x8fd35a); } this.jumpsUsed = 1; this.coyote = 0; this.jumpBuf = 0; SFX.jump(); }
       else if (this.abil.wj && wall && !onFloor) { b.setVelocity(-wall * P.wjX, P.wjY); this.wjLock = P.wjLock; this.facing = -wall; this.jumpsUsed = 1; this.jumpBuf = 0; SFX.jump(); }
-      else if (this.abil.dj && this.jumpsUsed < 2) { b.setVelocityY(P.djump); this.jumpsUsed = 2; this.jumpBuf = 0; this.poof(p.x, p.y + 16, 4); SFX.jump(); }
+      else if (this.abil.dj && !(this.stolenT > 0) && this.jumpsUsed < 2) { b.setVelocityY(P.djump); this.jumpsUsed = 2; this.jumpBuf = 0; this.poof(p.x, p.y + 16, 4); SFX.jump(); }
     }
     if (!held(K_.UP, K_.W, K_.SPACE, K_.Z) && !touch.jump && !pad.jump && b.velocity.y < -200 && this.dashT <= 0 && this.stun <= 0) b.setVelocityY(b.velocity.y * 0.55);
     if (this.abil.wj && wall && !onFloor && b.velocity.y > P.slide && dir === wall) b.setVelocityY(P.slide);
@@ -693,7 +693,7 @@ Object.assign(CastleScene.prototype, {
 
     this.stepUp(dir, onFloor); // en la Zona 3: los escalones de 1 casilla se suben andando
     // impulso (dash)
-    if (!ui && this.abil.dash && inp.dashPress && this.dashCd <= 0 && this.dashAvail && this.stun <= 0 && (!this.crouching || this.canStand())) {
+    if (!ui && this.abil.dash && !(this.stolenT > 0) && inp.dashPress && this.dashCd <= 0 && this.dashAvail && this.stun <= 0 && (!this.crouching || this.canStand())) {
       if (this.crouching) this.setCrouch(false);
       this.dashT = P.dashTime; this.dashCd = P.dashCd; this.dashDir = dir || this.facing; if (!onFloor) { if (this.abil.bone && !this.boneUsed) { this.boneUsed = true; this.poof(p.x, p.y, 5, 0xf2ead8); } else this.dashAvail = false; } this.dashHit = new Set(); this.mistHealed = false;
       this.invuln = Math.max(this.invuln, P.dashTime + 0.1); SFX.dash(); this.poof(p.x, p.y, 3, 0x9fd4ff);
@@ -701,7 +701,7 @@ Object.assign(CastleScene.prototype, {
     // ataque y objetos
     if (!ui && inp.attackPress && this.atkCd <= 0 && this.dashT <= 0 && this.stun <= 0) this.startAttack();
     if (this.atkT > 0) { this.atkT -= dt; this.doAttack(); } else this.heavy = false;
-    this.vineT -= dt; this.songStep(dt, onFloor, ui); this.mistStep(); this.chargeStep(dt, held(K_.X, K_.J) || !!(touch && touch.attack) || !!(pad && pad.attack), ui);
+    this.vineT -= dt; this.stolenT -= dt; this.songStep(dt, onFloor, ui); this.mistStep(); this.chargeStep(dt, held(K_.X, K_.J) || !!(touch && touch.attack) || !!(pad && pad.attack), ui);
     if (!ui && inp.usePress) this.useItem();
     if (!ui && inp.cyclePress) this.cycleItem();
     this.updateArrows(dt);
@@ -1234,7 +1234,7 @@ Object.assign(CastleScene.prototype, {
       if (this.hurtProjs.has(id)) return;
       const c = PR[pr.type]; if (c.slow) { if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1])) this.slowT = 0.6; return; }
       if (!c.dmg) return;
-      if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { if (!c.linger) this.hurtProjs.add(id); this.hurt(c.dmg + (this.pas.projPlus || 0), pr.spr.x); }
+      if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { if (!c.linger) this.hurtProjs.add(id); this.hurt(c.dmg + (this.pas.projPlus || 0), pr.spr.x); if (pr.type === 'siphon') { this.stolenT = 4; this.floatText(p.x, p.y - 44, '¡Te roba el impulso!', '#c8b0ff'); } }
     });
     if (this.hurtProjs.size > 200) this.hurtProjs.clear();
   },
@@ -1687,6 +1687,14 @@ Object.assign(CastleScene.prototype, {
     });
     // casas y cajas: sus casillas sólidas se ocultan y se dibuja el edificio encima
     const pg = this.add.graphics().setDepth(-4.9); this.propG = pg;
+    // decorado de la Morada: cunas vacías, los cuatro retratos y la mesa para seis (sin colisión)
+    (w.props || []).filter(p => p.kind === 'cradle' || p.kind === 'portrait' || p.kind === 'table').forEach(p => {
+      const x = (p.gx) * T, fy = p.gy * T;
+      if (p.kind === 'cradle') { pg.fillStyle(0x5a3d26, 1).fillRect(x - 22, fy - 26, 44, 8).fillRect(x - 24, fy - 44, 6, 44).fillRect(x + 18, fy - 44, 6, 44).fillStyle(0x7a5430, 1).fillRect(x - 20, fy - 40, 40, 14).fillStyle(0xcdbf9e, 1).fillRect(x - 17, fy - 36, 34, 8).fillStyle(0x3a2616, 1).fillRect(x - 28, fy - 4, 56, 4); return; }
+      if (p.kind === 'portrait') { const col = { red: 0xd84a4a, blue: 0x4a8ae8, green: 0x4ac87a, purple: 0xa86ae8 }[p.color] || 0xcccccc;
+        pg.fillStyle(0x3a2a1c, 1).fillRect(x - 34, fy - 190, 68, 96).fillStyle(0xc8a05a, 1).fillRect(x - 30, fy - 186, 60, 88).fillStyle(0x16101a, 1).fillRect(x - 26, fy - 182, 52, 80).fillStyle(col, 0.75).fillCircle(x, fy - 150, 14).fillRect(x - 20, fy - 134, 40, 34); return; }
+      pg.fillStyle(0x4a3220, 1).fillRect(x - 60, fy - 40, 120, 8).fillRect(x - 54, fy - 40, 8, 40).fillRect(x + 46, fy - 40, 8, 40); for (let i = 0; i < 6; i++) pg.fillStyle(i === 5 ? 0x2a1c10 : 0xcdbf9e, 1).fillRect(x - 54 + i * 19, fy - 50, 12, 10); // mesa para seis; la sexta silla, vacía
+    });
     (w.props || []).filter(p => open.some(a => a.id === p.area)).forEach(p => {
       if (p.kind === 'stairs' || p.kind === 'tower') return; // de ladrillo: se ven sus casillas
       if (p.kind === 'facade') { this.drawFacade(pg, p); return; }

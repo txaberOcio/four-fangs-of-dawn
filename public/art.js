@@ -160,6 +160,9 @@ const MAPS = {
   cadalso: [ // Cadalso, el Verdugo Mudo: capucha con la boca cosida, torso desnudo cruzado de cadenas y hacha enorme
     '.....KKKKKK..XX.', '....KKKKKKKK.XXX', '...KKKKKKKKKKXXX', '...KKKEKKEKKK.XR', '...KKKKKKKKKK..R', '...KKKTTTTKKK..R', '.KKKKKKKKKKKKK.R', 'KSSSSSSSSSSSSSKR',
     'KSSKIISssSIIKSKR', 'KSSKSIIssIISKSKR', 'KSSKSSIIIISSKSKR', '.KKAAAAAAAAAAKKR', '..KAAAAAAAAAAK.R', '..KAAAAAAAAAAK.R', '...KKK....KKK..R', '..KKKK....KKKK.R'],
+  anhelia: [ // Anhelia, la Primera Sed: figura enorme de vestido de raíces de sangre seca, sin ojos y con la boca abierta con cuatro huecos sangrantes
+    '.....RRRRRR.....', '...RRRRRRRRRR...', '..RRSSSSSSSSRR..', '..RSSSSSSSSSSR..', '..RSSSSSSSSSSR..', '..RSSSMMMMSSSR..', '..RSMBMBMBMBSR..', '..RSSMMMMMMSSR..',
+    '...RSSSSSSSSR...', '..RRRSSSSSSRRR..', '.RRRRRRRRRRRRRR.', 'RRrRRRRRRRRRRrRR', 'RRrRRRrRRrRRRrRR', 'RrRRRRRrRRRRRRrR', 'RRRRrRRRRRRrRRRR', 'RRrRRRRRRRRRRrRR'],
   vigilia: [ // Vigilia, la Cantora: pelo de algas, boca cosida con hilo de plata y vestido de olas con espuma; flota
     '....HHHHHHHH....', '...HHHHHHHHHH...', '..HHHSSSSSSHHH..', '..HHSSSSSSSSHH..', '..HHSSESSESSHH..', '..HHSSSSSSSSHH..', '..HHSSTtTtSSHH..', '..HHHSSSSSSHHH..',
     '..HHHHSSSSHHHH..', '.HHGGGGGGGGGGHH.', 'HHGGgGGGGGGgGGHH', 'HGGGGGWGGWGGGGGH', '.GGgGGGGGGGGgGG.', '..GGGGgGGgGGGG..', '...WGGGGGGGGW...', '....WW.WW.WW....'],
@@ -202,6 +205,7 @@ const MAP_PAL = {
   subastadora: { W: '#d8d0e8', S: '#e8d4c4', E: '#ffd23b', M: '#b02a4a', Y: '#d8b040', G: '#2a6a4a', R: '#6a4a2a', J: '#6dffd0', j: '#e0fff4', D: '#0e1a14' },
   chambelan: { K: '#1a1424', F: '#e4dcd0', f: '#b8aea4', G: '#d8b040', W: '#f0ecf4', P: '#6a3a8a', Y: '#ffd23b' },
   cadalso: { K: '#1c1418', S: '#a8887a', s: '#6a4a44', E: '#ff5a3a', T: '#d8d0b8', I: '#9a9aa8', A: '#5a3a28', X: '#c9ced8', R: '#5a3a28' },
+  anhelia: { R: '#6a1e28', r: '#3a0e14', S: '#e0cfc8', M: '#140808', B: '#d8283a' },
   vigilia: { H: '#1a4a5a', S: '#dcd8f0', E: '#ffffff', T: '#e8f0ff', t: '#9aa8d0', G: '#2a6a8a', g: '#6ac0d8', W: '#e8f8ff' },
   altar: { Y: '#ffd23b', O: '#ff7a1c', W: '#b8bdc9', D: '#6a6f7e' },
   crystal: { C: '#ff5b7a', W: '#ffd0da', D: '#a01a3c' },
@@ -502,7 +506,7 @@ function buildArt(scene) {
   ['limo', 'preso', 'raiz', 'esporas', 'hongo', 'carcelero', 'driade', 'magma'].forEach(n => makeMap(n, n, MAP_PAL[n], 1));
   makeMap('npc_prisionero_musgo', 'npcMoss', madPal('#3f7a3a', '#3a4a36'), 1);
   ['archon', 'reina', 'aurora', 'vesper'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // dibujos propios de los jefes nuevos
-  ['capitan', 'farero', 'subastadora', 'chambelan', 'cadalso', 'vigilia'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // jefes de la Zona 2 (16x16, como los que sustituyen): la textura se llama igual que el jefe
+  ['capitan', 'farero', 'subastadora', 'chambelan', 'cadalso', 'vigilia', 'anhelia'].forEach(n => makeMap(n, n, MAP_PAL[n], 1)); // jefes de la Zona 2 (16x16, como los que sustituyen): la textura se llama igual que el jefe
   // fotograma de reposo: el torso baja un píxel (respiración)
   for (const col in HERO_COLORS) {
     const src = tx.get('hero_' + col).getSourceImage(); const c = tx.createCanvas('hero_' + col + '_i', 12, 14); const g = c.getContext('2d');

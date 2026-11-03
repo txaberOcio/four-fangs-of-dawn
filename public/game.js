@@ -153,6 +153,7 @@ const EN = {
   subastadora: { tex: 'subastadora', sc: 4, body: [12, 14], hp: 96, dmg: 2, hb: [50, 56], kind: 'boss' },
   chambelan: { tex: 'chambelan', sc: 4, body: [10, 14], hp: 72, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   cadalso: { tex: 'cadalso', sc: 4, body: [12, 15], hp: 72, dmg: 2, hb: [52, 60], kind: 'boss' },
+  anhelia: { tex: 'anhelia', sc: 6, body: [14, 15], hp: 180, dmg: 2, hb: [78, 90], kind: 'boss', fearsome: true }, // jefa final de la Zona 3: cuatro actos, uno por colmillo
   vigilia: { tex: 'vigilia', sc: 4, body: [10, 14], hp: 80, dmg: 2, hb: [40, 56], kind: 'boss', fly: true },
   // enemigos invulnerables: solo se esquivan
   saw: { tex: 'saw', sc: 3, body: [12, 12], hp: 9999, dmg: 2, hb: [34, 34], kind: 'saw', inv: true },
@@ -171,6 +172,7 @@ const SILENCE_TYPES = ['orb', 'thorn']; // proyectiles que destruye la Palabra d
 const POISON = ['toxin', 'cloud', 'spore']; // veneno y esporas (Alcaide, Madre Moho, hongos): inflamables
 const PR = {
   orb: { tex: 'orb', sc: 2, hb: [14, 14], dmg: 1 },
+  siphon: { tex: 'orb', sc: 3, hb: [22, 22], dmg: 1, tint: 0xc8b0ff }, // robo de almas de Anhelia: quita el impulso y el doble salto 4 s
   shock: { tex: 'shock', sc: 2, hb: [30, 14], dmg: 1 },
   gear: { tex: 'gear', sc: 2.5, hb: [26, 26], dmg: 1 },
   mark: { tex: 'ring', sc: 3, hb: [0, 0], dmg: 0 },
@@ -435,6 +437,9 @@ class CastleScene extends Phaser.Scene {
     on('hit', h => { if (!this.isHost) return; const e = this.ents.get(h.id); if (e && e.sim) this.damageEnt(e, h.dmg, h.dir, h.from, h.el); });
     on('progress', p => this.applyProgress(p, false));
     on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(gx, gy); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
+    on('ending', () => { // Anhelia cae: final de la Parte 3 (la tercera vía)
+      this.centerTxt.setText('ANHELIA HA CAÍDO\n\n«No me odiéis: tampoco yo elegí tener sed.»\n\nLos cuatro colmillos no se la beben ni se la devuelven: la reparten.\nAurora y Vesper, Cor, Zaf, Malak y Matis:\nseis voces para un solo alba.\n\nAmanece, por primera vez, sin que nadie pague.\n\nFIN DE LA PARTE 3'); SFX.pick(); this.won = true; this.cameras.main.shake(600, 0.01);
+    });
     on('victory', v => { // el Conde cae, pero el castillo continúa: se despide y desaparece
       this.centerTxt.setText('¡EL CONDE HA CAÍDO!\n\n«Por fin... los sellos están rotos, y yo con ellos.\nAurora y Vesper os esperan más arriba,\nen las torres del alba.\nSubid, colmillos... y cobrad lo que os deben.»\n\nEl Conde se deshace en ceniza.\n\nTiempo: ' + Math.floor(v.time / 60) + 'm ' + (v.time % 60) + 's');
       SFX.pick(); this.won = true; this.cameras.main.shake(500, 0.008);
@@ -1056,7 +1061,7 @@ class CastleScene extends Phaser.Scene {
     const gear = () => this.spawnProj('gear', Phaser.Math.Between(a.x0 + 20, a.x1 - 20), a.y0 + 12, 0, 240, Math.max(3.5, (a.floor - a.y0 - 12) / 240 + 0.4), 0); // en salas altas (Dos Tronos) la vida del proyectil alcanza hasta el suelo
     const ring = (n, sp, off) => { for (let i = 0; i < n; i++) { const an = off + i * Math.PI * 2 / n, pr = this.spawnProj('spore', x, y - 10, Math.cos(an) * sp, Math.sin(an) * sp, 4); pr.brake = 1.0; } };
     const sporeFan = (n0) => { const list = tgs.length >= 2 ? tgs.slice(0, 4) : [tg], n = Math.max(2, n0 - (list.length - 1)); list.forEach(tt => { const base = Math.atan2(tt.y - y, tt.x - x) - 0.25; for (let i = 0; i < n; i++) { const an = base + (i - (n - 1) / 2) * 0.3, pr = this.spawnProj('spore', x, y - 30, Math.cos(an) * 260, Math.sin(an) * 260, 4.5); pr.brake = 0.75; pr.homing = 38; } }); }; // salen hacia el jugador y se paran lejos del jefe: así no arden junto a él
-    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'reina' || e.type === 'capitan' ? 'sk' : e.type === 'alcaide' ? 'shroom' : e.type === 'madre' ? (i < 2 ? 'shroom' : 'slug') : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
+    const summon = (n) => { for (let i = 0; i < n; i++) { const id = 's' + (this.nid++); const bx = Phaser.Math.Between(a.x0 + 60, a.x1 - 60), by = a.y0 + 120; this.createEnt(id, e.type === 'anhelia' ? 'gh' : e.type === 'reina' || e.type === 'capitan' ? 'sk' : e.type === 'alcaide' ? 'shroom' : e.type === 'madre' ? (i < 2 ? 'shroom' : 'slug') : 'bat', bx, by, true, { room: e.room, summoned: true, awake: true }); } };
 
     if (!e.act) {
       e.cd -= dt;
@@ -1085,6 +1090,10 @@ class CastleScene extends Phaser.Scene {
         if (e.type === 'subastadora') { const o = ['gavel', 'coins', 'tele', 'pillars'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 2 ? 'summon' : pick(o); e.last = e.act; }
         if (e.type === 'chambelan') { const o = ['forms', 'ambush', 'tele', 'pillars'].filter(x => x !== e.last); e.act = e.hp < e.max * 0.5 && e.summonCd <= 0 ? 'summon' : pick(o); e.last = e.act; }
         if (e.type === 'cadalso') { const o = ['axe', 'stomp', 'charge', rage ? 'leap' : 'axe'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
+        if (e.type === 'anhelia') { // cuatro actos: sed de sangre (Cor), ceguera (Zaf), robo de almas (Malak) y sombra de la sombra (Matis)
+          const f = e.hp / e.max, o = (f > 0.75 ? ['drain', 'fan', 'pillars', 'tele'] : f > 0.5 ? ['charge', 'beam', 'fog', 'fan'] : f > 0.25 ? ['siphon', 'tele', 'pillars', 'rain'] : ['ambush', 'fan', 'pillars', 'siphon']).filter(x => x !== e.last);
+          e.act = f <= 0.25 && e.summonCd <= 0 && [...this.ents.values()].filter(q => q.summoned).length < 3 ? 'summon' : pick(o); e.last = e.act;
+        }
         if (e.type === 'vigilia') { const o = ['eyes', 'tele', 'dive', 'rays'].filter(x => x !== e.last); e.act = pick(o); e.last = e.act; }
         if (e.type === 'bishop') { e.summonCd -= 0; e.act = e.hp < e.max * 0.6 && e.summonCd <= 0 ? 'summon' : pick(['fan', 'tele', 'fan']); }
         if (e.type === 'conde') {
@@ -1309,6 +1318,19 @@ class CastleScene extends Phaser.Scene {
         if (e.t < 0.6) e.tele = true;
         else if (!e.fired) { e.tele = false; e.fired = true; const n = rage ? 5 : 3; for (let i = 0; i < n; i++) { const pr = this.spawnProj('orb', x + (i - (n - 1) / 2) * 40, y - 10, 0, 0, 4.5); pr.homing = 110; } }
         else if (e.t > 1.3) { e.fired = false; done(1.0); }
+        break;
+      case 'drain': // Anhelia, acto de Cor: bebe para curarse; si le haces bastante daño mientras bebe, se interrumpe
+        b.setVelocity(0, 0);
+        if (e.t < 0.8) { e.tele = true; e.hp0 = e.hp; }
+        else { e.tele = (this.simT % 0.5) < 0.25; e.hp = Math.min(e.max, e.hp + e.max * 0.03 * dt * Math.max(1, tgs.length)); e.hp0 = Math.max(e.hp0, e.hp);
+          if (e.hp <= e.hp0 - e.max * 0.035) { e.tele = false; this.floatText(x, y - 90, '¡Interrumpida!', '#ffb36a'); this.cameras.main.shake(200, 0.008); done(1.4); }
+          else if (e.t > 4.4) { e.tele = false; done(1.0); } }
+        break;
+      case 'siphon': // Anhelia, acto de Malak: tres orbes que roban el impulso y el doble salto durante 4 s
+        b.setVelocity(0, 0);
+        if (e.t < 0.8) e.tele = true;
+        else if (!e.fired) { e.tele = false; e.fired = true; (tgs.length ? tgs.slice(0, 4) : [tg]).forEach(tt => { const base = Math.atan2(tt.y - y, tt.x - x); for (let i = -1; i <= 1; i++) { const an = base + i * 0.3; this.spawnProj('siphon', x, y - 20, Math.cos(an) * 230, Math.sin(an) * 230, 3.5); } }); }
+        else if (e.t > 1.6) { e.fired = false; done(0.9); }
         break;
       case 'order': // Capitán: ¡cierren filas! llama a dos soldados
         b.setVelocity(0, 0); e.tele = e.t < 0.8;

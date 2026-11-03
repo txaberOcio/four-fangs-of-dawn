@@ -12,7 +12,7 @@ const DATA_FILE = process.env.DATA_FILE || (PACKED ? path.join(process.env.APPDA
 const COLORS = ['red', 'blue', 'green', 'purple'];
 const ABILITIES = ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe', 'bone', 'vine', 'song'];
 const ABIL_BOSS = { dash: 'garg', dj: 'bishop', wj: 'clock', wings: 'aurora', eye: 'vesper', pound: 'alcaide', silence: 'archon', mist: 'conde', axe: 'cadalso', bone: 'reina', vine: 'madre', song: 'vigilia' }; // habilidad -> jefe que la da
-const BOSS_IDS = ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde', 'aurora', 'vesper', 'alcaide', 'madre', 'chambelan', 'capitan', 'farero', 'subastadora', 'cadalso', 'vigilia'];
+const BOSS_IDS = ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde', 'aurora', 'vesper', 'alcaide', 'madre', 'chambelan', 'capitan', 'farero', 'subastadora', 'cadalso', 'vigilia', 'anhelia'];
 const TALK_ID = /^[A-Z]\d{2}$/; // ids de las charlas (A01, B14...)
 const RIVAL = { aurora: 'vesper', vesper: 'aurora' }; // solo se puede derrotar a uno de los dos
 const MAX_PLAYERS = 4;
@@ -337,6 +337,7 @@ io.on('connection', socket => {
     r.progress.bosses.push(id);
     io.to(r.code).emit('progress', r.progress);
     if (id === 'conde') victory(r);
+    if (id === 'anhelia') io.to(r.code).emit('ending', { bosses: r.progress.bosses.length }); // final de la Parte 3
   });
   // Charla o pensamiento que salta una sola vez por partida: el servidor evita duplicados y la reenvía a todos
   on('talk', data => {
