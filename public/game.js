@@ -160,6 +160,7 @@ const ELITE_AB = {
   'Verdugo Cubierto de Musgo': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 3.8 },
   'Relojero Oxidado': { kind: 'haste', range: 260, tele: 0.5, act: 2.6, cd: 5, trail: true } // deja un rastro de veneno de 3 s y, un ciclo sí y otro no, lanza una nube que dura 5 s
 };
+const SILENCE_TYPES = ['orb', 'thorn']; // proyectiles que destruye la Palabra de Silencio (los orbes; no ondas, pilares ni nubes)
 const POISON = ['toxin', 'cloud', 'spore']; // veneno y esporas (Alcaide, Madre Moho, hongos): inflamables
 const PR = {
   orb: { tex: 'orb', sc: 2, hb: [14, 14], dmg: 1 },
@@ -422,6 +423,7 @@ class CastleScene extends Phaser.Scene {
     on('snap', s => this.onSnap(s));
     on('torch', ({ id, on: v }) => this.setTorch(id, v));
     on('ignite', ({ id }) => { if (!this.isHost) return; const p = this.projs.get(id); if (p && POISON.includes(p.type)) this.igniteProj(p); });
+    on('zap', ({ id }) => { if (!this.isHost) return; const p = this.projs.get(id); if (p && SILENCE_TYPES.includes(p.type)) this.zapProj(p); });
     on('hit', h => { if (!this.isHost) return; const e = this.ents.get(h.id); if (e && e.sim) this.damageEnt(e, h.dmg, h.dir, h.from, h.el); });
     on('progress', p => this.applyProgress(p, false));
     on('broke', ({ gx, gy }) => { this.fg.removeTileAt(gx, gy); this.wallBroken(gx, gy); this.poof((gx + 0.5) * T, (gy + 0.5) * T, 4, 0xaaaaaa); });
@@ -459,7 +461,7 @@ class CastleScene extends Phaser.Scene {
       const dead = (p.bosses || []).includes(id), key = 'seal_' + id;
       if (!dead) this.scenes.delete(key); else if (!this.scenes.has(key)) { this.scenes.add(key); if (!silent) this.sealBreakScene(id); }
     });
-    this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye', 'pound'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
+    this.abilTxt.setText(['dash', 'dj', 'wj'].concat(['wings', 'eye', 'pound', 'silence', 'mist', 'axe'].filter(a => this.abil[a])).map(a => (this.abil[a] ? '■ ' : '□ ') + World.ABILITIES[a]).join('   '));
   }
   bossGone(b) { const r = World.BOSSES[b.id] && World.BOSSES[b.id].rival; return this.progress.bosses.includes(b.id) || !!(r && this.progress.bosses.includes(r)); }
   gateOk(gt) { return World.gateOpen(gt.boss, this.progress.bosses); }
@@ -491,7 +493,7 @@ class CastleScene extends Phaser.Scene {
   }
   grantAbility(a) {
     this.abil[a] = true; SFX.pick();
-    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.', pound: 'En el aire, mantén abajo para caer en picado: rompe los suelos de raíces y aturde a los enemigos.' })[a], 6000);
+    this.toast('¡' + World.ABILITIES[a] + '! ' + ({ dash: 'Usa {dash} para el impulso (también en el aire).', dj: 'Pulsa saltar otra vez en el aire.', wj: 'Salta pegado a una pared para impulsarte.', wings: 'Mantén saltar en el aire para planear.', eye: 'Ves los secretos tras los muros agrietados y tu luz crece.', pound: 'En el aire, mantén abajo para caer en picado: rompe los suelos de raíces y aturde a los enemigos.', silence: 'Tus golpes y flechas destruyen los orbes enemigos.', mist: 'Tu impulso hiere a los enemigos que atraviesa y te cura un poco.', axe: 'Mantén el ataque para cargar un tajo de doble daño (no rompe escudos azules, salvo la guardia del Capitán).' })[a], 6000);
     this.wallBroken();
     this.syncRelics(); this.applyProgress(this.progress, true); this.autoSave();
   }
@@ -696,6 +698,9 @@ class CastleScene extends Phaser.Scene {
   nearFire(p) { // antorcha o hoguera encendida pegada al veneno
     const c = PR[p.type], rx = c.hb[0] / 2 + 24, ry = c.hb[1] / 2 + 24, x = p.spr.x, y = p.spr.y;
     return this.torchObjs.some(o => o.lit && Math.abs(o.x - x) < rx && Math.abs(o.y - y) < ry) || this.altars.some(a => a.lit && Math.abs(a.x - x) < rx && Math.abs(a.y - 20 - y) < ry + 20);
+  }
+  zapProj(p) { // Palabra de Silencio: el orbe se apaga
+    this.poof(p.spr.x, p.spr.y, 4, 0xc8b0ff); p.spr.destroy(); this.projs.delete(p.id);
   }
   igniteProj(p) {
     const x = p.spr.x, y = p.spr.y;

@@ -10,8 +10,8 @@ const PORT = process.env.PORT || 3000;
 const PACKED = !!process.pkg; // ejecutable instalado (creado con pkg)
 const DATA_FILE = process.env.DATA_FILE || (PACKED ? path.join(process.env.APPDATA || require('os').homedir(), 'FourFangsOfDawn', 'users.json') : path.join(__dirname, '..', 'data', 'users.json'));
 const COLORS = ['red', 'blue', 'green', 'purple'];
-const ABILITIES = ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'];
-const ABIL_BOSS = { dash: 'garg', dj: 'bishop', wj: 'clock', wings: 'aurora', eye: 'vesper', pound: 'alcaide' }; // habilidad -> jefe que la da
+const ABILITIES = ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe'];
+const ABIL_BOSS = { dash: 'garg', dj: 'bishop', wj: 'clock', wings: 'aurora', eye: 'vesper', pound: 'alcaide', silence: 'archon', mist: 'conde', axe: 'cadalso' }; // habilidad -> jefe que la da
 const BOSS_IDS = ['garg', 'bishop', 'clock', 'archon', 'reina', 'conde', 'aurora', 'vesper', 'alcaide', 'madre', 'chambelan', 'capitan', 'farero', 'subastadora', 'cadalso', 'vigilia'];
 const TALK_ID = /^[A-Z]\d{2}$/; // ids de las charlas (A01, B14...)
 const RIVAL = { aurora: 'vesper', vesper: 'aurora' }; // solo se puede derrotar a uno de los dos
@@ -39,7 +39,7 @@ function normalizeStats(u) {
 Object.values(users).forEach(normalizeStats);
 // migración: la partida única antigua pasa a la ranura del vampiro carmesí
 Object.values(users).forEach(u => { if (u.save && !u.saves) u.saves = { red: u.save }; delete u.save; });
-const ELEMS = ['fire', 'ice', 'bolt', 'poison', 'shadow', 'eclipse', 'wither', 'pound']; // 'pound' = golpe del Pisotón de Raíces (no es un elemento del arma)
+const ELEMS = ['fire', 'ice', 'bolt', 'poison', 'shadow', 'eclipse', 'wither', 'pound', 'axe']; // 'axe' = tajo cargado del Hachazo; 'pound' = golpe del Pisotón de Raíces (no es un elemento del arma)
 const ITEM_IDS = ['pot', 'pot2', 'spd', 'str', 'lamp', 'amu', 'ward', 'rage', 'tonic', 'fruit', 'bomb'];
 const clampInt = (v, lo, hi) => Math.min(hi, Math.max(lo, Number.isFinite(+v) ? Math.floor(+v) : lo));
 const strList = (a, max, len = 24) => (Array.isArray(a) ? a.filter(x => typeof x === 'string' && x.length <= len).slice(0, max) : []);
@@ -47,7 +47,7 @@ function sanitizeMe(m) {
   m = m && typeof m === 'object' ? m : {};
   const inv = {}; ITEM_IDS.forEach(k => { inv[k] = clampInt(m.inv && m.inv[k], 0, 9); });
   return { souls: clampInt(m.souls, 0, 99999), inv, wlv: clampInt(m.wlv, 1, 5), maxHp: clampInt(m.maxHp, 5, 40), cry: strList(m.cry, 60), forge: strList(m.forge, 20),
-    abil: { dash: !!(m.abil && m.abil.dash), dj: !!(m.abil && m.abil.dj), wj: !!(m.abil && m.abil.wj), wings: !!(m.abil && m.abil.wings), eye: !!(m.abil && m.abil.eye), pound: !!(m.abil && m.abil.pound) }, elite: strList(m.elite, 40, 40), pages: strList(m.pages, 40), seen: strList(m.seen, 60), kills: (() => { const o = {}; for (const k of ['sk', 'kn', 'bat', 'gh', 'saw', 'sentinel', 'garg', 'bishop', 'clock', 'archon', 'reina', 'conde', 'aurora', 'vesper', 'slug', 'shroom', 'vine', 'pris', 'moth', 'magma', 'alcaide', 'madre', 'cort', 'rosa', 'guard', 'arq', 'farol', 'ahogado', 'frasco', 'cobrador', 'eco', 'chambelan', 'capitan', 'farero', 'subastadora', 'cadalso', 'vigilia']) o[k] = clampInt(m.kills && m.kills[k], 0, 99999); return o; })(),
+    abil: { dash: !!(m.abil && m.abil.dash), dj: !!(m.abil && m.abil.dj), wj: !!(m.abil && m.abil.wj), wings: !!(m.abil && m.abil.wings), eye: !!(m.abil && m.abil.eye), pound: !!(m.abil && m.abil.pound), silence: !!(m.abil && m.abil.silence), mist: !!(m.abil && m.abil.mist), axe: !!(m.abil && m.abil.axe) }, elite: strList(m.elite, 40, 40), pages: strList(m.pages, 40), seen: strList(m.seen, 60), kills: (() => { const o = {}; for (const k of ['sk', 'kn', 'bat', 'gh', 'saw', 'sentinel', 'garg', 'bishop', 'clock', 'archon', 'reina', 'conde', 'aurora', 'vesper', 'slug', 'shroom', 'vine', 'pris', 'moth', 'magma', 'alcaide', 'madre', 'cort', 'rosa', 'guard', 'arq', 'farol', 'ahogado', 'frasco', 'cobrador', 'eco', 'chambelan', 'capitan', 'farero', 'subastadora', 'cadalso', 'vigilia']) o[k] = clampInt(m.kills && m.kills[k], 0, 99999); return o; })(),
     travel: !!m.travel, el: ELEMS.includes(m.el) ? m.el : '',
     hammer: clampInt(m.hammer, 0, 2), met: !!m.met,
     gems: clampInt(m.gems, 0, 999), gemGot: strList(m.gemGot, 100), bg: strList(m.bg, 30), perm: { dmg: clampInt(m.perm && m.perm.dmg, 0, 3), souls: clampInt(m.perm && m.perm.souls, 0, 2), hp: clampInt(m.perm && m.perm.hp, 0, 2) },
@@ -112,7 +112,7 @@ function newCode() {
   do { c = Array.from({ length: 4 }, () => L[crypto.randomInt(L.length)]).join(''); } while (rooms.has(c));
   return c;
 }
-const freshProgress = () => ({ abilities: { dash: false, dj: false, wj: false, wings: false, eye: false, pound: false }, bosses: [], broken: [], torches: {}, talks: [] });
+const freshProgress = () => ({ abilities: { dash: false, dj: false, wj: false, wings: false, eye: false, pound: false, silence: false, mist: false, axe: false }, bosses: [], broken: [], torches: {}, talks: [] });
 function roomInfo(r) {
   return { code: r.code, host: r.host, started: r.started, players: Object.values(r.players).map(p => ({ id: p.id, name: p.name, animal: p.animal })) };
 }
@@ -307,6 +307,13 @@ io.on('connection', socket => {
     const r = myRoom();
     if (!r || !r.started || typeof id !== 'string' || id.length > 24 || r.host === socket.id) return;
     io.to(r.host).emit('ignite', { id });
+  });
+  // Palabra de Silencio: un jugador destruye un orbe enemigo -> anfitrión (que simula los proyectiles)
+  on('zap', data => {
+    const { id } = data && typeof data === 'object' ? data : {};
+    const r = myRoom();
+    if (!r || !r.started || typeof id !== 'string' || id.length > 24 || r.host === socket.id) return;
+    io.to(r.host).emit('zap', { id });
   });
   on('ability', a => {
     const r = myRoom();

@@ -396,7 +396,7 @@ Object.assign(CastleScene.prototype, {
     (m.gemGot || []).forEach(id => { const o = this.gemObjs.find(x => x.id === id); if (o) { this.gemGot.add(id); o.spr.destroy(); o.glow.destroy(); } });
     this.bossGemsPaid = new Set(m.bg || this.progress.bosses || []);
     this.hammerState = m.hammer | 0; this.smithMet = !!m.met; this.quests = { anillo: (m.quests && m.quests.anillo) | 0, fin1: (m.quests && m.quests.fin1) | 0 }; this.syncNpcs();
-    if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
+    if (m.abil) { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe'].forEach(k => { this.abil[k] = !!m.abil[k]; }); this.syncRelics(); this.applyProgress(this.progress, true); }
     this.souls = m.souls | 0; ITEMS.forEach(i => { this.inv[i.id] = (m.inv && m.inv[i.id]) | 0; });
     const oldFruit = this.inv.fruit | 0; this.inv.fruit = 0; this.inv.fang = 0; this.inv.talis = 0; // eran objetos de inventario en partidas antiguas
     this.wlv = Math.min(5, Math.max(1, m.wlv | 0)); this.maxHp = Math.max(this.maxHp, m.maxHp | 0) + oldFruit; this.hp = this.maxHp;
@@ -689,12 +689,13 @@ Object.assign(CastleScene.prototype, {
     // impulso (dash)
     if (!ui && this.abil.dash && inp.dashPress && this.dashCd <= 0 && this.dashAvail && this.stun <= 0 && (!this.crouching || this.canStand())) {
       if (this.crouching) this.setCrouch(false);
-      this.dashT = P.dashTime; this.dashCd = P.dashCd; this.dashDir = dir || this.facing; if (!onFloor) this.dashAvail = false;
+      this.dashT = P.dashTime; this.dashCd = P.dashCd; this.dashDir = dir || this.facing; if (!onFloor) this.dashAvail = false; this.dashHit = new Set(); this.mistHealed = false;
       this.invuln = Math.max(this.invuln, P.dashTime + 0.1); SFX.dash(); this.poof(p.x, p.y, 3, 0x9fd4ff);
     }
     // ataque y objetos
     if (!ui && inp.attackPress && this.atkCd <= 0 && this.dashT <= 0 && this.stun <= 0) this.startAttack();
-    if (this.atkT > 0) { this.atkT -= dt; this.doAttack(); }
+    if (this.atkT > 0) { this.atkT -= dt; this.doAttack(); } else this.heavy = false;
+    this.mistStep(); this.chargeStep(dt, held(K_.X, K_.J) || !!(touch && touch.attack) || !!(pad && pad.attack), ui);
     if (!ui && inp.usePress) this.useItem();
     if (!ui && inp.cyclePress) this.cycleItem();
     this.updateArrows(dt);
@@ -810,7 +811,7 @@ Object.assign(CastleScene.prototype, {
       info.textContent = (pt ? pt.label + '   ·   ' : '') + (a ? a.name + ' (' + a.id + ')' : 'roca') + (here ? '   ·   estás en: ' + here.name : ''); };
     cv.onclick = ev => { const [x, y] = at(ev); this.devTeleportTo(x, y); toggle(); };
     box.querySelector('#devGod').onclick = ev => { this.devGod = !this.devGod; ev.target.textContent = 'Invulnerable: ' + (this.devGod ? 'SÍ' : 'NO'); ev.target.style.background = this.devGod ? '#7aff9a' : ''; this.toast(this.devGod ? 'Invulnerable activado' : 'Invulnerable desactivado'); };
-    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
+    box.querySelector('#devAbil').onclick = () => { ['dash', 'dj', 'wj', 'wings', 'eye', 'pound', 'silence', 'mist', 'axe'].forEach(a => { this.abil[a] = true; }); this.syncRelics(); this.applyProgress(this.progress, true); this.wallBroken(); this.toast('Todas las habilidades concedidas, también Alas del Alba y Ojo de la Noche (modo desarrollo)', 4500); };
     box.querySelector('#devSouls').onclick = () => { this.souls += 1000; SFX.pick(); this.toast('+1000 almas (modo desarrollo): ' + this.souls + ' en total'); };
     box.querySelector('#devGems').onclick = () => { this.gems += 20; this.toast('+20 gemas (modo desarrollo)'); };
     box.querySelector('#devHp').onclick = () => { this.hp = this.maxHp; this.invuln = 2; };
@@ -975,6 +976,46 @@ Object.assign(CastleScene.prototype, {
     if (this.wpn.kind === 'ranged') { this.atkT = 0.1; this.fireArrows(w); this.bowRecoil(p, this.facing); } else { this.atkT = this.wpn.act; this.swingHit.clear(); }
     this.slashFx(p.x, p.y + (this.crouching ? 7 : 0), this.facing, this.color);
   },
+  // ---- habilidades de los jefes de la Zona 1 y 2 sin recompensa
+  mistStep() { // Impulso de Niebla: el impulso hiere (1) a cada enemigo que atraviesa y te cura medio corazón la primera vez
+    if (!this.abil.mist || this.dashT <= 0 || this.dead || !this.dashHit) return;
+    const p = this.player;
+    this.ents.forEach(e => {
+      if (e.dead || e.melt || (e.boss && !e.aggro) || this.dashHit.has(e.id)) return;
+      const [ex, ey, ew, eh] = this.entBox(e);
+      if (!rectsOverlap(p.x, p.y, 26, 36, ex, ey, ew, eh)) return;
+      this.dashHit.add(e.id); this.hitEnemy(e, this.dashDir, 1, '');
+      if (!this.mistHealed && this.hp < this.maxHp) { this.mistHealed = true; this.hp = Math.min(this.maxHp, this.hp + 0.5); this.poof(p.x, p.y - 10, 4, 0xc8b0ff); }
+    });
+  },
+  silenceHit(x, y, w, h) { // Palabra de Silencio: tus golpes y flechas apagan los orbes enemigos
+    if (!this.abil.silence) return;
+    [...this.projs.values()].forEach(pr => {
+      if (!SILENCE_TYPES.includes(pr.type)) return;
+      const c = PR[pr.type];
+      if (!rectsOverlap(x, y, w, h, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1])) return;
+      if (this.isHost) this.zapProj(pr); else { socket.emit('zap', { id: pr.id }); this.poof(pr.spr.x, pr.spr.y, 3, 0xc8b0ff); }
+    });
+  },
+  chargeStep(dt, held, ui) { // Hachazo del Verdugo: mantén el ataque ~1 s y suéltalo para un tajo de doble daño
+    if (!this.abil.axe || ui || this.dead || this.stun > 0 || this.dashT > 0) { this.chargeT = 0; this.chargeOn = false; return; }
+    const p = this.player;
+    if (held && this.atkT <= 0) {
+      this.chargeT = (this.chargeT || 0) + dt;
+      if (this.chargeT > 0.9 && !this.chargeOn) { this.chargeOn = true; SFX.pick(); this.poof(p.x, p.y - 10, 6, 0xff9a3b); this.floatText(p.x, p.y - 44, '¡Cargado!', '#ffb36a'); }
+      else if (this.chargeT > 0.25 && Math.random() < 0.12) this.poof(p.x + this.facing * 14, p.y - 6, 1, this.chargeOn ? 0xff9a3b : 0xffffff);
+    } else {
+      if (this.chargeOn && !held) this.heavySwing();
+      this.chargeT = 0; this.chargeOn = false;
+    }
+  },
+  heavySwing() {
+    const w = this.wstats(), p = this.player; this.atkCd = Math.max(this.atkCd, 0.5); SFX.swing();
+    this.cameras.main.shake(120, 0.004);
+    if (this.wpn.kind === 'ranged') { this.fireArrows(w, 2); this.bowRecoil(p, this.facing); }
+    else { this.heavy = true; this.atkT = this.wpn.act; this.swingHit.clear(); }
+    this.slashFx(p.x, p.y + (this.crouching ? 7 : 0), this.facing, this.color); this.poof(p.x + this.facing * 24, p.y, 6, 0xff9a3b);
+  },
   slashFx(x, y, dir, color) {
     const W_ = WEAPONS[color] || WEAPONS.red, tint = (color === this.color && this.element) ? ELEMENTS[this.element].tint : W_.tint;
     if (W_.kind === 'ranged') {
@@ -987,8 +1028,8 @@ Object.assign(CastleScene.prototype, {
   bowRecoil(spr, dir) { // al soltar la flecha, Malak se tambalea un poquito hacia atrás
     this.tweens.add({ targets: spr, angle: -dir * 3, duration: 70, yoyo: true, ease: 'Sine.easeOut', onComplete: () => spr.setAngle(0) });
   },
-  fireArrows(w) {
-    const p = this.player, f = this.facing, dmg = w.dmg + this.dmgBonus();
+  fireArrows(w, mult = 1) {
+    const p = this.player, f = this.facing, dmg = (w.dmg + this.dmgBonus()) * mult;
     for (let i = 0; i < w.n; i++) {
       const vy = (i - (w.n - 1) / 2) * 46, vx = f * 430;
       const spr = this.add.image(p.x + f * 22, p.y - 4 + (this.crouching ? 7 : 0), 'arrow').setScale(2).setDepth(9).setTint(this.element ? ELEMENTS[this.element].tint : 0xb8ff9a).setRotation(Math.atan2(vy, vx));
@@ -1000,7 +1041,7 @@ Object.assign(CastleScene.prototype, {
       a.life -= dt; a.spr.x += a.vx * dt; a.spr.y += a.vy * dt;
       let dead = a.life <= 0;
       if (a.el === 'fire') this.fireTouch(a.spr.x, a.spr.y, 16, 10);
-      this.hitBreakables(a.spr.x, a.spr.y, 16, 10);
+      this.hitBreakables(a.spr.x, a.spr.y, 16, 10); this.silenceHit(a.spr.x, a.spr.y, 16, 10);
       if (!dead) {
         const t = this.fg.getTileAtWorldXY(a.spr.x, a.spr.y);
         if (t && t.index >= 0) {
@@ -1046,7 +1087,7 @@ Object.assign(CastleScene.prototype, {
   hitEnemy(e, f, dmg, el) {
     const p = this.player, [ex, ey] = this.entBox(e);
     if (e.cfg.inv) { if (!e.invMsg || Date.now() - e.invMsg > 900) { e.invMsg = Date.now(); this.floatText(ex, ey - 36, '¡Invulnerable!', '#9fd4ff'); } this.poof(ex, ey, 2, 0x9fd4ff); SFX.hurt(); return; }
-    if (e.cfg.shielded && e.shield && !e.elite && el !== 'pound') { if (!e.shieldMsg || Date.now() - e.shieldMsg > 900) { e.shieldMsg = Date.now(); this.floatText(ex, ey - 36, '¡Bloqueado!', '#8fc8ff'); } this.poof(ex, ey, 2, 0x8fc8ff); SFX.hurt(); return; }
+    if (e.cfg.shielded && e.shield && !e.elite && el !== 'pound' && el !== 'axe') { if (!e.shieldMsg || Date.now() - e.shieldMsg > 900) { e.shieldMsg = Date.now(); this.floatText(ex, ey - 36, '¡Bloqueado!', '#8fc8ff'); } this.poof(ex, ey, 2, 0x8fc8ff); SFX.hurt(); return; }
     if (e.type === 'clock' && e.shield) { if (!e.shieldMsg || Date.now() - e.shieldMsg > 1200) { e.shieldMsg = Date.now(); this.floatText(ex, ey - 40, '¡La luz lo protege!', '#8fc8ff'); } SFX.hurt(); return; }
     if (el === 'eclipse' && Math.random() < 0.25) { dmg *= 2; this.floatText(ex, ey - 40, '¡Eclipse!', '#f4f0ff'); }
     if (el === 'shadow' && !this.dead && this.hp < this.maxHp && Math.random() < 0.5) { this.hp = Math.min(this.maxHp, this.hp + 0.5); this.poof(p.x, p.y - 10, 3, 0xb06aff); }
@@ -1070,11 +1111,12 @@ Object.assign(CastleScene.prototype, {
     const p = this.player, f = this.facing, w = this.wstats(), wp = this.wpn;
     const cy = p.y - 2 + (this.crouching ? 7 : 0), bx = p.x + f * wp.off, bw = w.w, bh = wp.h;
     if (this.element === 'fire') this.fireTouch(bx, cy, bw, bh);
+    this.silenceHit(bx, cy, bw, bh);
     this.hitBreakables(bx, cy, bw, bh);
     this.ents.forEach(e => {
       if (e.dead || this.swingHit.has(e.id)) return;
       const [ex, ey, ew, eh] = this.entBox(e);
-      if (rectsOverlap(bx, cy, bw, bh, ex, ey, ew, eh)) { this.swingHit.add(e.id); this.hitEnemy(e, f, w.dmg + this.dmgBonus(), this.element); }
+      if (rectsOverlap(bx, cy, bw, bh, ex, ey, ew, eh)) { this.swingHit.add(e.id); this.hitEnemy(e, f, (w.dmg + this.dmgBonus()) * (this.heavy ? 2 : 1), this.heavy && e.type === 'capitan' && e.shield ? 'axe' : this.element); }
     });
     for (let wy = cy - bh / 2; wy <= cy + bh / 2; wy += 16) for (let wx = bx - bw / 2; wx <= bx + bw / 2; wx += 16) {
       const t = this.fg.getTileAtWorldXY(wx, wy);
@@ -1089,6 +1131,7 @@ Object.assign(CastleScene.prototype, {
     if (e.cfg.inv) return; // invulnerables
     if (e.down > 0) { if (el === 'pound') { e.down = 0; e.rez = true; e.hp = 0; this.killEnt(e, by); } return; } // el prisionero caído solo muere aplastado
     if (e.melt) return; // la Madre Moho diluida es intocable
+    if (el === 'axe') { if (e.type === 'capitan' && e.shield) { e.shield = false; e.act = null; e.cd = 1.4; e.tele = false; e.spr.body.setVelocityX(0); this.floatText(e.spr.x, e.spr.y - 70, '¡Guardia rota!', '#ffb36a'); this.cameras.main.shake(160, 0.006); } el = ''; } // el tajo del Hachazo solo rompe la guardia del Capitán
     if (el === 'pound' && e.cfg.shielded && !e.boss) { e.shield = false; e.shT = 2.2; } // el Pisotón rompe el escudo azul un rato
     if (e.type === 'alcaide' && e.shield) return; // hundido bajo el suelo
     if (el === 'fire' || el === 'burn') { const ar = this.W.areaOf(Math.floor(e.spr.x / T), Math.floor(e.spr.y / T)); if (ar && ar.z === 9) dmg *= MOSS_FIRE; } // el musgo arde: más daño de fuego

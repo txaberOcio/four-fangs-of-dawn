@@ -11,7 +11,7 @@
     bodyW: 30, bodyH: 39,
   };
   const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos', 'Patíbulo Exterior', 'Dependencias de los Funcionarios', 'Capilla del Cuartel', 'La Milla Verde', 'La Despensa', 'Los Tronos'];
-  const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche', pound: 'Pisotón de Raíces' };
+  const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche', pound: 'Pisotón de Raíces', silence: 'Palabra de Silencio', mist: 'Impulso de Niebla', axe: 'Hachazo del Verdugo' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
   const kind = idx => (idx < 0 ? -1 : idx % 8);
@@ -21,9 +21,9 @@
     bishop: { name: 'Obispo Caído', hp: 16, drop: 'dj' },
     clock: { name: 'Guardián del Reloj', hp: 22, drop: 'wj' },
     // guardianes de los dos sellos que cierran la Sala del Trono (hay que vencer a ambos para llegar al Conde)
-    archon: { name: 'Archimago Silente', hp: 30, drop: null },
+    archon: { name: 'Archimago Silente', hp: 30, drop: 'silence', reward: 'Palabra de Silencio: tus golpes y flechas destruyen los orbes enemigos' },
     reina: { name: 'Reina de Huesos', hp: 20, drop: null },
-    conde: { name: 'El Conde', hp: 32, drop: null },
+    conde: { name: 'El Conde', hp: 32, drop: 'mist', reward: 'Impulso de Niebla: el impulso hiere a los enemigos que atraviesa y te cura un poco' },
     // los dos rivales del Alba: al caer uno, el otro lo rescata y huye (solo se puede elegir a uno)
     aurora: { name: 'Aurora, Dama del Alba', hp: 34, drop: 'wings', rival: 'vesper', reward: 'Alas del Alba: mantén saltar en el aire para planear' },
     // Calabozos Profundos: el Alcaide guarda el Pisotón de Raíces y la Madre Moho cierra la zona
@@ -35,7 +35,7 @@
     farero: { name: 'Último Farero', hp: 88, drop: null },
     subastadora: { name: 'La Subastadora', hp: 96, drop: null },
     chambelan: { name: 'Chambelán Sin Rostro', hp: 72, drop: null },
-    cadalso: { name: 'Cadalso, el Verdugo Mudo', hp: 72, drop: null },
+    cadalso: { name: 'Cadalso, el Verdugo Mudo', hp: 72, drop: 'axe', reward: 'Hachazo del Verdugo: mantén el ataque para cargar un tajo de doble daño' },
     vigilia: { name: 'Vigilia, la Cantora de la Hondura', hp: 80, drop: null },
   };
 
