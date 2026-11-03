@@ -128,10 +128,10 @@ function endGame() { if (game) { game.destroy(true); game = null; } setupTouch(f
 // ---------- Configuración de entidades ----------
 const EN = {
   // vampiros de la Calle de las Horas: uno por colmillo, con una habilidad de su vampiro (ab: ver eliteAbility)
-  vrojo: { tex: 'vrojo', sc: 3, body: [10, 13], hp: 5, dmg: 2, spd: 50, hb: [32, 44], kind: 'walk', lifesteal: true, ab: { kind: 'charge', range: 300, tele: 0.45, act: 0.5, cd: 3.2, spd: 380 } }, // Cor: sed de sangre, se cura al herirte
-  vazul: { tex: 'vazul', sc: 3, body: [10, 13], hp: 5, dmg: 1, spd: 44, hb: [32, 44], kind: 'walk', ab: { kind: 'thrust', range: 170, tele: 0.5, act: 0.1, cd: 2.6 } }, // Zaf: estocada larga de lanza con luz
-  vverde: { tex: 'vverde', sc: 3, body: [10, 13], hp: 4, dmg: 1, spd: 36, hb: [32, 44], kind: 'walk', ab: { kind: 'arrow', range: 400, tele: 0.55, act: 0.1, cd: 2.2 } }, // Malak: flechas
-  vmorado: { tex: 'vmorado', sc: 3, body: [10, 13], hp: 5, dmg: 2, spd: 42, hb: [32, 44], kind: 'walk', ab: { kind: 'hook', range: 340, tele: 0.6, act: 0.1, cd: 4 } }, // Matis: gancho que te atrae
+  vrojo: { tex: 'vrojo', sc: 3, body: [10, 13], hp: 5, dmg: 2, spd: 50, hb: [32, 44], kind: 'walk', lifesteal: true, vamp: 'red' }, // Cor: ESPADA (tajos como los suyos), IMPULSO (embiste) y sed de sangre (se cura al herirte)
+  vazul: { tex: 'vazul', sc: 3, body: [10, 13], hp: 5, dmg: 1, spd: 44, hb: [32, 44], kind: 'walk', vamp: 'blue' }, // Zaf: LANZA (estocada larga) y jabalina de luz (la arroja de lejos)
+  vverde: { tex: 'vverde', sc: 3, body: [10, 13], hp: 4, dmg: 1, spd: 36, hb: [32, 44], kind: 'walk', vamp: 'green' }, // Malak: ARCO (flechas, y cada tercera una ráfaga de tres), paso atrás si te acercas y suelta el doble de almas
+  vmorado: { tex: 'vmorado', sc: 3, body: [10, 13], hp: 5, dmg: 2, spd: 62, hb: [32, 44], kind: 'walk', vamp: 'purple' }, // Matis: GUADAÑA (barrido ancho), gancho que te atrae y paso de sombra a tu espalda; más rápido
   sk: { tex: 'sk', sc: 3, body: [10, 13], hp: 2, dmg: 1, spd: 55, hb: [26, 36], kind: 'walk' },
   kn: { tex: 'kn', sc: 3, body: [12, 15], hp: 5, dmg: 2, spd: 38, hb: [34, 44], kind: 'walk', shielded: true }, // shielded: levanta y baja el escudo (azul) por turnos
   bat: { tex: 'bat1', sc: 3, body: [10, 6], hp: 1, dmg: 1, spd: 90, hb: [28, 18], kind: 'bat' },
@@ -184,7 +184,12 @@ const SILENCE_TYPES = ['orb', 'thorn']; // proyectiles que destruye la Palabra d
 const POISON = ['toxin', 'cloud', 'spore']; // veneno y esporas (Alcaide, Madre Moho, hongos): inflamables
 const PR = {
   orb: { tex: 'orb', sc: 2, hb: [14, 14], dmg: 1 },
-  lance: { tex: 'shock', sc: 4, hb: [120, 12], dmg: 1, tint: 0x7ab8ff }, // estocada de lanza del vampiro lancero
+  lance: { tex: 'shock', sc: 4, hb: [120, 12], dmg: 1, tint: 0x7ab8ff }, // (en desuso)
+  swingR: { tex: 'shock', sc: 2, hb: [66, 46], dmg: 2, alpha: 0.01 }, // golpe de la espada del vampiro cazador (la misma caja que la de Cor)
+  swingB: { tex: 'shock', sc: 2, hb: [112, 26], dmg: 1, alpha: 0.01 }, // estocada de la lanza del vampiro lancero (como la de Zaf)
+  swingP: { tex: 'shock', sc: 2, hb: [96, 74], dmg: 2, alpha: 0.01 }, // barrido de la guadaña del vampiro guadañero (como el de Matis)
+  javelin: { tex: 'spear', sc: 2.2, hb: [70, 12], dmg: 1, tint: 0x9fd4ff }, // jabalina de luz que arroja el lancero
+  arrowv: { tex: 'arrow', sc: 2, hb: [22, 10], dmg: 1, tint: 0xb8ff9a }, // flecha del vampiro arquero
   hookp: { tex: 'shock', sc: 2, hb: [24, 12], dmg: 0.5, tint: 0xc8a0ff }, // gancho del guadañero: te atrae hacia él
   siphon: { tex: 'orb', sc: 3, hb: [22, 22], dmg: 1, tint: 0xc8b0ff }, // robo de almas de Anhelia: quita el impulso y el doble salto 4 s
   shock: { tex: 'shock', sc: 2, hb: [30, 14], dmg: 1 },
@@ -865,6 +870,41 @@ class CastleScene extends Phaser.Scene {
     }
   }
 
+  // Vampiros de la Calle de las Horas: llevan el arma de su protagonista y la usan igual (mismos efectos de golpe y casi las mismas cajas de daño), más una habilidad extra:
+  //   rojo (Cor): espada + impulso · azul (Zaf): lanza + jabalina de luz · verde (Malak): arco + paso atrás y ráfaga · morado (Matis): guadaña + gancho + paso de sombra
+  vampAI(e, dt, tg) {
+    const b = e.spr.body, x = e.spr.x, y = e.spr.y, col = e.cfg.vamp;
+    e.vCd = (e.vCd === undefined ? 1.2 : e.vCd) - dt;
+    if (e.vPh === 'tele') { e.vT -= dt; e.tele = true; b.setVelocityX(0); if (e.vT <= 0) { e.tele = false; e.vPh = 'act'; e.vT = e.vAct; this.vampFire(e, e.vKind, tg); } return true; }
+    if (e.vPh === 'act') {
+      e.vT -= dt;
+      if (e.vKind === 'dash') { const ahead = this.solidAt(x + e.vdir * 22, y + (e.cfg.body[1] * e.cfg.sc) / 2 + 6); if (b.blocked.left || b.blocked.right || !ahead) e.vT = 0; else { b.setVelocityX(e.vdir * 460); e.spr.setFlipX(e.vdir < 0); } }
+      if (e.vKind === 'backstep') { const behind = this.solidAt(x - e.vdir * 22, y + (e.cfg.body[1] * e.cfg.sc) / 2 + 6); if (behind && !b.blocked.left && !b.blocked.right) b.setVelocityX(-e.vdir * 320); else b.setVelocityX(0); }
+      if (e.vT <= 0) { e.vPh = null; e.vCd = e.vNext; }
+      return e.vKind === 'dash' || e.vKind === 'backstep';
+    }
+    if (!tg || e.vCd > 0) return false;
+    const dx = tg.x - x, dy = Math.abs(tg.y - y), d = Math.hypot(dx, tg.y - y), dir = Math.sign(dx) || 1; if (dy > 90 && d > 160) return false;
+    let k = null, tele = 0.4, act = 0.15, next = 1.2;
+    if (col === 'red') { if (d < 110) { k = 'slash'; tele = 0.35; act = 0.2; next = 1.0; } else if (d < 380) { k = 'dash'; tele = 0.4; act = 0.38; next = 2.4; } }
+    else if (col === 'blue') { if (d < 150) { k = 'thrust'; tele = 0.4; act = 0.15; next = 1.2; } else if (d < 420) { k = 'javelin'; tele = 0.6; act = 0.1; next = 3.0; } }
+    else if (col === 'green') { if (d < 130) { k = 'backstep'; tele = 0.15; act = 0.3; next = 0.5; } else if (d < 440) { k = 'shoot'; tele = 0.5; act = 0.1; next = 1.6; } }
+    else if (col === 'purple') { if (d < 120) { k = 'sweep'; tele = 0.5; act = 0.22; next = 1.3; } else if (d < 360) { k = d > 160 && Math.random() < 0.35 ? 'blink' : 'hook'; tele = k === 'blink' ? 0.35 : 0.6; act = 0.1; next = 2.8; } }
+    if (!k) return false;
+    e.vPh = 'tele'; e.vKind = k; e.vT = tele; e.vAct = act; e.vNext = next; e.vdir = dir; e.spr.setFlipX(dir < 0); b.setVelocityX(0);
+    return true;
+  }
+  vampFire(e, k, tg) {
+    const x = e.spr.x, y = e.spr.y, col = e.cfg.vamp, dir = e.vdir || 1, an = tg ? Math.atan2(tg.y - y, tg.x - x) : 0;
+    if (k === 'slash') { this.slashFx(x, y, dir, 'red'); this.spawnProj('swingR', x + dir * 30, y, 0, 0, 0.16); }
+    else if (k === 'thrust') { this.slashFx(x, y, dir, 'blue'); this.spawnProj('swingB', x + dir * 56, y + 4, 0, 0, 0.14); }
+    else if (k === 'sweep') { this.slashFx(x, y, dir, 'purple'); this.spawnProj('swingP', x + dir * 26, y, 0, 0, 0.22); }
+    else if (k === 'javelin') { this.spawnProj('javelin', x + dir * 20, y - 2, dir * 380, 0, 1.2); }
+    else if (k === 'shoot') { e.vShots = (e.vShots || 0) + 1; const fan = e.vShots % 3 === 0 ? [-0.22, 0, 0.22] : [0]; fan.forEach(o => this.spawnProj('arrowv', x + dir * 22, y - 4, Math.cos(an + o) * 360, Math.sin(an + o) * 360, 2)); this.bowRecoil(e.spr, dir); }
+    else if (k === 'hook') { this.spawnProj('hookp', x + dir * 30, y, dir * 420, 0, 0.8); }
+    else if (k === 'blink' && tg) { const nx = tg.x - dir * 70; if (!this.solidAt(nx, y)) { this.poof(x, y, 5, 0xc8a0ff); e.spr.setPosition(nx, y); this.poof(nx, y, 5, 0xc8a0ff); e.vdir = dir; e.spr.setFlipX(dir < 0); this.slashFx(nx, y, dir, 'purple'); this.spawnProj('swingP', nx + dir * 26, y, 0, 0, 0.22); } }
+    else if (k === 'dash') { this.poof(x, y + 8, 4, 0xff7a8a); }
+  }
   // habilidad propia de cada enemigo con nombre (nunca retroceden al ser golpeados)
   eliteAbility(e, dt, tg) {
     const ab = ELITE_AB[e.name] || e.cfg.ab; if (!ab) return false;
@@ -929,7 +969,7 @@ class CastleScene extends Phaser.Scene {
       b.setVelocity((nx - e.spr.x) * 9, (ny - e.spr.y) * 9); return;
     }
     if (e.down > 0) { e.down -= dt; b.setVelocityX(0); if (e.down <= 0) { e.down = 0; e.shield = false; e.spr.setAngle(0); this.poof(e.spr.x, e.spr.y, 6, 0x8fd35a); } return; } // el prisionero caído se levanta
-    if ((e.elite || e.cfg.ab) && this.eliteAbility(e, dt, tg)) return;
+    if (e.cfg.vamp) { if (this.vampAI(e, dt, tg)) return; } else if ((e.elite || e.cfg.ab) && this.eliteAbility(e, dt, tg)) return;
     if (cfg.kind === 'turret') { // hongo: se hincha y suelta esporas que persiguen
       b.setVelocityX(0); e.cd = (e.cd === undefined ? 2 : e.cd) - dt * slow;
       if (!e.ph && e.cd <= 0 && tg && Math.hypot(tg.x - e.spr.x, tg.y - e.spr.y) < 300) { e.ph = 'tele'; e.abT = 0.8; }

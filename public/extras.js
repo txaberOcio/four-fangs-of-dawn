@@ -119,10 +119,10 @@ const HINT_KEYS = { act: { key: 'E', pad: '△', touch: 'E' }, dash: { key: 'C',
 function hintText(s) { const m = inputMode(); return String(s).replace(/\{(act|dash|down)\}/g, (_, k) => HINT_KEYS[k][m]); }
 // ---------- Bestiario y diarios ----------
 const BESTIARY = {
-  vrojo: { name: 'Vampiro cazador', text: 'Un colmillo de capa roja que bebe de lo que hiere. Embiste con la espada y se cura cada vez que te toca.', tip: 'Esquívalo cuando se agache y golpéalo al terminar la embestida.' },
-  vazul: { name: 'Vampiro lancero', text: 'Un colmillo de capa azul: su lanza de luz alcanza más lejos de lo que parece.', tip: 'Fíjate en cuándo se queda quieto: viene la estocada. Acércate o salta por encima.' },
-  vverde: { name: 'Vampiro arquero', text: 'Un colmillo de capa verde que vigila desde lejos y suelta flechas rápidas.', tip: 'Avanza saltando o usa el impulso para cruzar sus flechas.' },
-  vmorado: { name: 'Vampiro guadañero', text: 'Un colmillo de capa morada con un gancho de sombra: te arrastra hacia su guadaña.', tip: 'Cuando levante la guadaña, salta: el gancho va a ras de suelo.' },
+  vrojo: { name: 'Vampiro cazador', text: 'Un colmillo de capa roja con la espada de Cor: tajos cortos y un impulso que te cae encima. Se cura cada vez que te toca.', tip: 'Esquiva el impulso (se agacha antes) y golpéalo cuando termine.' },
+  vazul: { name: 'Vampiro lancero', text: 'Un colmillo de capa azul con la lanza de Zaf: estocada larga de cerca y, de lejos, te arroja una jabalina de luz.', tip: 'Cuando se queda quieto viene el golpe: acércate o salta por encima. La jabalina va recta: agáchate o salta.' },
+  vverde: { name: 'Vampiro arquero', text: 'Un colmillo de capa verde con el arco de Malak: flechas rápidas, una ráfaga de tres cada tres disparos y un paso atrás si te acercas. Suelta el doble de almas.', tip: 'Avanza saltando o usa el impulso; si lo arrinconas no puede retroceder.' },
+  vmorado: { name: 'Vampiro guadañero', text: 'Un colmillo de capa morada con la guadaña de Matis: barrido ancho, un gancho de sombra que te arrastra y un paso de sombra que lo deja a tu espalda. Es más rápido.', tip: 'Salta el gancho (va a ras de suelo) y no te quedes quieto a su alcance.' },
   sk: { name: 'Esqueleto', text: 'Soldados de la guardia caídos. Patrullan y, si te ven cerca, te persiguen. Son débiles pero muchos.', tip: 'Un par de golpes bastan.' },
   kn: { name: 'Caballero maldito', text: 'Armaduras vacías que aún obedecen al Conde. Lentos y pesados, golpean fuerte.', tip: 'Golpea y retrocede. Cuando brilla en azul tiene el escudo arriba y no le haces daño: espera a que lo baje o aplástalo con el Pisotón.' },
   bat: { name: 'Murciélago', text: 'Duermen en las bóvedas hasta que alguien se acerca. Temen la luz de las antorchas.', tip: 'Enciende antorchas ({act}) para mantenerlos a raya.' },
@@ -169,7 +169,7 @@ PAGES.rai = { title: 'Nota del Montacargas', text: 'Orden del Alcaide: el ascens
 PAGES.cel = { title: 'Registro de Reos', text: 'Reo 14: pidió ver el sol. Reo 15: pidió ver la luna. Reo 16: no pidió nada y fue el único que durmió sin miedo. El musgo lo abrazó primero.' };
 PAGES.rez = { title: 'Menú del último banquete', text: 'Sopa de raíces, pan de piedra y vino sin cosecha. Los carceleros comían de pie; los presos, de rodillas. Ya nadie se acuerda de quién era cada cual.' };
 PAGES.ant = { title: 'Última orden del Alcaide', text: 'Me dejaron las llaves con una sola orden: no abrir hasta que los hermanos vuelvan juntos. Nunca volvieron juntos. Ahora el musgo me habla con la voz de los dos y ya no sé a cuál obedezco. Quien me venza no es mi enemigo: es mi relevo.' };
-const SOULS = { sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160, alcaide: 140, madre: 300, capitan: 200, farero: 220, subastadora: 320, chambelan: 180, cadalso: 400, vigilia: 500, slug: 5, shroom: 6, vine: 8, pris: 10, moth: 7, magma: 9 };
+const SOULS = { vrojo: 10, vazul: 10, vverde: 20, vmorado: 12, sk: 3, kn: 8, bat: 1, gh: 4, garg: 60, bishop: 80, clock: 100, conde: 200, aurora: 160, vesper: 160, alcaide: 140, madre: 300, capitan: 200, farero: 220, subastadora: 320, chambelan: 180, cadalso: 400, vigilia: 500, slug: 5, shroom: 6, vine: 8, pris: 10, moth: 7, magma: 9 };
 const NPC_DEFS = {
   merchant: { name: 'Mercader', tex: 'npc_merchant', shop: true, lines: [['Almas, almas... Las prefiero a las monedas. Mira lo que tengo.']] },
   archivist: { name: 'Archivista Loco', tex: 'npc_archivist', lines: [
@@ -1245,7 +1245,7 @@ Object.assign(CastleScene.prototype, {
       if (this.hurtProjs.has(id)) return;
       const c = PR[pr.type]; if (c.slow) { if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1])) this.slowT = 0.6; return; }
       if (!c.dmg) return;
-      if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { if (!c.linger) this.hurtProjs.add(id); this.hurt(c.dmg + (this.pas.projPlus || 0), pr.spr.x); if (pr.type === 'hookp') { const hk = [...this.ents.values()].filter(q => q.cfg.ab && q.cfg.ab.kind === 'hook' && !q.dead).sort((u, v) => Math.hypot(u.spr.x - p.x, u.spr.y - p.y) - Math.hypot(v.spr.x - p.x, v.spr.y - p.y))[0]; if (hk) { this.pullT = 0.35; this.pullTo = { x: hk.spr.x, y: hk.spr.y }; this.floatText(p.x, p.y - 44, '¡Gancho!', '#c8a0ff'); } }
+      if (rectsOverlap(p.x, cy, pw, ph, pr.spr.x, pr.spr.y, c.hb[0], c.hb[1]) && this.invuln <= 0 && this.dashT <= 0) { if (!c.linger) this.hurtProjs.add(id); this.hurt(c.dmg + (this.pas.projPlus || 0), pr.spr.x); if (pr.type === 'hookp') { const hk = [...this.ents.values()].filter(q => q.cfg.vamp === 'purple' && !q.dead).sort((u, v) => Math.hypot(u.spr.x - p.x, u.spr.y - p.y) - Math.hypot(v.spr.x - p.x, v.spr.y - p.y))[0]; if (hk) { this.pullT = 0.35; this.pullTo = { x: hk.spr.x, y: hk.spr.y }; this.floatText(p.x, p.y - 44, '¡Gancho!', '#c8a0ff'); } }
  if (pr.type === 'siphon') { this.stolenT = 4; this.floatText(p.x, p.y - 44, '¡Te roba el impulso!', '#c8b0ff'); } }
     });
     if (this.hurtProjs.size > 200) this.hurtProjs.clear();
