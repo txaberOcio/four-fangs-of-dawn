@@ -825,7 +825,7 @@ Object.assign(CastleScene.prototype, {
     box.querySelector('#devLoad').onclick = () => { let pos = this.devPos; try { pos = pos || JSON.parse(localStorage.getItem('devPos_' + this.color) || 'null'); } catch (e) { /* ok */ } toggle(); this.revertToCheckpoint(); if (pos) { this.player.setPosition(pos.x, pos.y); this.player.body.setVelocity(0, 0); this.invuln = 2; } this.hp = this.maxHp; this.toast('Partida cargada (modo desarrollo)'); };
     { // selector de zonas y salas: teletransporta a la sala elegida (agrupadas por zona y región; hoy solo existe la Zona 1)
       const sel = box.querySelector('#devZone'); let html = '<option value="">Ir a zona / sala...</option>';
-      const zoneOf = a => a.zona || 1, groups = {};
+      const zoneOf = a => a.zona || (W.region === 'z3' ? 3 : 1), groups = {};
       W.areaList.filter(a => !a.interior).forEach(a => { const k = 'Zona ' + zoneOf(a) + ' · ' + (World.ZONES[a.z] || 'Otros'); (groups[k] = groups[k] || []).push(a); });
       Object.keys(groups).forEach(k => { html += '<optgroup label="' + k + '">' + groups[k].map(a => '<option value="' + a.id + '">' + a.name + '</option>').join('') + '</optgroup>'; });
       sel.innerHTML = html; sel.onchange = () => { if (sel.value) { this.devTeleport(sel.value); sel.value = ''; toggle(); } };

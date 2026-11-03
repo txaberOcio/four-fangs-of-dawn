@@ -17,6 +17,8 @@ const ZONE_PAL = [
   { base: '#34506a', dark: '#1f3348', light: '#5a82a6', mortar: '#0e1a26', bg: '#0c1620', bgd: '#08101a', glow: '#8ad8ff' }, // 13 Faro Ciego
   { base: '#4a6a58', dark: '#2c4436', light: '#7ea08a', mortar: '#14221a', bg: '#12201a', bgd: '#0c1612', glow: '#b8ffc8' }, // 14 Mercado Hueco
   { base: '#5a2a3a', dark: '#341822', light: '#8a4a5e', mortar: '#1c0c14', bg: '#1a0c12', bgd: '#12080d', glow: '#ff5a7a' }, // 15 Los Tronos
+  // Zona 3
+  { base: '#6b5a48', dark: '#3e3226', light: '#9a8468', mortar: '#231a12', bg: '#1d1712', bgd: '#14100c', glow: '#ffb347' }, // 16 La Calle de las Horas: adobe y piedra tosca cálida
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
@@ -284,6 +286,7 @@ const ZONE_STYLE = {
   13: { wall: 'long', floor: 'wet', fx: 'salt' }, // Faro: costra de sal y humedad
   14: { floor: 'cobble', fx: 'plaster' }, // Mercado: adoquines y enlucido
   15: { wall: 'long', floor: 'checker', fx: 'gold' }, // Los Tronos: oscuro con oro
+  16: { wall: 'long', floor: 'cobble' }, // La Calle de las Horas: sillares toscos y adoquines
 };
 const ART_GLASS = { 2: ['#5a86d8', '#9a5ab8', '#d8b050'], 5: ['#c83a3a', '#d8b050'], 7: ['#f0a0c0', '#f8d890'], 11: ['#9a5ab8', '#5a3a8a'], 13: ['#8ad8ff', '#d8f0ff'], 15: ['#c83a5a', '#d8b050'] }; // vidrieras
 
@@ -452,8 +455,15 @@ function buildArt(scene) {
   const tx = scene.textures;
   if (tx.exists('tiles')) return;
   // Tileset: 6 zonas x 8 tipos
-  const tiles = tx.createCanvas('tiles', ZONE_PAL.length * 8 * 32, 32); const tctx = tiles.getContext('2d');
-  for (let z = 0; z < ZONE_PAL.length; z++) for (let k = 0; k < 8; k++) drawTile(tctx, z, k, (z * 8 + k) * 32);
+  // Atlas de 64 tiles por fila con 2 px de separación entre tiles (así no pasa de 4096 px aunque haya más zonas) y los bordes de cada tile repetidos en esa separación, para que al escalar no se cuele el tile vecino
+  const nT = ZONE_PAL.length * 8, AC = 64, AS = 2, rowsT = Math.ceil(nT / AC), cvs = tx.createCanvas('tiles', AC * (32 + AS) - AS, rowsT * (32 + AS) - AS), tctx = cvs.getContext('2d');
+  for (let n = 0; n < nT; n++) { const ox = (n % AC) * (32 + AS), oy = ((n / AC) | 0) * (32 + AS); tctx.save(); tctx.translate(0, oy); drawTile(tctx, (n / 8) | 0, n % 8, ox); tctx.restore(); }
+  for (let n = 0; n < nT; n++) {
+    const ox = (n % AC) * (32 + AS), oy = ((n / AC) | 0) * (32 + AS), hasR = (n % AC) < AC - 1 && n + 1 < nT, hasD = n + AC < nT;
+    tctx.drawImage(cvs.canvas, ox + 31, oy, 1, 32, ox + 32, oy, 1, 32); if (hasR) tctx.drawImage(cvs.canvas, ox + 34, oy, 1, 32, ox + 33, oy, 1, 32); // separación a la derecha: mitad de este tile, mitad del siguiente
+    tctx.drawImage(cvs.canvas, ox, oy + 31, 32, 1, ox, oy + 32, 32, 1); if (hasD) tctx.drawImage(cvs.canvas, ox, oy + 34 * 1 + 0, 32, 1, ox, oy + 33, 32, 1); // y hacia abajo
+  }
+  const tiles = cvs;
   tiles.refresh();
 
   const makeMap = (key, mapName, pal, px) => {

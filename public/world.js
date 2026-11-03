@@ -11,7 +11,7 @@
     wjY: -430, wjX: 190, wjLock: 0.18, slide: 110, maxFall: 700,
     bodyW: 30, bodyH: 39,
   };
-  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos', 'Patíbulo Exterior', 'Dependencias de los Funcionarios', 'Capilla del Cuartel', 'La Milla Verde', 'La Despensa', 'Los Tronos'];
+  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos', 'Patíbulo Exterior', 'Dependencias de los Funcionarios', 'Capilla del Cuartel', 'La Milla Verde', 'La Despensa', 'Los Tronos', 'La Calle de las Horas'];
   const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche', pound: 'Pisotón de Raíces', silence: 'Palabra de Silencio', mist: 'Impulso de Niebla', axe: 'Hachazo del Verdugo', bone: 'Paso de Hueso', vine: 'Raíces Vivas', song: 'Canto de la Hondura' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
@@ -230,7 +230,7 @@
 
   // ===== Zona 3: la Calle de las Horas (región 'z3', un mapa aparte; ver docs/ZONA3-PROPUESTA.md) =====
   // De momento: el Zaguán, la Plaza de la Puerta con el Campanario (tramo vertical) y el principio del Cuartel Viejo. La paleta es provisional (Capilla del Cuartel).
-  const Z3Z = 12;
+  const Z3Z = 16; // zona 16: La Calle de las Horas (paleta propia)
   inRegion('z3', () => {
     // Zaguán: fachada del castillo con la Puerta Gigante empotrada y, a la derecha, la calle al aire libre
     area('zag', 'El Zaguán de las Horas', Z3Z, 0, 8, 2, 1, [['cycle'], ['open'], ['castle', 22], ['calm'], ['altar', 14, 16], ['bell', 36, 16], ['gdoor', 3, 'main', 0, '']]);
