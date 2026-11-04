@@ -11,7 +11,7 @@
     wjY: -430, wjX: 190, wjLock: 0.18, slide: 110, maxFall: 700,
     bodyW: 30, bodyH: 39,
   };
-  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos', 'Patíbulo Exterior', 'Dependencias de los Funcionarios', 'Capilla del Cuartel', 'La Milla Verde', 'La Despensa', 'Los Tronos', 'La Calle de las Horas', 'La Ciudad Baja'];
+  const ZONES = ['Vestíbulo', 'Biblioteca', 'Capilla', 'Calabozos', 'Torre del Reloj', 'Sala Real', '', 'Torres del Alba', 'Cueva del Abismo', 'Calabozos Profundos', 'Patíbulo Exterior', 'Dependencias de los Funcionarios', 'Capilla del Cuartel', 'La Milla Verde', 'La Despensa', 'Los Tronos', 'La Calle de las Horas', 'La Ciudad Baja', 'Los Tejados', 'Las Cloacas'];
   const ABILITIES = { dash: 'Impulso (dash)', dj: 'Doble salto', wj: 'Salto de pared', wings: 'Alas del Alba', eye: 'Ojo de la Noche', pound: 'Pisotón de Raíces', silence: 'Palabra de Silencio', mist: 'Impulso de Niebla', axe: 'Hachazo del Verdugo', bone: 'Paso de Hueso', vine: 'Raíces Vivas', song: 'Canto de la Hondura', hourglass: 'Hora Sostenida' };
   const K = { SOLID: 0, FLOOR: 1, ONEWAY: 2, BG: 3, CRACK: 4, SPIKES: 5, PILLAR: 6, WINDOW: 7 };
   const ROCK = 6; // zona 6 = roca natural entre salas
@@ -149,7 +149,7 @@
   const GEMS = [['hidden', 8, 16], ['lect', 6, 10], ['obs', 13, 2], ['osario', 36, 10], ['mazm', 36, 10],
     ['arch1', 22, 9], ['cat1', 14, 11], ['cielo1', 48, 4], ['mazC', 26, 2], ['santuario', 20, 16], ['cumbre', 48, 6], ['jardin', 11, 12], ['fragua', 6, 16],
     ['cist', 25, 22], ['rez', 46, 4], ['tun', 47, 13],
-    ['pat4', 30, 11], ['y2', 26, 10], ['cellar', 70, 16]]; // Zona 2
+    ['pat4', 30, 11], ['y2', 26, 10], ['cellar', 70, 16], ['tj5', 26, 4], ['cl3', 11, 12], ['cl4', 68, 13], ['cl7', 52, 5]]; // Zona 2 y las vías alternativas de la Zona 3
 
   // Casa del Mercader: se entra con E por la puerta de la casita de la Sala de los Rivales. 'interior': no sale en el mapa
   area('casaM', 'Casa del Mercader', 7, 12, 3, 1, 1, [['special'], ['interior'], ['calm'], ['door', 5, 'albaH', 33], ['npc', 'merchant', 17, 16], ['torch', 9, 11], ['torch', 21, 11],
@@ -274,7 +274,7 @@
     area('cot3', 'Los Cotos: Lonja de los Cotos', Z3Z, 18, 8, 2, 1, [['cycle'], ['open'], ['boss', 'tasador', 30, 16]]); // mini-jefe del día
     // Plaza del Pregón: el centro de la calle (tienda, hoguera y campana), con la tarima del pregonero
     area('plz1', 'Plaza del Pregón', Z3Z, 20, 8, 3, 1, [['cycle'], ['open'], ['calm'], ['npc', 'merchant', 8, 16], ['altar', 16, 16], ['well', 23, 'z4'], ['bell', 30, 16],
-      ['facade', 36, 12, 'stone', 'L'], ['stairs', 54, 16, 'R', 3], ['B', 57, 14, 8, 3], ['facade', 66, 10, 'adobe', 'R']]);
+      ['facade', 34, 12, 'stone', 'L'], ['deco', 'manhole', 50, 4], ['deco', 'crossroads', 57], ['lift', 62, 6], ['deco', 'hoist', 62, 6], ['facade', 69, 7, 'timber', 'R']]); // LA ENCRUCIJADA: la alcantarilla (x 50) baja a las Cloacas, la calle sigue al este y el montacargas (x 62) sube a los Tejados
     // Puente de las Dos Voces: un foso de estacas y un puente de piedra con tramo levadizo que solo baja en el alba y en el ocaso
     area('pte1', 'Puente de las Dos Voces', Z3Z, 23, 8, 2, 1, [['cycle'], ['open'], ['bell', 4, 16], ['bell', 47, 16],
       ['pit', 12, 40], ['stairs', 6, 16, 'R', 2], ['B', 8, 15, 10, 2], ['PB', 18, 15, 14, 2, 'AO'], ['B', 32, 15, 14, 2], ['stairs', 47, 16, 'L', 2], ['E', 'bat', 25, 6], ['E', 'gh', 38, 8]]);
@@ -283,13 +283,13 @@
     area('pal1', 'Palacio: Avenida de las Columnas', Z3Z, 26, 8, 3, 1, [['cycle'], ['open'],
       ['facade', 3, 14, 'stone', 'L'], ['stairs', 18, 16, 'R', 4], ['B', 22, 12, 2, 5], ['B', 30, 12, 2, 5], ['B', 38, 12, 2, 5], ['B', 46, 12, 2, 5], ['B', 22, 11, 27, 1], ['stairs', 53, 16, 'L', 5], ['cry', 35, 9],
       ['facade', 56, 18, 'stone', 'R'], ['E', 'vverde', 12, 16], ['E', 'vmorado', 28, 16], ['E', 'gh', 42, 8], ['E', 'vrojo', 50, 16], ['E', 'vazul', 68, 16], ['E', 'bat', 33, 5]]);
-    area('pal2', 'Palacio: Jardín de la Corte', Z3Z, 29, 8, 2, 1, [['cycle'], ['open'], ['bell', 6, 16], ['facade', 10, 12, 'stone', 'L'], ['PB', 26, 1, 2, 16, 'NAD'], ['altar', 38, 16], ['E', 'vverde', 18, 16], ['E', 'gh', 20, 7]]); // el portón del jardín (26 a 27) solo se abre en el ocaso
+    area('pal2', 'Palacio: Jardín de la Corte', Z3Z, 29, 8, 2, 1, [['cycle'], ['open'], ['bell', 6, 16], ['facade', 10, 12, 'stone', 'L'], ['PB', 26, 1, 2, 16, 'NAD'], ['altar', 38, 16], ['deco', 'manhole', 44, 4], ['E', 'vverde', 18, 16], ['E', 'gh', 20, 7]]); // el portón del jardín (26 a 27) solo se abre en el ocaso
     area('pal3', 'Palacio: Sala del Duelo', Z3Z, 31, 8, 2, 1, [['cycle'], ['open'], ['boss', 'planidera', 30, 10]]); // mini-jefa del ocaso
     // Muelle del Faro Seco (noche): un embarcadero de piedra sobre un canal seco de estacas, barcas varadas y un faro apagado
     area('mue1', 'Muelle del Faro Seco: Embarcadero', Z3Z, 33, 8, 3, 1, [['cycle'], ['open'],
       ['pit', 8, 70], ['stairs', 2, 16, 'R', 2], ['B', 3, 15, 71, 2], ['stairs', 74, 16, 'L', 2], ['cart', 18, 13], ['cart', 34, 13], ['deco', 'faro', 60], ['cry', 66, 12],
       ['E', 'gh', 24, 10], ['E', 'gh', 46, 10], ['E', 'bat', 14, 6], ['E', 'bat', 52, 6]]);
-    area('mue2', 'Muelle del Faro Seco: Varadero', Z3Z, 36, 8, 2, 1, [['cycle'], ['open'], ['bell', 5, 16], ['facade', 8, 11, 'timber', 'R'], ['PB', 26, 1, 2, 16, 'ADO'], ['cart', 34, 15], ['cart', 41, 15], ['E', 'vmorado', 16, 16], ['E', 'gh', 22, 7], ['E', 'vrojo', 44, 16]]); // la reja del varadero (26 a 27) solo se abre de noche
+    area('mue2', 'Muelle del Faro Seco: Varadero', Z3Z, 36, 8, 2, 1, [['cycle'], ['open'], ['bell', 5, 16], ['facade', 8, 11, 'timber', 'R'], ['PB', 26, 1, 2, 16, 'ADO'], ['deco', 'manhole', 20, 4], ['lift', 28, 6], ['deco', 'hoist', 28, 6], ['cart', 34, 15], ['cart', 41, 15], ['E', 'vmorado', 16, 16], ['E', 'gh', 22, 7], ['E', 'vrojo', 44, 16]]); // la reja del varadero (26 a 27) solo se abre de noche
     area('mue3', 'Muelle del Faro Seco: Fondeadero', Z3Z, 38, 8, 2, 1, [['cycle'], ['open'], ['boss', 'nasa', 30, 16]]); // mini-jefe de la noche
     // La Última Esquina (Hora Quebrada): la calle gira; todo se mezcla. Al final, el umbral de la Morada
     area('esq1', 'La Última Esquina: Callejón de las Cunas', Z3Z, 40, 8, 2, 1, [['cycle'], ['open'], ['facade', 3, 10, 'adobe', 'R'], ['stairs', 16, 16, 'R', 5], ['B', 21, 12, 8, 5], ['stairs', 34, 16, 'L', 5], ['facade', 38, 12, 'timber', 'L'],
@@ -302,6 +302,72 @@
       ['pit', 10, 40], ['B', 3, 15, 7, 2], ['PB', 10, 15, 8, 2, 'NAD'], ['B', 18, 15, 6, 2], ['PB', 24, 15, 8, 2, 'NAO'], ['B', 32, 15, 8, 2], ['stairs', 2, 16, 'R', 2], ['stairs', 49, 16, 'L', 2], ['E', 'gh', 14, 9], ['E', 'gh', 28, 9], ['E', 'bat', 36, 6]]);
     area('mor3', 'Morada: Pozo de la Copa', Z3Z, 49, 8, 1, 2, [['indoor'], ['bell', 20, 16], ['B', 1, 16, 9, 2], ['E', 'gh', 16, 24], ['E', 'bat', 8, 28]]);
     area('mor4', 'Morada: Sala de la Primera Sed', Z3Z, 47, 10, 3, 2, [['indoor'], ['deco', 'table', 30], ['boss', 'anhelia', 36, 34]]);
+    // ===== La Encrucijada de las Tres Vías (desde la Plaza del Pregón hasta La Última Esquina): TEJADOS (fila 7, sobre la calle), CALLE (fila 8) y CLOACAS (fila 9, bajo ella). Ver docs/ZONA3-BIFURCACION.md =====
+    // tejado a dos aguas de altura h sobre la cubierta (el jugador sube los peldaños andando): vertiente izquierda, cumbrera plana y vertiente derecha
+    const gable = (x, w, h) => [['stairs', x, 16, 'R', h], ['B', x + h, 17 - h, w - 2 * h, h], ['stairs', x + w - 1, 16, 'L', h]];
+    const TJ = 18, CL = 19;
+    // --- TEJADOS: las azoteas de las mismas casas de la calle de abajo; los huecos entre edificios caen a la calle ---
+    area('tj1', 'Tejados: Azoteas del Pregón', TJ, 20, 7, 3, 1, [['cycle'], ['open'],
+      ['deco', 'tenement', 2, 16, 0], ['deco', 'tenement', 18, 14, 1], ['deco', 'tenement', 32, 13, 2], ['deco', 'tenement', 46, 13, 3], ['deco', 'tenement', 68, 10, 1],
+      ...gable(4, 12, 4), ['deco', 'chimney', 9], ['cry', 9, 11], ['deco', 'laundry', 17, 6], ...gable(24, 14, 5), ['deco', 'vane', 30], ['deco', 'laundry', 39, 6], ...gable(46, 12, 3), ['deco', 'chimney', 51],
+      ['deco', 'gargoyle', 70, 0], ['E', 'vazul', 19, 16], ['E', 'vrojo', 41, 16], ['E', 'vverde', 72, 16], ['E', 'bat', 30, 5], ['E', 'bat', 55, 5]]); // el montacargas del pregonero sube aquí (x 62 a 67)
+    area('tj2', 'Tejados: Cumbreras del Puente', TJ, 23, 7, 2, 1, [['cycle'], ['open'],
+      ['deco', 'tenement', 0, 34, 1], ['deco', 'tenement', 40, 12, 2],
+      ...gable(4, 10, 3), ['deco', 'chimney', 8], ['PH', 16, 13, 5, 'D'], ['cry', 18, 10], ['deco', 'laundry', 15, 6], ...gable(22, 10, 4), ['deco', 'gargoyle', 26, 0], ['P', 36, 13, 3], ['deco', 'belfry', 45],
+      ['E', 'vazul', 17, 16], ['E', 'vrojo', 26, 12], ['E', 'vverde', 46, 16], ['E', 'bat', 12, 6], ['E', 'bat', 38, 5]]); // el hueco (x 34 a 39) cae al puente
+    area('tj3', 'Tejados: Espadaña de la Orilla', TJ, 25, 7, 1, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 26, 2],
+      ['stairs', 2, 16, 'R', 9], ['B', 11, 8, 5, 9], ['stairs', 24, 16, 'L', 9], ['bell', 13, 7], ['deco', 'belfry', 13], ['cry', 13, 5], ['E', 'gh', 6, 10], ['E', 'bat', 20, 6]]); // una campana en lo alto: se puede cambiar de fase desde los tejados
+    area('tj4', 'Tejados: Cornisas de la Corte', TJ, 26, 7, 3, 1, [['cycle'], ['open'],
+      ['deco', 'tenement', 0, 19, 1], ['deco', 'tenement', 25, 16, 2], ['deco', 'tenement', 46, 32, 3],
+      ...gable(5, 14, 4), ['deco', 'chimney', 11], ...gable(25, 16, 5), ['deco', 'gargoyle', 31, 0], ['deco', 'gargoyle', 35, 1], ...gable(46, 14, 4), ['deco', 'chimney', 52],
+      ['deco', 'skylight', 62, 6], ['P', 63, 13, 4], ['P', 68, 10, 4], ['cry', 70, 7],
+      ['E', 'vverde', 11, 12], ['E', 'vazul', 32, 11, { elite: true, name: 'Vigía de las Cornisas', reward: { souls: 80, item: 'spd' } }], ['E', 'vmorado', 66, 16], ['E', 'bat', 45, 5], ['E', 'bat', 20, 4]]); // los huecos (x 19 a 24 y 41 a 45) caen a la columnata
+    area('tj5', 'Tejados: Cúpula del Jardín', TJ, 29, 7, 2, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 26, 1], ['deco', 'tenement', 26, 26, 2],
+      ...gable(6, 40, 10), ['deco', 'vane', 25], ['deco', 'gargoyle', 17, 0], ['deco', 'gargoyle', 34, 1],
+      ['E', 'vazul', 3, 16], ['E', 'vrojo', 25, 6, { elite: true, name: 'Gárgola Viva', reward: { souls: 100, item: 'ward' } }], ['E', 'vverde', 48, 16], ['E', 'bat', 20, 3]]);
+    area('tj6', 'Tejados: Mirador de las Plañideras', TJ, 31, 7, 2, 1, [['cycle'], ['open'], ['calm'], ['deco', 'tenement', 0, 52, 3],
+      ['altar', 20, 16], ['npc', 'merchant', 30, 16], ['bell', 8, 16], ['deco', 'flag', 12], ['deco', 'laundry', 38, 6], ['deco', 'gargoyle', 4, 0], ['deco', 'rigging', 42, 8], ['P', 44, 12, 4]]);
+    area('tj7', 'Tejados: Jarcias del Muelle', TJ, 33, 7, 3, 1, [['cycle'], ['open'],
+      ['deco', 'tenement', 0, 7, 0], ['deco', 'tenement', 12, 41, 1], ['deco', 'tenement', 58, 20, 2],
+      ['P', 9, 12, 3], ['P', 16, 13, 4], ['P', 17, 10, 3], ['P', 18, 7, 3], ['B', 21, 6, 2, 11], ['P', 23, 7, 3], ['P', 24, 10, 3], ['P', 24, 13, 4], ['cry', 21, 3], ['deco', 'rigging', 14, 12],
+      ...gable(30, 14, 4), ['deco', 'chimney', 36], ['deco', 'rigging', 60, 10], ['deco', 'flag', 65], ['P', 66, 13, 4], ['P', 70, 10, 4],
+      ['E', 'vmorado', 14, 16], ['E', 'vazul', 36, 12], ['E', 'vrojo', 48, 16], ['E', 'vverde', 72, 16], ['E', 'bat', 25, 4]]); // los huecos (x 7 a 11 y 53 a 57) caen al embarcadero
+    area('tj8', 'Tejados: Cumbreras del Varadero', TJ, 36, 7, 2, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 27, 3], ['deco', 'tenement', 34, 18, 1],
+      ...gable(4, 12, 3), ['deco', 'rigging', 18, 8], ['PH', 20, 12, 5, 'N'], ...gable(36, 12, 4), ['cry', 42, 10], ['deco', 'chimney', 40],
+      ['E', 'vrojo', 9, 13], ['E', 'vazul', 23, 16, { elite: true, name: 'Sereno de las Alturas', reward: { souls: 90, item: 'bomb' } }], ['E', 'vmorado', 42, 12], ['E', 'bat', 12, 5]]); // el montacargas del Varadero llega aquí (x 28 a 33)
+    area('tj9', 'Tejados: Cornisa del Fondeadero', TJ, 38, 7, 2, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 52, 0],
+      ['S', 6, 16, 8], ['P', 8, 13, 4], ...gable(20, 10, 3), ['cry', 25, 11], ['S', 32, 16, 6], ['P', 33, 13, 4], ['S', 44, 16, 5], ['P', 45, 13, 3], ['deco', 'gargoyle', 16, 0], ['deco', 'gargoyle', 40, 1],
+      ['E', 'vmorado', 16, 16], ['E', 'gh', 24, 8], ['E', 'bat', 12, 5], ['E', 'bat', 36, 5]]); // pinchos antipalomas sobre la cornisa
+    area('tj10', 'Tejados: Alero de la Última Esquina', TJ, 40, 7, 2, 1, [['cycle'], ['open'], ['calm'], ['deco', 'tenement', 0, 22, 1], ['deco', 'tenement', 26, 26, 2],
+      ['altar', 8, 16], ['deco', 'flag', 14], ['deco', 'chimney', 28], ['deco', 'laundry', 32, 6]]); // el hueco (x 22 a 25) baja a La Última Esquina
+    // --- CLOACAS: lo que la ciudad esconde bajo sus calles; se entra por las alcantarillas de la calle y se sale por un montacargas ---
+    area('cl1', 'Cloacas: Boca del Pregón', CL, 20, 9, 3, 1, [['climb', 50, 4, 'norm', true],
+      ['deco', 'sgrate', 50, 4], ['deco', 'sarch', 4, 30], ['deco', 'spipe', 8, 20], ['deco', 'sdrip', 25], ['deco', 'sdrip', 42], ['deco', 'swater', 57, 16, 1],
+      ['B', 2, 12, 12, 1], ['B', 13, 13, 1, 4], ['K', 14, 13, 1, 4], ['cry', 8, 15], ['bleed', 14, 13, 4], ['pit', 57, 72], ['B', 58, 15, 3, 2], ['B', 63, 15, 3, 2], ['B', 68, 15, 3, 2],
+      ['E', 'slug', 20, 16], ['E', 'slug', 32, 16], ['E', 'bat', 38, 6], ['E', 'gh', 46, 10]]);
+    area('cl2', 'Cloacas: Canal del Puente', CL, 23, 9, 2, 1, [['pit', 4, 47], ['B', 1, 15, 3, 2], ['B', 48, 15, 3, 2],
+      ['TP', 6, 14, 3, 6, 4, 0], ['TP', 12, 13, 3, 6, 4, 1.5], ['TP', 18, 14, 3, 6, 4, 3], ['TP', 24, 13, 3, 6, 4, 4.5], ['TP', 30, 14, 3, 6, 4, 0.5], ['TP', 36, 13, 3, 6, 4, 2], ['TP', 42, 14, 3, 6, 4, 3.5],
+      ['deco', 'sarch', 0, 52], ['deco', 'swater', 4, 44, 1], ['deco', 'spipe', 0, 52], ['deco', 'sdrip', 15], ['E', 'bat', 14, 6], ['E', 'bat', 34, 6], ['E', 'gh', 20, 9], ['E', 'gh', 38, 9]]);
+    area('cl3', 'Cloacas: Sifón de la Orilla', CL, 25, 9, 1, 1, [['pit', 5, 15], ['B', 1, 15, 4, 2], ['B', 9, 15, 3, 2], ['B', 16, 15, 10, 2],
+      ['ltorch', 3, 14, 5, 14, 4], ['ltorch', 10, 14, 12, 14, 4], ['deco', 'swater', 5, 11, 1], ['deco', 'slamp', 20], ['deco', 'sdrip', 8], ['E', 'bat', 12, 6], ['E', 'bat', 20, 8]]);
+    area('cl4', 'Cloacas: Bodegas de la Corte', CL, 26, 9, 3, 1, [['deco', 'sarch', 0, 78], ['deco', 'spipe', 5, 30], ['deco', 'slamp', 25], ['deco', 'sdrip', 30], ['deco', 'sdrip', 57], ['deco', 'sgate', 70, 6],
+      ['B', 20, 1, 2, 9], ['B', 50, 1, 2, 9], ['B', 40, 12, 6, 1], ['K', 40, 13, 1, 4], ['B', 45, 13, 1, 4], ['cry', 42, 15], ['bleed', 40, 13, 4], ['P', 66, 14, 5],
+      ['E', 'vrojo', 14, 16], ['E', 'vverde', 34, 16], ['E', 'sk', 54, 16], ['E', 'sk', 60, 16], ['E', 'vazul', 72, 16], ['E', 'bat', 46, 5]]);
+    area('cl5', 'Cloacas: Aljibe de la Corte', CL, 29, 9, 2, 1, [['climb', 44, 4, 'norm', true], ['pit', 4, 38], ['B', 1, 15, 3, 2], ['B', 6, 15, 3, 2], ['B', 11, 15, 3, 2], ['B', 17, 15, 9, 2], ['B', 29, 15, 3, 2], ['B', 34, 15, 3, 2], ['B', 40, 15, 11, 2],
+      ['deco', 'sarch', 0, 52], ['deco', 'swater', 4, 35, 1], ['deco', 'sgrate', 44, 4], ['deco', 'sdrip', 28],
+      ['E', 'vrojo', 21, 14, { elite: true, name: 'Alguacil del Aljibe', reward: { souls: 100, item: 'ward' } }], ['E', 'bat', 10, 6], ['E', 'gh', 32, 9]]);
+    area('cl6', 'Cloacas: Compuerta de las Plañideras', CL, 31, 9, 2, 1, [['calm'], ['altar', 20, 16], ['deco', 'sgate', 34, 8], ['deco', 'swater', 4, 12, 0], ['deco', 'sdrip', 12], ['deco', 'slamp', 26], ['deco', 'spipe', 0, 52], ['P', 40, 13, 4], ['cry', 42, 12]]);
+    area('cl7', 'Cloacas: Lecho del Canal Seco', CL, 33, 9, 3, 1, [['pit', 4, 72],
+      ['stairs', 6, 16, 'R', 3], ['B', 9, 14, 5, 3], ['stairs', 13, 16, 'L', 3], ['stairs', 20, 16, 'R', 3], ['B', 23, 14, 5, 3], ['stairs', 27, 16, 'L', 3], ['stairs', 34, 16, 'R', 3], ['B', 37, 14, 5, 3], ['stairs', 41, 16, 'L', 3],
+      ['stairs', 48, 16, 'R', 3], ['B', 51, 14, 5, 3], ['stairs', 55, 16, 'L', 3], ['stairs', 62, 16, 'R', 3], ['B', 65, 14, 5, 3], ['stairs', 69, 16, 'L', 3],
+      ['P', 44, 9, 4], ['P', 50, 6, 4], ['deco', 'sarch', 0, 78], ['deco', 'swater', 4, 69, 1], ['deco', 'slamp', 40], ['deco', 'sdrip', 30],
+      ['E', 'vazul', 39, 13, { elite: true, name: 'Farolero Ahogado', reward: { souls: 110, item: 'rage' } }], ['E', 'gh', 18, 9], ['E', 'gh', 46, 9], ['E', 'gh', 60, 9], ['E', 'bat', 30, 5]]);
+    area('cl8', 'Cloacas: Desagüe del Varadero', CL, 36, 9, 2, 1, [['climb', 20, 4, 'norm', true], ['S', 30, 16, 6], ['P', 31, 13, 4], ['deco', 'sarch', 0, 52], ['deco', 'sgrate', 20, 4], ['deco', 'spipe', 26, 24], ['deco', 'snest', 46], ['deco', 'sdrip', 12],
+      ['E', 'slug', 8, 16], ['E', 'vmorado', 42, 16, { elite: true, name: 'Rata Mayor del Colector', reward: { souls: 90, item: 'spd' } }], ['E', 'slug', 48, 16], ['E', 'bat', 36, 6]]);
+    area('cl9', 'Cloacas: Rejas del Fondeadero', CL, 38, 9, 2, 1, [['pit', 5, 36], ['B', 1, 15, 4, 2], ['B', 10, 15, 4, 2], ['B', 19, 15, 4, 2], ['B', 28, 15, 4, 2], ['B', 37, 15, 14, 2],
+      ['ltorch', 3, 14, 5, 14, 4], ['ltorch', 12, 14, 14, 14, 4], ['ltorch', 21, 14, 23, 14, 4], ['ltorch', 30, 14, 32, 14, 4], ['cry', 30, 11],
+      ['deco', 'sgate', 40, 8], ['deco', 'swater', 5, 32, 1], ['deco', 'slamp', 24], ['deco', 'sdrip', 44], ['E', 'bat', 14, 6], ['E', 'bat', 26, 6], ['E', 'gh', 20, 9], ['E', 'gh', 34, 9]]);
+    area('cl10', 'Cloacas: Colector de la Última Esquina', CL, 40, 9, 2, 1, [['calm'], ['altar', 8, 16], ['lift', 40, 6], ['deco', 'sarch', 0, 52], ['deco', 'sgrate', 40, 6], ['deco', 'swater', 4, 22, 0], ['deco', 'sdrip', 24], ['deco', 'slamp', 30]]); // el montacargas del colector sube a La Última Esquina
   });
 
   // ===== Zona 4: La Ciudad Baja (región 'z4'): la ciudad de los pagados bajo la Calle de las Horas; se entra por el pozo de la Plaza del Pregón =====
@@ -331,6 +397,10 @@
   const S = (a, b, x = 11, size = 4, o = {}) => LINKS.push({ t: 'S', a, b, x, size, region: CUR, ...o });
   inRegion('z3', () => {
     E('zag', 'plz0', 14); E('plz0', 'cu1', 14); E('cu1', 'cu2', 14); E('cu2', 'cu3', 14); E('cu3', 'cu4', 14); E('cu4', 'cot1', 14, { gate: 'reverberia' }); E('cot1', 'cot2', 14); E('cot2', 'cot3', 14); E('cot3', 'plz1', 14, { gate: 'tasador' }); E('plz1', 'pte1', 14); E('pte1', 'pte2', 14); E('pte2', 'pal1', 14); E('pal1', 'pal2', 14); E('pal2', 'pal3', 14); E('pal3', 'mue1', 14, { gate: 'planidera' }); E('mue1', 'mue2', 14); E('mue2', 'mue3', 14); E('mue3', 'esq1', 14, { gate: 'nasa' }); E('esq1', 'esq3', 14); E('esq3', 'esq2', 14, { gate: 'tornera' }); E('esq2', 'mor1', 6); E('mor1', 'mor2', 8); E('mor2', 'mor3', 8); S('mor3', 'mor4', 11, 4); // la calle es continua: pasos casi tan altos como la sala
+    // La Encrucijada: tejados y cloacas son cadenas paralelas de salas (encima y debajo de la calle) que confluyen en La Última Esquina
+    ['tj1', 'tj2', 'tj3', 'tj4', 'tj5', 'tj6', 'tj7', 'tj8', 'tj9', 'tj10'].forEach((k, i, a) => { if (i) E(a[i - 1], k, 14); });
+    ['cl1', 'cl2', 'cl3', 'cl4', 'cl5', 'cl6', 'cl7', 'cl8', 'cl9', 'cl10'].forEach((k, i, a) => { if (i) E(a[i - 1], k, 14); });
+    S('tj1', 'plz1', 62, 6); S('plz1', 'cl1', 50, 4); S('tj2', 'pte1', 34, 6); S('tj4', 'pal1', 19, 6); S('tj4', 'pal1', 41, 5); S('pal2', 'cl5', 44, 4); S('tj7', 'mue1', 7, 5); S('tj7', 'mue1', 53, 5); S('tj8', 'mue2', 28, 6); S('mue2', 'cl8', 20, 4); S('tj10', 'esq1', 22, 4); S('esq1', 'cl10', 40, 6);
     S('cb1', 'cb0'); S('cb2', 'cb1'); S('cbT', 'cb2'); E('cbT', 'azotea', 3, { lift: 16 }); // a la torre se entra por la puerta de su base
   });
   inRegion('z4', () => {
@@ -494,7 +564,8 @@
           case 'tower': { const w = op[2]; for (let y = 1; y <= 11; y++) for (let x = op[1]; x < op[1] + w; x++) setF(a, x, y, K.SOLID); a.keepbg = [op[1], op[1] + w - 1]; world.props.push({ kind: 'tower', area: a.id, gx: a.x0 + op[1], w }); break; }
           case 'house': case 'crate': for (let y = op[2]; y < op[2] + op[4]; y++) for (let x = op[1]; x < op[1] + op[3]; x++) setF(a, x, y, K.SOLID); world.props.push({ kind: op[0], area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], w: op[3], h: op[4] }); break;
           // ['deco', 'cradle'|'portrait'|'table', x, color]: decorado sin colisión de la Morada (cunas, retratos de los cuatro y la mesa para seis)
-          case 'deco': world.props.push({ kind: op[1], area: a.id, gx: a.x0 + op[2], gy: a.y0 + a.rh - 1, color: op[3] }); break;
+          // (ampliado) ['deco', tipo, x, color|ancho, estilo]: decorado sin colisión anclado al suelo de la sala (gy = casilla del suelo); w = ancho si op[3] es un número
+          case 'deco': world.props.push({ kind: op[1], area: a.id, gx: a.x0 + op[2], gy: a.y0 + a.rh - 1, color: op[3], w: typeof op[3] === 'number' ? op[3] : 0, style: op[4] }); break;
           // ['well', x, region]: un pozo (en la Calle de las Horas) o la escalera que sube (en la Ciudad Baja) que cambia de mapa
           case 'well': world.gdoors.push({ id: sid('gd'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, toRegion: op[2], needs: [], kind: region === 'z3' ? 'well' : 'ladder' }); break;
           case 'bell': world.bells.push({ id: sid('b'), area: a.id, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 1) * T }); break;

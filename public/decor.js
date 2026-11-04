@@ -353,7 +353,7 @@
       const tileKind = (gx, gy) => { const t = this.fg.getTileAt(gx, gy); return t && t.index >= 0 ? t.index % 8 : -1; };
       W.areaList.forEach(a => {
         if (a.special || a.open) return;
-        const th0 = DECOR[a.z] || DECOR[a.z === 17 ? 3 : 0], R = n => FACT[n] ? mkArt(facKey(n, a.z)) : n, th = { bg: th0.bg.map(R), wall: th0.wall.map(R), fg: th0.fg }, rnd = rndSeeded(a.x0 * 7 + a.y0 * 13 + 5), floorY = a.y0 + a.rh - 1;
+        const th0 = DECOR[a.z] || DECOR[a.z === 17 || a.z === 19 ? 3 : 0], R = n => FACT[n] ? mkArt(facKey(n, a.z)) : n, th = { bg: th0.bg.map(R), wall: th0.wall.map(R), fg: th0.fg }, rnd = rndSeeded(a.x0 * 7 + a.y0 * 13 + 5), floorY = a.y0 + a.rh - 1;
         // "bolsa mezclada": todas las piezas de la zona salen antes de repetir ninguna, y nunca la misma dos veces seguidas
         const bag = list => { let b = [], last = null; return () => { if (!b.length) { b = list.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(rnd() * (i + 1)); [b[i], b[j]] = [b[j], b[i]]; } } let k = b.pop(); if (k === last && b.length) { const o = b.pop(); b.push(k); k = o; } last = k; return k; }; };
         const nextBg = bag(th.bg), nextFg = bag(th.fg), nextWall = bag(th.wall);
@@ -416,7 +416,7 @@
     },
     // arquitectura de una sala: cornisa y zócalo (tramos repetidos), arcos/cerchas entre pilares, vidrieras con su luz, lámparas y estandartes
     buildArch(a, tileKind) {
-      const W = this.W, cfg0 = ARQ[a.z === 17 ? 3 : a.z], tx = this.textures, z = a.z, D = this.decorObjs; if (!cfg0 || a.interior || a.open) return;
+      const W = this.W, cfg0 = ARQ[a.z === 17 || a.z === 19 ? 3 : a.z], tx = this.textures, z = a.z, D = this.decorObjs; if (!cfg0 || a.interior || a.open) return;
       const cfg = ARQ_ROOM[a.id] ? Object.assign({}, cfg0, ARQ_ROOM[a.id]) : cfg0, rnd = rndSeeded(a.x0 * 11 + a.y0 * 5 + 77), P = apal(z), gx0 = a.x0 * T, gy0 = a.y0 * T;
       const blk = []; // sitios con objetos que hay que dejar libres (x, y locales en baldosas)
       [W.altars, W.npcs, W.crystals, W.forges, W.pages, W.bosses, W.sforges || [], W.gems || []].forEach(l => l.forEach(o => { if (o.area === a.id) blk.push([Math.floor(o.x / T) - a.x0, Math.floor(o.y / T) - a.y0]); }));

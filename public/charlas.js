@@ -126,7 +126,7 @@ Object.assign(CastleScene.prototype, {
   },
   // ---- ganchos
   talkOnArea(id) { if (typeof TALK_TRIGGERS !== 'undefined') TALK_TRIGGERS.forEach(t => { if (t.type === 'area' && t.area === id) this.talkFire(t.id); }); },
-  talkOnEnemy(type, eliteName) { if (typeof TALK_TRIGGERS !== 'undefined') TALK_TRIGGERS.forEach(t => { if (t.type === 'enemy' && t.enemy === type && (t.eliteName ? t.eliteName === eliteName : !eliteName)) this.talkFire(t.id); }); },
+  talkOnEnemy(type, eliteName) { if (typeof TALK_TRIGGERS !== 'undefined') TALK_TRIGGERS.forEach(t => { if (t.type === 'enemy' && (t.enemy === type || (t.enemy === '*' && eliteName)) && (t.eliteName ? t.eliteName === eliteName : !eliteName)) this.talkFire(t.id); }); },
   talkOnProgress(silent) { // jefes nuevos caídos
     if (!this.talkInit || typeof TALK_TRIGGERS === 'undefined') return;
     const now = this.progress.bosses || [];

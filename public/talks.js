@@ -32,6 +32,10 @@ const TALK_TRIGGERS = [
   { id: 'A24', type: 'area', area: 'dep2' },
   { id: 'A25', type: 'area', area: 'dep4' },
   { id: 'A26', type: 'area', area: 'tronos' },
+  // ---------- A: Zona 3, la encrucijada de las tres vias (docs/ZONA3-BIFURCACION.md) ----------
+  { id: 'A27', type: 'area', area: 'tj1' },    // Los Tejados: Azoteas del Pregon (se sube por el montacargas del pregonero)
+  { id: 'A28', type: 'area', area: 'cl1' },    // Las Cloacas: Boca del Pregon (se baja por la alcantarilla)
+  { id: 'A29', type: 'area', area: 'plz1' },   // Plaza del Pregon: la calle se bifurca en tres (grupo)
   // ---------- B: lograr un objetivo ----------
   { id: 'B01', type: 'boss', boss: 'garg' },
   { id: 'B02', type: 'boss', boss: 'bishop' },
@@ -76,6 +80,13 @@ const TALK_TRIGGERS = [
   { id: 'C18', type: 'enemy', enemy: 'ahogado' },
   { id: 'C19', type: 'enemy', enemy: 'frasco' },
   { id: 'C20', type: 'enemy', enemy: 'cobrador' },
+  // Zona 3, elites con nombre de Los Tejados y Las Cloacas. enemy: '*' = cualquier tipo; solo cuenta el nombre del elite (ver talkOnEnemy en charlas.js)
+  { id: 'C21', type: 'enemy', enemy: '*', eliteName: 'Vigía de las Cornisas' },
+  { id: 'C22', type: 'enemy', enemy: '*', eliteName: 'Gárgola Viva' },
+  { id: 'C23', type: 'enemy', enemy: '*', eliteName: 'Sereno de las Alturas' },
+  { id: 'C24', type: 'enemy', enemy: '*', eliteName: 'Rata Mayor del Colector' },
+  { id: 'C25', type: 'enemy', enemy: '*', eliteName: 'Farolero Ahogado' },
+  { id: 'C26', type: 'enemy', enemy: '*', eliteName: 'Alguacil del Aljibe' },
   // ---------- D: lugares inalcanzables por ahora (x, y en tiles locales del area; coordenadas orientativas de ZONA2.md 7.2) ----------
   { id: 'D01', type: 'spot', area: 'salon', x: 13, y: 16, r: 200, need: { abil: 'dash' } },
   { id: 'D02', type: 'spot', area: 'mazm', x: 36, y: 10, r: 200, need: { abil: 'dj' } },
@@ -371,7 +382,42 @@ const TALKS = {
     solo: { red: 'Dos tronos. Me toca ir delante.', blue: 'El canto de aquella noche. Por fin sé de dónde venía.', green: 'Un atril y un cadalso. Qué mal gusto para una sala.', purple: 'Un cadalso. Conozco el sitio donde se despide a la gente.' },
   },
 
-  // ======================= B: objetivos =======================
+  // ======================= A: Zona 3 (encrucijada de las tres vias) =======================
+  A27: { // Azoteas del Pregon, primera sala de Los Tejados
+    pair: ['blue', 'purple'], needs: [],
+    lines: [
+      ['blue', 'Aquí arriba hay viento. Y se ve la calle entera.'],
+      ['purple', 'Y la calle no nos ve a nosotros. Me gusta.'],
+      ['blue', 'Cuidado con las tejas.'],
+      ['purple', 'Y con quien las vigila.'],
+    ],
+    lua: [['lua', '¡Palomas! Tienen mejor ruta que nosotros.']],
+    solo: { red: 'Los tejados. Desde arriba, la guardia lo ve todo.', blue: 'El viento suena a coro. Aquí arriba se oye el cielo falso.', green: 'Tendederos, tejas y nadie cobrando. Qué raro.', purple: 'Aquí arriba vive quien no quiso bajar a la calle.' },
+    soloLua: '¡Palomas! Tienen mejor ruta que nosotros.',
+  },
+  A28: { // Boca del Pregon, primera sala de Las Cloacas
+    pair: ['green', 'purple'], needs: [],
+    lines: [
+      ['green', 'Goteo, eco y olor a trato sucio. Me siento en casa.'],
+      ['purple', 'Aquí abajo acaba lo que la ciudad tira.'],
+      ['green', '¿Se paga por entrar?'],
+      ['purple', 'Con permiso. Y con luz.'],
+    ],
+    lua: [['lua', 'Qué oscuro. Que alguien encienda algo, por favor.']],
+    solo: { red: 'Una alcantarilla. Hasta el cuartel tenía una. Nunca la miré.', blue: 'Oscuridad que gotea. Aquí veo mejor que nadie.', green: 'Lo que la ciudad desecha, siempre vale algo.', purple: 'Bajo la calle hay otra calle. Con otros vecinos.' },
+    soloLua: 'Qué oscuro. Que alguien encienda algo, por favor.',
+  },
+  A29: { // grupo; la Plaza del Pregon se abre en tres caminos
+    needs: [],
+    lines: [
+      ['red', 'Tres caminos. La calle, por arriba y por abajo.'],
+      ['blue', 'Todos llegan a la Última Esquina. Se oye el torno desde los tres.'],
+      ['green', '¿Cuál es el más barato?'],
+      ['purple', 'Ninguno. Pero cada uno cuenta algo distinto.'],
+    ],
+    solo: { red: 'Tres caminos. Un soldado elige el que menos le gusta.', blue: 'Calle, tejados o cloacas. Los tres suenan al mismo torno.', green: 'Tres caminos, tres peajes. Elijo el que menos se vea.', purple: 'Cada camino tiene sus vecinos. Los saludaré a todos.' },
+  },
+
   B01: {
     pair: ['red', 'blue'], needs: [],
     lines: [
@@ -762,6 +808,62 @@ const TALKS = {
       ['green', 'Me lo conozco. Se cobra primero y se pregunta luego.'],
     ],
     solo: { red: 'Un cobrador. Roba almas. Lo detengo.', blue: 'Persigue al más rico. Cuidado.', green: 'Cobrador. Mi vida, resumida.', purple: 'Quien cobra así suele deber más que nadie.' },
+  },
+
+  // ======================= C: elites con nombre de Zona 3 (tejados y cloacas) =======================
+  C21: { // Vigia de las Cornisas
+    pair: ['red', 'blue'], needs: [],
+    lines: [
+      ['red', 'Un vigía en la cornisa. Hace guardia de cara al vacío.'],
+      ['blue', 'Nadie le dijo que el relevo no viene.'],
+      ['red', 'A mí tampoco me lo dijeron.'],
+    ],
+    solo: { red: 'Un vigía que no se baja. Lo conozco.', blue: 'Mira la calle sin parpadear. Yo también miraba un mar.', green: 'Un vigía. Si cobra por mirar, vive bien.', purple: 'Lleva siglos de guardia. Que descanse.' },
+  },
+  C22: { // Gargola Viva
+    pair: ['blue', 'green'], needs: [],
+    lines: [
+      ['green', 'Esa gárgola se ha movido.'],
+      ['blue', 'Estaba posada. Ahora ha decidido bajar.'],
+      ['green', 'Mala idea para ella.'],
+    ],
+    solo: { red: 'Una gárgola que respira. A distancia.', blue: 'Piedra con alas. Cuento cuándo salta.', green: 'Una gárgola viva. Y yo sin comprador para el susto.', purple: 'La piedra también despierta, si la llaman.' },
+  },
+  C23: { // Sereno de las Alturas
+    pair: ['red', 'purple'], needs: [],
+    lines: [
+      ['purple', 'Un sereno. Con su farol y su llavero.'],
+      ['red', 'Canta las horas desde un tejado. Qué oficio.'],
+      ['purple', 'Con permiso. Y a su hora.'],
+    ],
+    solo: { red: 'Otro sereno. Este vigila desde arriba.', blue: 'Canta la hora sin saber cuál es.', green: 'Un sereno sin vecinos. Cobra por nada.', purple: 'Hay quien canta las horas para no oír el silencio.' },
+  },
+  C24: { // Rata Mayor del Colector
+    pair: ['green', 'purple'], needs: [],
+    lines: [
+      ['green', 'Una rata del tamaño de un perro. Con corona de huesos.'],
+      ['purple', 'Manda en todo lo que se arrastra aquí abajo.'],
+      ['green', 'Pues a destronarla.'],
+    ],
+    solo: { red: 'Una rata enorme. Solo es una rata. Muy grande.', blue: 'Chilla en el eco. Se oye desde lejos.', green: 'La Rata Mayor. Aquí abajo, la competencia.', purple: 'Ni la basura se queda sin rey.' },
+  },
+  C25: { // Farolero Ahogado
+    pair: ['blue', 'purple'], needs: [],
+    lines: [
+      ['blue', 'Un farolero. Con la lámpara aún encendida bajo el agua.'],
+      ['purple', 'Se ahogó cuidando una luz.'],
+      ['blue', 'Entonces yo le entiendo.'],
+    ],
+    solo: { red: 'Un farolero que no soltó la lámpara.', blue: 'Una luz bajo el agua. Qué terca. Qué bonita.', green: 'Luz que no se vende. La única de esta ciudad.', purple: 'Se ahogó con su oficio puesto. Con permiso.' },
+  },
+  C26: { // Alguacil del Aljibe
+    pair: ['red', 'green'], needs: [],
+    lines: [
+      ['green', 'Un alguacil. Aquí abajo también hay ley.'],
+      ['red', 'Y llaves. Mira cuántas lleva.'],
+      ['green', 'Seguro que cobra por abrir.'],
+    ],
+    solo: { red: 'Un alguacil con llaves. La ley llega hasta aquí abajo.', blue: 'Guarda el agua como otros guardan una cárcel.', green: 'Mismo oficio que yo, pero con uniforme.', purple: 'Una ley que nadie pidió, en un sitio donde nadie mira.' },
   },
 
   // ======================= D: lugares inalcanzables =======================

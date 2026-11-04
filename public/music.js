@@ -30,6 +30,8 @@ const Music = (() => {
     { root: 40, bpm: 60, pad: 'square', organ: true, royal: true }, // 15 Los Tronos (órgano de teatro apagado)
     { root: 45, bpm: 66, pad: 'triangle', organ: true },    // 16 La Calle de las Horas (órgano suave y paso de marcha lejana)
     { root: 33, bpm: 46, pad: 'triangle', drone: true, drip: true }, // 17 La Ciudad Baja (agua negra y goteo, grave)
+    { root: 47, bpm: 58, pad: 'sine', wind: true },         // 18 Los Tejados (aéreo y ventoso: colchón claro, soplos de viento y campanitas solitarias agudas)
+    { root: 31, bpm: 38, pad: 'triangle', drone: true, drip: true, deep: true }, // 19 Las Cloacas (goteo grave con mucho eco, lentísimo)
     { root: 43, bpm: 50, pad: 'triangle', calm: true },     // Calma: salas tranquilas y casas (sol mayor, lento, sin bajo grave y con campanas)
   ];
   const CALM = ZONES.length - 1;
@@ -94,6 +96,14 @@ const Music = (() => {
     if (boss) { if (s16 % 4 === 0) kick(t); if (s16 % 8 === 4) noise(t, 0.12, 0.12, 1200); else if (s16 % 2 === 1 && !lite()) noise(t, 0.04, 0.05, 6000); }
     if (z.tick && !boss && s16 % 4 === 0) noise(t, 0.03, 0.06, 3500);
     if (z.drip && !boss && s16 % 2 === 1 && Math.random() < 0.2) tone(mtof(root + [24, 31, 34, 36, 39][Math.random() * 5 | 0] + 12), t, 0.35, 'sine', 0.04, 4000, 0.9); // gota con mucho eco
+    if (z.wind && !boss) { // tejados: un soplo de viento cada dos compases y una campanita aguda y sola de vez en cuando
+      if (!lite() && s16 === 0 && bar % 2 === 0) noise(t, 2.6, 0.02, 1800 + (bar % 4) * 500);
+      if (s16 === 4 && bar % 2 === 0 && Math.random() < 0.55) tone(mtof(root + chord[(bar >> 1) % 3] + 48), t, 3.2, 'sine', 0.035, 6000, 0.9);
+    }
+    if (z.deep && !boss) { // cloacas: gotas graves y lejanas, con eco largo
+      if (s16 % 4 === 2 && Math.random() < 0.3) tone(mtof(root + [24, 27, 31, 36][Math.random() * 4 | 0]), t, 0.6, 'sine', 0.05, 2200, 1);
+      if (!lite() && s16 === 8 && bar % 4 === 1) noise(t, 1.8, 0.012, 500);
+    }
     if (z.drip && !boss && !lite() && s16 === 0 && bar % 4 === 3) noise(t, 1.4, 0.014, 2600); // siseo húmedo, muy flojo
   }
   function schedule() {

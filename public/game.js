@@ -179,6 +179,13 @@ const ELITE_AB = {
   'Carcelero': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 4.2 },
   'Espectro Penitente': { kind: 'blink', range: 420, tele: 0.5, act: 0.1, cd: 4.5 },
   'Verdugo Cubierto de Musgo': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 3.8 },
+  'Vigía de las Cornisas': { kind: 'blink', range: 420, tele: 0.5, act: 0.1, cd: 4.2 }, // Tejados: aparece a tu espalda desde otra cornisa
+  'Gárgola Viva': { kind: 'quake', range: 300, tele: 0.65, act: 0.1, cd: 4 }, // Tejados: se deja caer sobre la teja y sacude el suelo
+  'Sereno de las Alturas': { kind: 'orbs', range: 380, tele: 0.45, act: 0.1, cd: 3.2 }, // Tejados: farol en alto que suelta orbes de luz
+  'Rata Mayor del Colector': { kind: 'charge', range: 280, tele: 0.55, act: 0.55, cd: 3.4, spd: 360 }, // Cloacas: embestida a ras de suelo
+  'Farolero Ahogado': { kind: 'haste', range: 260, tele: 0.5, act: 2.4, cd: 5, trail: true },
+ // Cloacas: corre y deja un rastro de légamo
+  'Alguacil del Aljibe': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 3.9 }, // Cloacas: golpea con el cayado y hace temblar el aljibe
   'Relojero Oxidado': { kind: 'haste', range: 260, tele: 0.5, act: 2.6, cd: 5, trail: true } // deja un rastro de veneno de 3 s y, un ciclo sí y otro no, lanza una nube que dura 5 s
 };
 const SILENCE_TYPES = ['orb', 'thorn']; // proyectiles que destruye la Palabra de Silencio (los orbes; no ondas, pilares ni nubes)
@@ -213,7 +220,7 @@ const PR = {
 const OTHER_ROOM_DARK = 0.86; // cuánto se oscurecen las salas en las que no estás (0 = nada, 1 = negro)
 const NEAR_ROOM_DARK = 0.3; // salas vecinas con el paso abierto: se ven al 70 %
 const ROOM_FADE = 0.7; // segundos que tarda una sala en aclararse u oscurecerse al cambiar de sala
-const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7, 1.9, 2.2, 2.0, 2.1, 2.1, 1, 2.4, 2.6]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
+const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7, 1.9, 2.2, 2.0, 2.1, 2.1, 1, 2.4, 2.6, 2.5, 2.6]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 

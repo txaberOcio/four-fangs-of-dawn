@@ -7,6 +7,8 @@ const REGION = process.env.REGION || (['z3', 'z4'].includes(process.argv[2]) ? p
 const w = World.build(REGION);
 // los portones con horario (['PB'] altos) se abren en alguna fase del ciclo: para el alcance se tratan como abiertos; los tramos bajos de puente (levadizos) se dejan puestos
 (w.phased || []).filter(p => !p.oneway && p.h >= 8).forEach(p => { for (let j = 0; j < p.h; j++) for (let i = 0; i < p.w; i++) w.fg[p.gy + j][p.gx + i] = -1; });
+// montacargas: el validador los trata como una escalera de peldaños de una dirección cada 3 casillas dentro del hueco (el ascensor real sube y baja solo)
+(w.lifts || []).forEach(l => { const gx0 = Math.round(l.x / World.T), gx1 = gx0 + Math.round(l.w / World.T), top = Math.round(l.yTop / World.T), bot = Math.round(l.yBot / World.T); for (let y = bot - 3; y >= top; y -= 3) for (let x = gx0; x < gx1; x++) if (w.fg[y][x] === -1) w.fg[y][x] = World.K.ONEWAY; });
 // puertas por jefe: empiezan cerradas; se abren con los jefes ya derrotados (World.gateOpen, la misma regla que usa el juego)
 const defeated = new Set();
 w.gates.forEach(g => g.tiles.forEach(t => { t.orig = w.fg[t.gy][t.gx]; }));
@@ -208,7 +210,7 @@ if (process.argv[2] === 'dbg') { // depuración: node validate.js dbg <gx> <gy> 
 }
 // ---- Fases de progreso ----
 const abil = REGION !== 'main' ? { dash: true, dj: true, wj: true } : { dash: false, dj: false, wj: false };
-const Z3_PROGRESSION = [{ bosses: ['reverberia'] }, { bosses: ['tasador'] }, { bosses: ['planidera'] }, { bosses: ['nasa'] }, { bosses: ['tornera'] }, { bosses: ['anhelia'] }]; // orden previsto de los jefes de la Zona 3
+const Z3_PROGRESSION = [{ bosses: ['reverberia'] }, { bosses: ['tasador'] }, { bosses: ['planidera', 'nasa', 'tornera'] }, { bosses: ['anhelia'] }]; // tras la bifurcación de la Plaza del Pregón (tejados, calle y cloacas) la Plañidera y Nasa son opcionales: la Tornera ya se alcanza por cualquiera de los tres caminos // orden previsto de los jefes de la Zona 3
 const PROG = REGION === 'z3' ? Z3_PROGRESSION : REGION === 'z4' ? [{ bosses: ['cobrador'] }] : World.PROGRESSION;
 // alcance: en la Zona 3 las puertas (torre del Campanario, casas) son pasos: desde cada puerta alcanzada se parte otra búsqueda en su destino
 function reach(abil, start) {
@@ -249,7 +251,7 @@ const allRooms = Object.keys(w.areas).filter(r => !w.areas[r].special);
 // Con Vesper (sin Alas del Alba) la Cueva del Abismo y lo que exige planear sobre los pinchos son opcionales: no cuentan como error
 const OPT_ROOMS = PICK === 'vesper' ? ['caida', 'fragua', 'gran'] : [], OPT_ITEMS = PICK === 'vesper' ? ['cripta', 'cumbre', 'fragua'] : [];
 const missing = allRooms.filter(r => !(r in firstStage) && !OPT_ROOMS.includes(r));
-const names = REGION === 'z4' ? { 0: 'inicio (hasta el Cobrador)', 1: 'tras el Cobrador' } : REGION === 'z3' ? { 0: 'inicio (hasta Reverberia)', 1: 'tras Reverberia', 2: 'tras el Tasador', 3: 'tras la Plañidera', 4: 'tras Nasa', 5: 'tras la Tornera' } : { 0: 'inicio', 1: 'tras la Gárgola (Impulso)', 2: 'tras el Obispo (Doble salto)', 3: 'tras el Guardián del Reloj (Salto de pared)', 4: 'tras el Conde', 5: 'tras Aurora/Vesper', 6: 'tras el Alcaide (Pisotón)' };
+const names = REGION === 'z4' ? { 0: 'inicio (hasta el Cobrador)', 1: 'tras el Cobrador' } : REGION === 'z3' ? { 0: 'inicio (hasta Reverberia)', 1: 'tras Reverberia', 2: 'tras el Tasador (calle, tejados y cloacas)', 3: 'tras la Tornera' } : { 0: 'inicio', 1: 'tras la Gárgola (Impulso)', 2: 'tras el Obispo (Doble salto)', 3: 'tras el Guardián del Reloj (Salto de pared)', 4: 'tras el Conde', 5: 'tras Aurora/Vesper', 6: 'tras el Alcaide (Pisotón)' };
 console.log('\nSalas por fase en la que se alcanzan:');
 for (let s = 0; s < stage; s++) {
   const list = allRooms.filter(r => firstStage[r] === s).map(r => w.areas[r].name + ' (' + r + ')');

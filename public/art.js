@@ -20,6 +20,8 @@ const ZONE_PAL = [
   // Zona 3
   { base: '#6b5a48', dark: '#3e3226', light: '#9a8468', mortar: '#231a12', bg: '#1d1712', bgd: '#14100c', glow: '#ffb347' }, // 16 La Calle de las Horas: adobe y piedra tosca cálida
   { base: '#3f5a52', dark: '#243832', light: '#6f948a', mortar: '#101c19', bg: '#0e1714', bgd: '#09100e', glow: '#7affc8' }, // 17 La Ciudad Baja: ladrillo verdoso y húmedo bajo la calle
+  { base: '#4d5a74', dark: '#2a3248', light: '#7f90b2', mortar: '#141a2a', bg: '#121827', bgd: '#0c111c', glow: '#ffb36a', terra: '#a8583a', terraL: '#d98a5c', terraD: '#5e2c22' }, // 18 Los Tejados: pizarra azulada fría y teja de terracota, ventanas cálidas
+  { base: '#5a5a40', dark: '#32331f', light: '#8a8a5e', mortar: '#15160c', bg: '#10120a', bgd: '#0a0b06', glow: '#c9d44a', slime: '#6f8a2a', slimeL: '#b4d04a', rust: '#7a4a28' }, // 19 Las Cloacas: ladrillo pardo-verdoso, sucio, con légamo y luz amarillo enfermizo
 ];
 
 const HERO_COLORS = { red: '#d93a3a', blue: '#3a6ad9', green: '#3aa84a', purple: '#9a4ad9' };
@@ -333,6 +335,8 @@ const ZONE_STYLE = {
   15: { wall: 'long', floor: 'checker', fx: 'gold' }, // Los Tronos: oscuro con oro
   16: { wall: 'long', floor: 'cobble' },
   17: { wall: 'long', floor: 'wet' }, // La Ciudad Baja: sillares y suelo húmedo
+  18: { wall: 'shingle', floor: 'shingle' }, // Los Tejados: escamas de teja y caballete
+  19: { floor: 'wet', fx: 'slime' }, // Las Cloacas: ladrillo pequeño sucio, légamo y humedad
  // La Calle de las Horas: sillares toscos y adoquines
 };
 const ART_GLASS = { 2: ['#5a86d8', '#9a5ab8', '#d8b050'], 5: ['#c83a3a', '#d8b050'], 7: ['#f0a0c0', '#f8d890'], 11: ['#9a5ab8', '#5a3a8a'], 13: ['#8ad8ff', '#d8f0ff'], 15: ['#c83a5a', '#d8b050'] }; // vidrieras
@@ -389,7 +393,19 @@ function drawTile(ctx, z, k, ox) {
     plaster() { const x = ri(8), y = ri(8), c = artMix(p.base, '#e8dcc0', 0.38); r(x, y, 6, 4, c); r(x + 1, y + 4, 4, 1, c); r(x - 1, y + 1, 1, 2, c); px(x + 2, y + 1, artMix(c, p.base, 0.5)); r(x + 3, y + 3, 2, 1, artMix(c, p.dark, 0.3)); },
     ivy() { for (let i = 0; i < 3; i++) { const x = 1 + ri(14), y = ri(2) * 8 + 1, n = 3 + ri(5); r(x, y, 1, n, '#2e5a34'); for (let j = 1; j < n; j += 2) px(x + (j & 2 ? 1 : -1), y + j, '#5a9a4a'); } px(1 + ri(14), 2 + ri(12), '#7a1a3a'); },
     rust() { for (let i = 0; i < 2; i++) { const x = 1 + ri(14), y = ri(2) * 8 + 1; r(x, y, 1, 3 + ri(4), '#6a3a22'); px(x, y + 1, '#b0642c'); } px(ri(16), ri(16), '#b0642c'); },
+    slime() { const sl = p.slime || '#6f8a2a'; for (let i = 0; i < 4; i++) { const x = 1 + ri(14), y = ri(2) * 8 + 1, n = 2 + ri(6); r(x, y, 1, n, artMix(sl, p.mortar, 0.35)); px(x, y + n, p.slimeL || sl); } for (let i = 0; i < 2; i++) r(ri(13), 8 + ri(7), 2 + ri(3), 1, artMix(p.base, p.dark, 0.55)); if (rnd() < 0.5) px(ri(16), ri(16), p.rust || '#7a4a28'); },
     salt() { for (let i = 0; i < 6; i++) px(ri(16), ri(2) * 8 + 1 + ri(2), '#dfeaf2'); r(ri(12), 12 + ri(3), 3, 1, artMix(p.base, '#dfeaf2', 0.5)); },
+  };
+  const shingles = () => { // tejado: escamas de pizarra con alguna teja de terracota; cada fila va a media teja de la anterior (4 filas: encaja sin cortes)
+    r(0, 0, 16, 16, t.sh);
+    const slate = [p.base, p.base, t.b1, t.b2], terra = [p.terra, p.terra, p.terraL, p.terraD];
+    for (let row = 0; row < 4; row++) { const y = row * 4, off = row & 1 ? 4 : 0;
+      for (let x = off - 8; x < 16; x += 8) {
+        const c = rnd() < 0.3 ? terra[ri(4)] : slate[ri(4)], hi = artMix(c, '#ffffff', 0.22), lo = artMix(c, '#0a0820', 0.45);
+        r(x, y, 7, 4, c); r(x, y, 7, 1, hi); r(x + 6, y, 1, 4, lo); r(x, y + 3, 7, 1, lo); px(x, y + 3, t.sh); px(x + 6, y + 3, t.sh);
+        if (rnd() < 0.5) px(x + 1 + ri(5), y + 1 + ri(2), artMix(c, '#0a0820', 0.25));
+      } }
+    if (st.fx && FX[st.fx]) FX[st.fx]();
   };
   const wall = () => { // muros (k 0) y muros agrietados (k 4)
     if (st.wall === 'panel') { // paneles de madera: tablas verticales con veta y nudos
@@ -398,6 +414,7 @@ function drawTile(ctx, z, k, ox) {
       r(0, 7, 16, 1, artMix(p.base, p.dark, 0.5)); r(0, 8, 16, 1, artMix(p.base, p.light, 0.35)); // moldura a media altura
       px(1 + ri(2) * 8, 3 + ri(3), p.dark); return;
     }
+    if (st.wall === 'shingle') { shingles(); return; }
     masonry(wallTones, p.mortar, Object.assign({ long: st.wall === 'long', plate: st.wall === 'plate' }, wallO));
     if (FX[st.fx]) FX[st.fx]();
   };
@@ -407,6 +424,7 @@ function drawTile(ctx, z, k, ox) {
     else if (fl === 'parquet') { const w = artMix(p.light, '#c08a48', 0.45); r(0, 0, 16, 4, artMix(p.base, '#8a5a30', 0.5)); r(0, 0, 16, 1, artMix(w, '#ffffff', 0.15)); r(0, 1, 16, 2, w); for (let x = 0; x < 16; x += 5) { r(x, 1, 1, 3, artMix(p.base, p.dark, 0.6)); } for (let i = 0; i < 4; i++) px(ri(16), 1 + ri(2), artMix(w, p.dark, 0.35)); r(0, 3, 16, 1, artMix(p.dark, '#2a1608', 0.4)); }
     else if (fl === 'grate') { r(0, 0, 16, 4, artMix(p.light, p.base, 0.3)); r(0, 0, 16, 1, t.hi); for (let x = 1; x < 16; x += 4) r(x, 1, 2, 2, p.mortar); r(0, 3, 16, 1, p.dark); }
     else if (fl === 'grass') { r(0, 0, 16, 3, '#2e4a34'); r(0, 3, 16, 1, p.dark); for (let x = 0; x < 16; x++) { const h = 1 + ri(3); r(x, 0, 1, h, rnd() < 0.3 ? '#8ab86a' : '#4a7a46'); if (rnd() < 0.15) px(x, 0, '#c09ae8'); } r(0, 3, 16, 1, p.dark); }
+    else if (fl === 'shingle') { r(0, 0, 16, 4, p.terraD); for (let x = 0; x < 16; x += 4) { r(x, 0, 3, 3, x % 8 ? p.terra : p.terraL); r(x, 0, 3, 1, artMix(p.terraL, '#ffffff', 0.3)); r(x + 3, 0, 1, 3, p.terraD); px(x + 2, 2, p.terraD); } r(0, 3, 16, 1, p.dark); if (rnd() < 0.6) px(ri(16), 1, '#7a9a5a'); }
     else if (fl === 'cobble') { r(0, 0, 16, 4, p.mortar); [0, 6, 11].forEach((x0, i) => { const w = i === 0 ? 5 : i === 1 ? 4 : 5, c = i === 1 ? p.light : artMix(p.light, p.base, 0.3); r(x0 + 1, 0, w, 3, c); r(x0 + 1, 0, w, 1, t.hi); r(x0 + 1, 2, w, 1, artMix(c, p.dark, 0.35)); px(x0 + 1, 0, p.mortar); px(x0 + w, 0, p.mortar); }); r(0, 3, 16, 1, p.dark); }
     else { r(0, 0, 16, 1, t.hi); r(0, 1, 16, 2, p.light); px(a, 1, artMix(p.light, p.dark, 0.35)); px(a, 2, artMix(p.light, p.dark, 0.35)); px((a + 8) % 16, 1, artMix(p.light, p.dark, 0.3)); r(0, 3, 16, 1, p.dark); if (fl === 'wet') { px(2 + ri(4), 1, '#ffffff'); px(9 + ri(5), 1, artMix(p.light, '#ffffff', 0.6)); r(5 + ri(5), 2, 2, 1, artMix(p.light, '#ffffff', 0.35)); } }
     r(0, 4, 16, 1, artMix(p.dark, p.mortar, 0.55)); // labio de sombra bajo el suelo
