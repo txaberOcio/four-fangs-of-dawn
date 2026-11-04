@@ -220,7 +220,7 @@ const PR = {
 const OTHER_ROOM_DARK = 0.86; // cuánto se oscurecen las salas en las que no estás (0 = nada, 1 = negro)
 const NEAR_ROOM_DARK = 0.3; // salas vecinas con el paso abierto: se ven al 70 %
 const ROOM_FADE = 0.7; // segundos que tarda una sala en aclararse u oscurecerse al cambiar de sala
-const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7, 1.9, 2.2, 2.0, 2.1, 2.1, 1, 2.4, 2.6, 2.5, 2.6]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
+const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7, 1.9, 2.2, 2.0, 2.1, 2.1, 1, 2.4, 2.6, 2.4, 2.5]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 

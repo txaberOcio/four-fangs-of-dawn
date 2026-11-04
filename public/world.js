@@ -308,37 +308,37 @@
     const TJ = 18, CL = 19;
     // --- TEJADOS: las azoteas de las mismas casas de la calle de abajo; los huecos entre edificios caen a la calle ---
     area('tj1', 'Tejados: Azoteas del Pregón', TJ, 20, 7, 3, 1, [['cycle'], ['open'],
-      ['deco', 'tenement', 2, 16, 0], ['deco', 'tenement', 18, 14, 1], ['deco', 'tenement', 32, 13, 2], ['deco', 'tenement', 46, 13, 3], ['deco', 'tenement', 68, 10, 1],
+      ['deco', 'tenement', 2, 16, 0], ['deco', 'tenement', 18, 10, 1], ['deco', 'tenement', 50, 9, 3], ['deco', 'tenement', 68, 10, 1],
       ...gable(4, 12, 4), ['deco', 'chimney', 9], ['cry', 9, 11], ['deco', 'laundry', 17, 6], ...gable(24, 14, 5), ['deco', 'vane', 30], ['deco', 'laundry', 39, 6], ...gable(46, 12, 3), ['deco', 'chimney', 51],
-      ['deco', 'gargoyle', 70, 0], ['E', 'vazul', 19, 16], ['E', 'vrojo', 41, 16], ['E', 'vverde', 72, 16], ['E', 'bat', 30, 5], ['E', 'bat', 55, 5]]); // el montacargas del pregonero sube aquí (x 62 a 67)
+      ['deco', 'gargoyle', 70, 0], ['E', 'vazul', 19, 16], ['E', 'vrojo', 41, 16], ['E', 'bat', 30, 5], ['E', 'bat', 55, 5]]); // el montacargas del pregonero sube aquí (x 62 a 67)
     area('tj2', 'Tejados: Cumbreras del Puente', TJ, 23, 7, 2, 1, [['cycle'], ['open'],
-      ['deco', 'tenement', 0, 34, 1], ['deco', 'tenement', 40, 12, 2],
+      ['deco', 'tenement', 0, 10, 1], ['deco', 'tenement', 42, 10, 2],
       ...gable(4, 10, 3), ['deco', 'chimney', 8], ['PH', 16, 13, 5, 'D'], ['cry', 18, 10], ['deco', 'laundry', 15, 6], ...gable(22, 10, 4), ['deco', 'gargoyle', 26, 0], ['P', 36, 13, 3], ['deco', 'belfry', 45],
       ['E', 'vazul', 17, 16], ['E', 'vrojo', 26, 12], ['E', 'vverde', 46, 16], ['E', 'bat', 12, 6], ['E', 'bat', 38, 5]]); // el hueco (x 34 a 39) cae al puente
-    area('tj3', 'Tejados: Espadaña de la Orilla', TJ, 25, 7, 1, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 26, 2],
+    area('tj3', 'Tejados: Espadaña de la Orilla', TJ, 25, 7, 1, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 8, 2], ['deco', 'tenement', 18, 8, 1],
       ['stairs', 2, 16, 'R', 9], ['B', 11, 8, 5, 9], ['stairs', 24, 16, 'L', 9], ['bell', 13, 7], ['deco', 'belfry', 13], ['cry', 13, 5], ['E', 'gh', 6, 10], ['E', 'bat', 20, 6]]); // una campana en lo alto: se puede cambiar de fase desde los tejados
     area('tj4', 'Tejados: Cornisas de la Corte', TJ, 26, 7, 3, 1, [['cycle'], ['open'],
-      ['deco', 'tenement', 0, 19, 1], ['deco', 'tenement', 25, 16, 2], ['deco', 'tenement', 46, 32, 3],
+      ['deco', 'tenement', 0, 19, 1], ['deco', 'tenement', 46, 32, 3],
       ...gable(5, 14, 4), ['deco', 'chimney', 11], ...gable(25, 16, 5), ['deco', 'gargoyle', 31, 0], ['deco', 'gargoyle', 35, 1], ...gable(46, 14, 4), ['deco', 'chimney', 52],
       ['deco', 'skylight', 62, 6], ['P', 63, 13, 4], ['P', 68, 10, 4], ['cry', 70, 7],
       ['E', 'vverde', 11, 12], ['E', 'vazul', 32, 11, { elite: true, name: 'Vigía de las Cornisas', reward: { souls: 80, item: 'spd' } }], ['E', 'vmorado', 66, 16], ['E', 'bat', 45, 5], ['E', 'bat', 20, 4]]); // los huecos (x 19 a 24 y 41 a 45) caen a la columnata
-    area('tj5', 'Tejados: Cúpula del Jardín', TJ, 29, 7, 2, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 26, 1], ['deco', 'tenement', 26, 26, 2],
+    area('tj5', 'Tejados: Cúpula del Jardín', TJ, 29, 7, 2, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 10, 1], ['deco', 'tenement', 40, 12, 2],
       ...gable(6, 40, 10), ['deco', 'vane', 25], ['deco', 'gargoyle', 17, 0], ['deco', 'gargoyle', 34, 1],
       ['E', 'vazul', 3, 16], ['E', 'vrojo', 25, 6, { elite: true, name: 'Gárgola Viva', reward: { souls: 100, item: 'ward' } }], ['E', 'vverde', 48, 16], ['E', 'bat', 20, 3]]);
-    area('tj6', 'Tejados: Mirador de las Plañideras', TJ, 31, 7, 2, 1, [['cycle'], ['open'], ['calm'], ['deco', 'tenement', 0, 52, 3],
+    area('tj6', 'Tejados: Mirador de las Plañideras', TJ, 31, 7, 2, 1, [['cycle'], ['open'], ['calm'], ['deco', 'tenement', 0, 14, 3], ['deco', 'tenement', 38, 14, 1],
       ['altar', 20, 16], ['npc', 'merchant', 30, 16], ['bell', 8, 16], ['deco', 'flag', 12], ['deco', 'laundry', 38, 6], ['deco', 'gargoyle', 4, 0], ['deco', 'rigging', 42, 8], ['P', 44, 12, 4]]);
     area('tj7', 'Tejados: Jarcias del Muelle', TJ, 33, 7, 3, 1, [['cycle'], ['open'],
-      ['deco', 'tenement', 0, 7, 0], ['deco', 'tenement', 12, 41, 1], ['deco', 'tenement', 58, 20, 2],
+      ['deco', 'tenement', 0, 7, 0], ['deco', 'tenement', 12, 16, 1], ['deco', 'tenement', 36, 10, 2], ['deco', 'tenement', 68, 10, 3],
       ['P', 9, 12, 3], ['P', 16, 13, 4], ['P', 17, 10, 3], ['P', 18, 7, 3], ['B', 21, 6, 2, 11], ['P', 23, 7, 3], ['P', 24, 10, 3], ['P', 24, 13, 4], ['cry', 21, 3], ['deco', 'rigging', 14, 12],
       ...gable(30, 14, 4), ['deco', 'chimney', 36], ['deco', 'rigging', 60, 10], ['deco', 'flag', 65], ['P', 66, 13, 4], ['P', 70, 10, 4],
       ['E', 'vmorado', 14, 16], ['E', 'vazul', 36, 12], ['E', 'vrojo', 48, 16], ['E', 'vverde', 72, 16], ['E', 'bat', 25, 4]]); // los huecos (x 7 a 11 y 53 a 57) caen al embarcadero
-    area('tj8', 'Tejados: Cumbreras del Varadero', TJ, 36, 7, 2, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 27, 3], ['deco', 'tenement', 34, 18, 1],
+    area('tj8', 'Tejados: Cumbreras del Varadero', TJ, 36, 7, 2, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 12, 3], ['deco', 'tenement', 40, 12, 1],
       ...gable(4, 12, 3), ['deco', 'rigging', 18, 8], ['PH', 20, 12, 5, 'N'], ...gable(36, 12, 4), ['cry', 42, 10], ['deco', 'chimney', 40],
       ['E', 'vrojo', 9, 13], ['E', 'vazul', 23, 16, { elite: true, name: 'Sereno de las Alturas', reward: { souls: 90, item: 'bomb' } }], ['E', 'vmorado', 42, 12], ['E', 'bat', 12, 5]]); // el montacargas del Varadero llega aquí (x 28 a 33)
-    area('tj9', 'Tejados: Cornisa del Fondeadero', TJ, 38, 7, 2, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 52, 0],
+    area('tj9', 'Tejados: Cornisa del Fondeadero', TJ, 38, 7, 2, 1, [['cycle'], ['open'], ['deco', 'tenement', 0, 10, 0], ['deco', 'tenement', 40, 12, 2],
       ['S', 6, 16, 8], ['P', 8, 13, 4], ...gable(20, 10, 3), ['cry', 25, 11], ['S', 32, 16, 6], ['P', 33, 13, 4], ['S', 44, 16, 5], ['P', 45, 13, 3], ['deco', 'gargoyle', 16, 0], ['deco', 'gargoyle', 40, 1],
       ['E', 'vmorado', 16, 16], ['E', 'gh', 24, 8], ['E', 'bat', 12, 5], ['E', 'bat', 36, 5]]); // pinchos antipalomas sobre la cornisa
-    area('tj10', 'Tejados: Alero de la Última Esquina', TJ, 40, 7, 2, 1, [['cycle'], ['open'], ['calm'], ['deco', 'tenement', 0, 22, 1], ['deco', 'tenement', 26, 26, 2],
+    area('tj10', 'Tejados: Alero de la Última Esquina', TJ, 40, 7, 2, 1, [['cycle'], ['open'], ['calm'], ['deco', 'tenement', 0, 12, 1], ['deco', 'tenement', 34, 18, 2],
       ['altar', 8, 16], ['deco', 'flag', 14], ['deco', 'chimney', 28], ['deco', 'laundry', 32, 6]]); // el hueco (x 22 a 25) baja a La Última Esquina
     // --- CLOACAS: lo que la ciudad esconde bajo sus calles; se entra por las alcantarillas de la calle y se sale por un montacargas ---
     area('cl1', 'Cloacas: Boca del Pregón', CL, 20, 9, 3, 1, [['climb', 50, 4, 'norm', true],
