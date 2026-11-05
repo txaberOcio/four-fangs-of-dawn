@@ -380,7 +380,7 @@ Object.assign(CastleScene.prototype, {
       const name = this.add.text(n.x, n.y - 56, def.name, nameStyle).setOrigin(0.5).setDepth(27);
       return { ...n, def, spr, name, visits: 0 };
     });
-    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.skyBuild(); this.buildHouses(); this.buildGateDoors(); this.buildGDoors(); this.buildLuaCell(); this.buildBleeds(); if (this.floorBroken) this.dropThroneDecor(false);
+    this.buildExtraHud(); this.buildShopUi(); this.buildDialogueUi(); this.buildBookUi(); this.buildTravelUi(); this.buildImbueUi(); this.buildCaveDecor(); this.buildMossDecor(); this.buildStompFloors(); this.buildDecor(); this.skyBuild(); this.buildRoofs(); this.buildHouses(); this.buildGateDoors(); this.buildGDoors(); this.buildLuaCell(); this.buildBleeds(); if (this.floorBroken) this.dropThroneDecor(false);
     this.npcObjs.filter(n => n.type === 'smith' || n.type === 'smith2').forEach(n => this.smithWorks(n)); this.syncNpcs();
     [this.promptTxt, this.dlgText, this.toastTxt].forEach(o => { if (o && !o._hint) { const st = o.setText.bind(o); o.setText = t => st(hintText(t)); o._hint = true; } });
     this.lastBonfire = this.altars.find(a => a.area === this.W.spawnPoint.area) || this.altars[0];
@@ -713,7 +713,7 @@ Object.assign(CastleScene.prototype, {
     this.updateArrows(dt);
 
     // peligros y recogidas
-    if (this.spikesTouch()) { this.hurt(1, p.x); if (!this.dead) { p.setPosition(this.lastGround.x, this.lastGround.y); b.setVelocity(0, 0); this.invuln = 1.2; } }
+    if (this.spikesTouch()) { const fall = !!(this.W.areas[this.myArea] || {}).open; this.hurt(1, p.x); if (!this.dead) { if (fall) this.roofFall(); p.setPosition(this.lastGround.x, this.lastGround.y); b.setVelocity(0, 0); this.invuln = 1.2; } } // en la calle de los tejados, las estacas del foso son un abismo entre edificios
     if (p.y > (this.W.Ht - 1) * T) { p.setPosition(this.lastGround.x, this.lastGround.y); b.setVelocity(0, 0); }
     this.contact(); this.pickups();
     this.interact(inp.ePress && !ui);
@@ -1683,6 +1683,45 @@ Object.assign(CastleScene.prototype, {
   },
   // ---- Cielo de la Zona 3: la calle es exterior. Se oculta la roca sobre el suelo y el techo y las paredes de las salas abiertas (siguen siendo sólidos), y detrás
   // se pinta un cielo en degradado según la fase, con estrellas, luna o sol y una ciudad de siluetas que se mueve más despacio que la cámara
+  // La calle de la Zona 3 se recorre por los tejados: bajo cada tramo de suelo hay un edificio (muro, ventanas, alero) y entre ellos hay abismos. Caer = daño y volver al último tejado pisado.
+  roofFall() {
+    SFX.hurt && SFX.hurt(); this.cameras.main.flash(260, 0, 0, 0); this.cameras.main.shake(180, 0.006);
+    if (!this.fallHint) { this.fallHint = true; this.toast('Has caído entre los tejados: te haces daño y vuelves al último tejado que pisaste.', 6000); }
+  },
+  buildRoofs() {
+    const w = this.W; if (!w.sky) return; this.roofObjs = [];
+    const WALL = [0x6a5262, 0x6f5448, 0x4f4a66, 0x665846, 0x56566a], HT = 15 * T;
+    w.areaList.filter(a => a.open && !a.castle).forEach(a => {
+      const fy = a.y0 + a.rh - 1, top = (fy + 1) * T, rnd = rndSeeded(a.x0 * 13 + a.y0), g = this.add.graphics().setDepth(-4.75).setVisible(false);
+      const gaps = (w.gaps || []).filter(q => q.area === a.id).sort((p1, q1) => p1.x0 - q1.x0);
+      const spans = []; let cur = a.x0; for (const q of gaps) { if (q.x0 > cur) spans.push([cur, q.x0]); cur = q.x1 + 1; } if (cur < a.x0 + a.rw) spans.push([cur, a.x0 + a.rw]); if (spans.length) { if (spans[0][0] === a.x0) spans[0][0] -= 10; const l = spans[spans.length - 1]; if (l[1] === a.x0 + a.rw) l[1] += 10; } // el edificio sigue un poco más allá de los bordes de la sala (se ve el vecino)
+      for (const q of gaps) {
+        this.fg.forEachTile(t => { t.alpha = 0; }, this, q.x0, fy, q.x1 - q.x0 + 1, 1); // las estacas del foso no se ven: solo el abismo (siguen valiendo como peligro)
+        const x = q.x0 * T, wd = (q.x1 - q.x0 + 1) * T;
+        g.fillStyle(0x07050c, 1).fillRect(x, fy * T, wd, HT + T);
+        g.fillStyle(0x120d18, 1).fillRect(x, top + 9 * T, wd, 6 * T); // al fondo, la calle de verdad, muy abajo y a oscuras
+        for (let k = 0; k < wd / T; k++) if (rnd() < 0.45) g.fillStyle(0xe8b45a, 0.35).fillRect(x + k * T + 10, top + 11 * T + Math.floor(rnd() * 3) * 20, 5, 7);
+        g.fillStyle(0x000000, 0.35).fillRect(x, fy * T, 8, HT + T).fillRect(x + wd - 8, fy * T, 8, HT + T); // el borde de los edificios da sombra
+      }
+      for (const [s0, s1] of spans) {
+        let x = s0; while (x < s1) {
+          const rest = s1 - x, n = rest <= 16 ? rest : 8 + Math.floor(rnd() * 7), wt = rest - n < 5 ? rest : n, px = x * T, wd = wt * T, col = WALL[Math.floor(rnd() * WALL.length)];
+          g.fillStyle(col, 1).fillRect(px, top, wd, HT).fillStyle(0x000000, 0.22).fillRect(px, top, 6, HT).fillRect(px + wd - 6, top, 6, HT);
+          g.fillStyle(0x5a4a52, 1).fillRect(px - 5, top, wd + 10, 9).fillStyle(0x7a666a, 1).fillRect(px - 5, top, wd + 10, 3).fillStyle(0x000000, 0.3).fillRect(px - 5, top + 9, wd + 10, 3); // alero
+          for (let wy = 2; wy < 13; wy += 3) for (let wx = 1; wx + 1 < wt; wx += 3) { // ventanas con postigos
+            const lx = px + wx * T + 3, ly = top + wy * T + 6, lit = rnd() < 0.3;
+            g.fillStyle(0x3a2622, 1).fillRect(lx - 4, ly - 2, 30, 38).fillStyle(lit ? 0xf0c068 : 0x1c1624, 1).fillRect(lx, ly, 22, 30);
+            if (lit) g.fillStyle(0xfff0c0, 0.4).fillRect(lx + 2, ly + 2, 8, 12); else g.fillStyle(0x3a2a30, 1).fillRect(lx, ly + 14, 22, 2);
+          }
+          x += wt;
+          if (x < s1) g.fillStyle(0x000000, 0.45).fillRect(x * T - 2, top, 4, HT); // medianera entre dos casas
+        }
+      }
+      this.roofObjs.push({ id: a.id, g });
+    });
+    this.roofShown = null;
+  },
+  roofStep() { if (!this.roofObjs || this.roofShown === this.myArea) return; this.roofShown = this.myArea; for (const o of this.roofObjs) o.g.setVisible(o.id === this.myArea); },
   skyBuild() {
     const w = this.W; if (!w.sky && !(w.props || []).length && !(w.doors || []).some(d => d.label)) return;
     const open = w.sky ? w.areaList.filter(a => a.open) : []; if (w.sky && !open.length) return;

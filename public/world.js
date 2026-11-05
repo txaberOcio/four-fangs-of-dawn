@@ -259,17 +259,17 @@
       ['stairs', 2, 16, 'R', 5], ['facade', 7, 12, 'stone', 'R'], ['cart', 19, 15], ['PH', 22, 14, 4, 'ADO'], ['P', 19, 12, 15],
       ['facade', 34, 13, 'timber', 'L'], ['B', 48, 12, 1, 5], ['B', 54, 12, 1, 5], ['B', 48, 11, 7, 1], ['stairs', 59, 16, 'L', 5],
       ['facade', 62, 12, 'adobe', 'R'], ['cry', 66, 6], ['door', 13, 'intF', 5, 'Entrar en la Intendencia del Furriel'], ['door', 40, 'intG', 5, 'Entrar en la Garita del Cabo'], ['door', 68, 'intE', 5, 'Entrar en el Escondite del Armero'],
-      ['E', 'vrojo', 16, 16], ['E', 'vazul', 30, 16], ['E', 'vverde', 51, 16], ['E', 'vmorado', 75, 16], ['E', 'bat', 40, 5]]);
-    area('cu2', 'Cuartel Viejo: Patio del Relevo', Z3Z, 8, 8, 2, 1, [['cycle'], ['open'], ['bell', 8, 16], ['B', 3, 13, 1, 4], ['stairs', 16, 16, 'L', 4], ['P', 3, 12, 10], ['PB', 34, 1, 2, 16, 'NDO'], ['cart', 40, 15], ['PH', 44, 14, 5, 'ADO'], ['E', 'vrojo', 22, 16], ['E', 'vazul', 28, 16], ['E', 'vverde', 47, 16], ['E', 'bat', 20, 5]]); // el portón (34 a 35) solo se abre en el alba: hay que golpear la campana o esperar
+      ['gap', 27, 31], ['gap', 43, 46], ['E', 'vrojo', 16, 16], ['E', 'vazul', 35, 16], ['E', 'vverde', 51, 16], ['E', 'vmorado', 75, 16], ['E', 'bat', 40, 5]]);
+    area('cu2', 'Cuartel Viejo: Patio del Relevo', Z3Z, 8, 8, 2, 1, [['cycle'], ['open'], ['bell', 8, 16], ['B', 3, 13, 1, 4], ['stairs', 16, 16, 'L', 4], ['P', 3, 12, 10], ['PB', 34, 1, 2, 16, 'NDO'], ['cart', 40, 15], ['PH', 44, 14, 5, 'ADO'], ['gap', 23, 26], ['E', 'vrojo', 19, 16], ['E', 'vazul', 30, 16], ['E', 'vverde', 47, 16], ['E', 'bat', 20, 5]]); // el portón (34 a 35) solo se abre en el alba: hay que golpear la campana o esperar
     area('cu3', 'Cuartel Viejo: Puerta del Relevo', Z3Z, 10, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]);
     area('cu4', 'Cuartel Viejo: Plaza de Armas', Z3Z, 11, 8, 2, 1, [['cycle'], ['open'], ['boss', 'reverberia', 30, 16]]); // mini-jefe del alba
     // Los Cotos (día): casas de caza de madera, cercados y jauría; la calle sube y baja por escaleras de piedra
     area('cot1', 'Los Cotos: Calle de las Jaurías', Z3Z, 13, 8, 3, 1, [['cycle'], ['open'],
       ['facade', 3, 10, 'timber', 'R'], ['stairs', 15, 16, 'L', 4], ['cart', 20, 15], ['PH', 23, 14, 4, 'D'],
-      ['facade', 30, 12, 'adobe', 'L'], ['facade', 44, 13, 'timber', 'R'], ['stairs', 60, 16, 'R', 3], ['B', 63, 14, 8, 3], ['cry', 66, 12],
+      ['facade', 30, 12, 'adobe', 'L'], ['facade', 44, 13, 'timber', 'R'], ['stairs', 60, 16, 'R', 3], ['B', 63, 14, 8, 3], ['cry', 66, 12], ['gap', 32, 36], ['gap', 46, 50],
       ['E', 'vmorado', 10, 16], ['E', 'vrojo', 27, 16], ['E', 'vazul', 40, 16], ['E', 'gh', 52, 8], ['E', 'vverde', 74, 16], ['E', 'bat', 35, 5]]);
     area('cot2', 'Los Cotos: Cercado de los Sabuesos', Z3Z, 16, 8, 2, 1, [['cycle'], ['open'], ['bell', 6, 16],
-      ['facade', 9, 11, 'adobe', 'R'], ['PB', 26, 1, 2, 16, 'NDO'], ['cart', 32, 15], ['PH', 36, 14, 5, 'ADO'], ['stairs', 44, 16, 'L', 3],
+      ['facade', 9, 11, 'adobe', 'R'], ['PB', 26, 1, 2, 16, 'NDO'], ['cart', 32, 15], ['PH', 36, 14, 5, 'ADO'], ['stairs', 44, 16, 'L', 3], ['gap', 13, 16],
       ['E', 'vmorado', 20, 16], ['E', 'vrojo', 23, 16], ['E', 'vazul', 40, 16], ['E', 'gh', 14, 7]]); // el portón del cercado (26 a 27) solo se abre en el alba
     area('cot3', 'Los Cotos: Lonja de los Cotos', Z3Z, 18, 8, 2, 1, [['cycle'], ['open'], ['boss', 'tasador', 30, 16]]); // mini-jefe del día
     // Plaza del Pregón: el centro de la calle (tienda, hoguera y campana), con la tarima del pregonero
@@ -282,18 +282,18 @@
     // Palacio de la Corte Primera (ocaso): fachadas de piedra, una columnata que se recorre por arriba y un jardín cuyo portón solo abre en el ocaso
     area('pal1', 'Palacio: Avenida de las Columnas', Z3Z, 26, 8, 3, 1, [['cycle'], ['open'],
       ['facade', 3, 14, 'stone', 'L'], ['stairs', 18, 16, 'R', 4], ['B', 22, 12, 2, 5], ['B', 30, 12, 2, 5], ['B', 38, 12, 2, 5], ['B', 46, 12, 2, 5], ['B', 22, 11, 27, 1], ['stairs', 53, 16, 'L', 5], ['cry', 35, 9],
-      ['facade', 56, 18, 'stone', 'R'], ['E', 'vverde', 12, 16], ['E', 'vmorado', 28, 16], ['E', 'gh', 42, 8], ['E', 'vrojo', 50, 16], ['E', 'vazul', 68, 16], ['E', 'bat', 33, 5]]);
-    area('pal2', 'Palacio: Jardín de la Corte', Z3Z, 29, 8, 2, 1, [['cycle'], ['open'], ['bell', 6, 16], ['facade', 10, 12, 'stone', 'L'], ['PB', 26, 1, 2, 16, 'NAD'], ['altar', 38, 16], ['E', 'vverde', 18, 16], ['E', 'gh', 20, 7]]); // el portón del jardín (26 a 27) solo se abre en el ocaso
+      ['facade', 56, 18, 'stone', 'R'], ['gap', 7, 10], ['gap', 60, 63], ['E', 'vverde', 14, 16], ['E', 'vmorado', 28, 16], ['E', 'gh', 42, 8], ['E', 'vrojo', 50, 16], ['E', 'vazul', 68, 16], ['E', 'bat', 33, 5]]);
+    area('pal2', 'Palacio: Jardín de la Corte', Z3Z, 29, 8, 2, 1, [['cycle'], ['open'], ['bell', 6, 16], ['facade', 10, 12, 'stone', 'L'], ['PB', 26, 1, 2, 16, 'NAD'], ['altar', 38, 16], ['gap', 30, 33], ['E', 'vverde', 18, 16], ['E', 'gh', 20, 7]]); // el portón del jardín (26 a 27) solo se abre en el ocaso
     area('pal3', 'Palacio: Sala del Duelo', Z3Z, 31, 8, 2, 1, [['cycle'], ['open'], ['boss', 'planidera', 30, 10]]); // mini-jefa del ocaso
     // Muelle del Faro Seco (noche): un embarcadero de piedra sobre un canal seco de estacas, barcas varadas y un faro apagado
     area('mue1', 'Muelle del Faro Seco: Embarcadero', Z3Z, 33, 8, 3, 1, [['cycle'], ['open'],
       ['pit', 8, 70], ['stairs', 2, 16, 'R', 2], ['B', 3, 15, 71, 2], ['stairs', 74, 16, 'L', 2], ['cart', 18, 13], ['cart', 34, 13], ['deco', 'faro', 60], ['cry', 66, 12],
       ['E', 'gh', 24, 10], ['E', 'gh', 46, 10], ['E', 'bat', 14, 6], ['E', 'bat', 52, 6]]);
-    area('mue2', 'Muelle del Faro Seco: Varadero', Z3Z, 36, 8, 2, 1, [['cycle'], ['open'], ['bell', 5, 16], ['facade', 8, 11, 'timber', 'R'], ['PB', 26, 1, 2, 16, 'ADO'], ['cart', 34, 15], ['cart', 41, 15], ['E', 'vmorado', 16, 16], ['E', 'gh', 22, 7], ['E', 'vrojo', 44, 16]]); // la reja del varadero (26 a 27) solo se abre de noche
+    area('mue2', 'Muelle del Faro Seco: Varadero', Z3Z, 36, 8, 2, 1, [['cycle'], ['open'], ['bell', 5, 16], ['facade', 8, 11, 'timber', 'R'], ['PB', 26, 1, 2, 16, 'ADO'], ['cart', 34, 15], ['cart', 41, 15], ['gap', 10, 13], ['E', 'vmorado', 19, 16], ['E', 'gh', 22, 7], ['E', 'vrojo', 44, 16]]); // la reja del varadero (26 a 27) solo se abre de noche
     area('mue3', 'Muelle del Faro Seco: Fondeadero', Z3Z, 38, 8, 2, 1, [['cycle'], ['open'], ['boss', 'nasa', 30, 16]]); // mini-jefe de la noche
     // La Última Esquina (Hora Quebrada): la calle gira; todo se mezcla. Al final, el umbral de la Morada
     area('esq1', 'La Última Esquina: Callejón de las Cunas', Z3Z, 40, 8, 2, 1, [['cycle'], ['open'], ['facade', 3, 10, 'adobe', 'R'], ['stairs', 16, 16, 'R', 5], ['B', 21, 12, 8, 5], ['stairs', 34, 16, 'L', 5], ['facade', 38, 12, 'timber', 'L'],
-      ['cry', 25, 10], ['E', 'vazul', 12, 16], ['E', 'vverde', 30, 16], ['E', 'gh', 26, 6], ['E', 'vmorado', 46, 16], ['E', 'bat', 20, 5]]);
+      ['cry', 25, 10], ['gap', 5, 8], ['gap', 41, 44], ['E', 'vazul', 12, 16], ['E', 'vverde', 30, 16], ['E', 'gh', 26, 6], ['E', 'vmorado', 46, 16], ['E', 'bat', 20, 5]]);
     area('esq3', 'La Última Esquina: Torno de las Horas', Z3Z, 42, 8, 2, 1, [['cycle'], ['open'], ['ltorch', 8, 15, 6, 12, 7], ['ltorch', 24, 15, 21, 12, 7], ['ltorch', 40, 15, 36, 12, 7], ['boss', 'tornera', 30, 16]]); // mini-jefa de la Hora Quebrada: durante su combate el ciclo corre el triple de rápido
     area('esq2', 'Umbral de la Morada', Z3Z, 44, 8, 1, 1, [['cycle'], ['open'], ['calm'], ['altar', 13, 16]]);
     // La Morada de Anhelia (el 20 % final): una casa, no un castillo. Cuatro cunas, cuatro retratos de altura y una mesa para seis; por dentro es el cuerpo de Anhelia y la sala final es su boca
@@ -405,7 +405,7 @@
     const mk = () => Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     const fg = mk(), bg = mk(), areaAt = Array.from({ length: Ht }, () => new Array(Wt).fill(-1));
     for (let y = 0; y < Ht; y++) for (let x = 0; x < Wt; x++) fg[y][x] = ROCK * 8 + K.SOLID;
-    const world = { region, sky: region === 'z3', T, COLS: R.cols, ROWS: R.rows, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS_R, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], bleeds: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], phased: [], bells: [], gdoors: [], props: [], litPlats: [], lifts: [], roots: new Set() };
+    const world = { region, sky: region === 'z3', T, COLS: R.cols, ROWS: R.rows, CW, CH, Wt, Ht, fg, bg, areaAt, areas: {}, areaList: AREAS_R, spawns: [], crystals: [], altars: [], forges: [], npcs: [], pages: [], bosses: [], torches: [], doors: [], bleeds: [], links: LINKS, ZONES, PHYS, BOSSES, gates: [], sforges: [], gems: [], timed: [], phased: [], bells: [], gdoors: [], props: [], litPlats: [], gaps: [], lifts: [], roots: new Set() };
     let uid = 1;
     // 1) interior de cada área
     for (const a of AREAS_R) {
@@ -512,7 +512,8 @@
           // ['ltorch', x, y, px, py, ancho]: una antorcha que EMPIEZA APAGADA y una plataforma que solo existe mientras está encendida (para el validador la plataforma siempre está)
           case 'ltorch': { const tid = world.torches.length; world.torches.push({ id: tid, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T, z: a.z, area: a.id, lit: false, r: 170 }); world.litPlats.push({ torch: tid, area: a.id, gx: a.x0 + op[3], gy: a.y0 + op[4], w: op[5], idx: a.z * 8 + K.ONEWAY }); for (let x = op[3]; x < op[3] + op[5]; x++) if (free(a, x, op[4])) setF(a, x, op[4], K.ONEWAY); break; }
           case 'torch': world.torches.push({ id: world.torches.length, x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + op[2] + 0.5) * T, z: a.z, area: a.id, lit: true, r: 150 }); break;
-          case 'pit': for (let x = op[1]; x <= op[2]; x++) setF(a, x, a.rh - 1, K.SPIKES); break;
+          // ['gap', x0, x1] (y los 'pit' de las salas abiertas): hueco entre dos edificios de la calle; se ve como un abismo y quien cae se hace daño y reaparece en el último tejado pisado
+          case 'gap': case 'pit': for (let x = op[1]; x <= op[2]; x++) setF(a, x, a.rh - 1, K.SPIKES); if (a.open) world.gaps.push({ area: a.id, x0: a.x0 + op[1], x1: a.x0 + op[2], fy: a.y0 + a.rh - 1 }); break;
           case 'E': if (a.safe) break; world.spawns.push({ id: 'e' + (uid++), area: a.id, type: op[1], x: (a.x0 + op[2] + 0.5) * T, y: (a.y0 + op[3] + 1) * T, opts: op[4] || null, zone: a.diff }); break;
           case 'door': { const b = world.areas[op[2]]; if (!b) throw new Error('Puerta a área inexistente ' + op[2]); world.doors.push({ id: sid('d'), area: a.id, label: op[4] || '', x: (a.x0 + op[1] + 0.5) * T, y: (a.y0 + a.rh - 1) * T, to: op[2], toX: (b.x0 + op[3] + 0.5) * T, toY: (b.y0 + b.rh - 1) * T }); break; }
           case 'bleed': world.bleeds.push({ area: a.id, gx: a.x0 + op[1], gy: a.y0 + op[2], h: op[3] }); break; // ['bleed', x, y, alto]: muro agrietado que gotea sangre (pista)
