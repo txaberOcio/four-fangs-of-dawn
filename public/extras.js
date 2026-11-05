@@ -151,8 +151,27 @@ const BESTIARY = {
   vesper: { name: 'Vesper, Señor del Ocaso', text: 'Hermano de Aurora y señor del Conde, un cazador de sombras que embiste, se teletransporta y alza pilares. Si cae, su hermana lo rescata y se lo lleva a la Cumbre. Premio: Ojo de la Noche.', tip: 'Vigila las marcas del suelo y salta sus embestidas.' },
   archon: { name: 'Archimago Silente', text: 'Guardián del sello de tinta. Entre sus libros flotan tormentas de luz y fantasmas que acuden a su llamada.', tip: 'Esquiva sus abanicos de orbes y la lluvia de rayos; cuando invoque ayuda, golpéalo sin parar.' },
   reina: { name: 'Reina de Huesos', text: 'Esposa del Conde y guardiana del sello de hueso que lo encierra. La llaman reina porque reina sobre los muertos. Salta, embiste y llama a los esqueletos de la cripta.', tip: 'Vigila los pilares marcados en el suelo y no te quedes bajo sus saltos.' },
+  elVigia: { name: 'Vigía de las Cornisas', text: 'Un colmillo sin nombre que se quedó de guardia en los tejados cuando el cielo se apagó. Conoce cada cornisa y cada teja suelta, y no necesita escaleras: salta de una a otra como una sombra.', tip: 'Desaparece y reaparece a tu espalda: no te quedes quieto en una cornisa. Cuando se agache, gírate y golpéalo al salir.' },
+  elGargola: { name: 'Gárgola Viva', text: 'Una de las gárgolas de las cornisas que dejó de ser piedra una noche de tormenta. Sigue sentada en su alero, esperando, hasta que pasa alguien por debajo.', tip: 'Se deja caer y sacude el tejado: salta justo cuando toque la teja y castígala mientras se levanta.' },
+  elSereno: { name: 'Sereno de las Alturas', text: 'El sereno que cantaba las horas desde los tejados. Nadie le dijo que las horas se pararon: sigue haciendo la ronda con su farol, que ya no calienta, sino que dispara.', tip: 'Cuando alza el farol lanza orbes de luz en abanico: busca el hueco entre ellos o ponte a cubierto tras una chimenea.' },
+  elRata: { name: 'Rata Mayor del Colector', text: 'Cría de las cloacas, grande como un mastín. Come lo que cae por las rejas y no le gusta compartir su colector con nadie.', tip: 'Embiste a ras de suelo en línea recta: salta por encima y golpéala cuando frene, resoplando.' },
+  elFarolero: { name: 'Farolero Ahogado', text: 'Encendía los faroles de gas de las alcantarillas. Se ahogó en la crecida y sigue su ronda, chorreando légamo, con la llama apagada a la espalda.', tip: 'Echa a correr y deja un rastro de légamo que daña: no lo pises y espera a que se canse para golpearlo.' },
+  elAlguacil: { name: 'Alguacil del Aljibe', text: 'Guardián del aljibe, donde acaba toda el agua de la ciudad. Lleva un cayado de hierro con el que golpea el suelo para hacer temblar el agua negra.', tip: 'Cuando golpea el suelo viene la sacudida: salta en ese momento y ataca por la espalda mientras recoge el cayado.' },
   conde: { name: 'El Conde', text: 'Siervo de los hermanos del Alba, que lo encerraron en el trono del castillo que él les entregó. Rompe el suelo para enterrar a sus cazadores en el foso y alza pilares de sangre.', tip: 'Vigila las marcas rojas del suelo: son pilares que se alzarán.' },
 };
+// ---------- Decorados de la bifurcación de la Zona 3 (Tejados, Calle y Cloacas): world.props con kind en este conjunto se pintan en drawDeco (extras.js) ----------
+const DECO_KINDS = new Set(['tenement', 'chimney', 'vane', 'laundry', 'gargoyle', 'skylight', 'rigging', 'belfry', 'flag', 'pigeons', 'crossroads', 'manhole', 'hoist', 'swater', 'sgrate', 'spipe', 'sdrip', 'sarch', 'sgate', 'snest', 'slamp']);
+const DECO_W = { tenement: 6, laundry: 4, skylight: 3, rigging: 5, manhole: 2, hoist: 3, swater: 4, sgrate: 2, spipe: 4, sarch: 6, sgate: 3 }; // ancho por defecto en casillas
+function decoMix(c1, c2, f) { // mezcla de dos colores 0xRRGGBB
+  const r = ((c1 >> 16) & 255) + (((c2 >> 16) & 255) - ((c1 >> 16) & 255)) * f, g = ((c1 >> 8) & 255) + (((c2 >> 8) & 255) - ((c1 >> 8) & 255)) * f, b = (c1 & 255) + ((c2 & 255) - (c1 & 255)) * f;
+  return ((r | 0) << 16) | ((g | 0) << 8) | (b | 0);
+}
+function decoPoly(g, pts, col, al = 1) { g.fillStyle(col, al).fillPoints(pts.map(q => ({ x: q[0], y: q[1] })), true); } // polígono relleno desde [[x,y],...]
+function decoArch(cx, baseY, hw, sh) { // contorno de un arco de medio punto: pilares rectos de altura sh y semicírculo encima
+  const pts = [[cx - hw, baseY], [cx - hw, baseY - sh]]; for (let i = 1; i < 12; i++) { const an = Math.PI + Math.PI * i / 12; pts.push([cx + hw * Math.cos(an), baseY - sh + hw * Math.sin(an)]); }
+  pts.push([cx + hw, baseY - sh], [cx + hw, baseY]); return pts;
+}
+const ELITE_BEST = { 'Vigía de las Cornisas': 'elVigia', 'Gárgola Viva': 'elGargola', 'Sereno de las Alturas': 'elSereno', 'Rata Mayor del Colector': 'elRata', 'Farolero Ahogado': 'elFarolero', 'Alguacil del Aljibe': 'elAlguacil' }; // nombre del élite -> registro del bestiario
 const PAGES = {
   arch1: { title: 'Nota del Archimago', text: 'Los hermanos del Alba me pidieron guardar un sello de tinta: mientras exista, el Conde no saldrá de su trono. Lo escondí tras mil páginas y me quedé a vigilarlo. Los libros ya no responden; solo susurran mi nombre.' },
   cat1: { title: 'Lamento de la Reina', text: 'Mi sello es de hueso porque los huesos no mienten. Los hermanos me encerraron bajo la Mazmorra para que mi esposo no saliera de su trono. Los muertos me hacen compañía. El Conde nunca bajó a verme.' },
@@ -462,7 +481,7 @@ Object.assign(CastleScene.prototype, {
   updateExtraHud() {
     // bestiario: se registra lo que ves de cerca; nombre del élite más cercano
     let el = null, ed = 1e9; const p0 = this.player;
-    this.ents.forEach(e => { const d = Math.hypot(e.spr.x - p0.x, e.spr.y - p0.y); if (d < 260) this.noteSeen(e.type); if (e.elite && d < 340 && d < ed) { ed = d; el = e; } });
+    this.ents.forEach(e => { const d = Math.hypot(e.spr.x - p0.x, e.spr.y - p0.y); if (d < 260) this.noteSeen(e.type); if (e.elite && d < 260 && ELITE_BEST[e.name]) this.noteSeen(ELITE_BEST[e.name]); if (e.elite && d < 340 && d < ed) { ed = d; el = e; } });
     if (el) this.eliteTag.setVisible(true).setText('★ ' + (el.name || 'Élite')).setPosition(el.spr.x, el.spr.y - 52); else this.eliteTag.setVisible(false);
     this.expT -= 0.016;
     if (this.expT <= 0) {
@@ -713,7 +732,7 @@ Object.assign(CastleScene.prototype, {
     this.updateArrows(dt);
 
     // peligros y recogidas
-    if (this.spikesTouch()) { const fall = !!(this.W.areas[this.myArea] || {}).open; this.hurt(1, p.x); if (!this.dead) { if (fall) this.roofFall(); p.setPosition(this.lastGround.x, this.lastGround.y); b.setVelocity(0, 0); this.invuln = 1.2; } } // en la calle de los tejados, las estacas del foso son un abismo entre edificios
+    if (this.spikesTouch()) { const fall = (this.W.gaps || []).some(q => q.area === this.myArea && p.x / T > q.x0 - 2 && p.x / T < q.x1 + 3); this.hurt(1, p.x); if (!this.dead) { if (fall) this.roofFall(); p.setPosition(this.lastGround.x, this.lastGround.y); b.setVelocity(0, 0); this.invuln = 1.2; } } // en la calle de los tejados, las estacas del foso son un abismo entre edificios
     if (p.y > (this.W.Ht - 1) * T) { p.setPosition(this.lastGround.x, this.lastGround.y); b.setVelocity(0, 0); }
     this.contact(); this.pickups();
     this.interact(inp.ePress && !ui);
@@ -1683,46 +1702,33 @@ Object.assign(CastleScene.prototype, {
   },
   // ---- Cielo de la Zona 3: la calle es exterior. Se oculta la roca sobre el suelo y el techo y las paredes de las salas abiertas (siguen siendo sólidos), y detrás
   // se pinta un cielo en degradado según la fase, con estrellas, luna o sol y una ciudad de siluetas que se mueve más despacio que la cámara
-  // La calle de la Zona 3 se recorre por los tejados: bajo cada tramo de suelo hay un edificio (muro, ventanas, alero) y entre ellos hay abismos. Caer = daño y volver al último tejado pisado.
+  // Los tejados de la Zona 3 se recorren de edificio en edificio: entre ellos hay huecos ('gap') que no se ven (solo la calle, muy abajo). Caer = daño y volver al último tejado pisado, no a la calle.
   roofFall() {
     SFX.hurt && SFX.hurt(); this.cameras.main.flash(260, 0, 0, 0); this.cameras.main.shake(180, 0.006);
     if (!this.fallHint) { this.fallHint = true; this.toast('Has caído entre los tejados: te haces daño y vuelves al último tejado que pisaste.', 6000); }
   },
-  buildRoofs() {
-    const w = this.W; if (!w.sky) return; this.roofObjs = [];
-    const WALL = [0x6a5262, 0x6f5448, 0x4f4a66, 0x665846, 0x56566a], HT = 15 * T;
-    w.areaList.filter(a => a.open && !a.castle).forEach(a => {
-      const fy = a.y0 + a.rh - 1, top = (fy + 1) * T, rnd = rndSeeded(a.x0 * 13 + a.y0), g = this.add.graphics().setDepth(-4.75).setVisible(false);
-      const gaps = (w.gaps || []).filter(q => q.area === a.id).sort((p1, q1) => p1.x0 - q1.x0);
-      const spans = []; let cur = a.x0; for (const q of gaps) { if (q.x0 > cur) spans.push([cur, q.x0]); cur = q.x1 + 1; } if (cur < a.x0 + a.rw) spans.push([cur, a.x0 + a.rw]); if (spans.length) { if (spans[0][0] === a.x0) spans[0][0] -= 10; const l = spans[spans.length - 1]; if (l[1] === a.x0 + a.rw) l[1] += 10; } // el edificio sigue un poco más allá de los bordes de la sala (se ve el vecino)
-      for (const q of gaps) {
-        this.fg.forEachTile(t => { t.alpha = 0; }, this, q.x0, fy, q.x1 - q.x0 + 1, 1); // las estacas del foso no se ven: solo el abismo (siguen valiendo como peligro)
-        const x = q.x0 * T, wd = (q.x1 - q.x0 + 1) * T;
-        g.fillStyle(0x07050c, 1).fillRect(x, fy * T, wd, HT + T);
-        g.fillStyle(0x120d18, 1).fillRect(x, top + 9 * T, wd, 6 * T); // al fondo, la calle de verdad, muy abajo y a oscuras
-        for (let k = 0; k < wd / T; k++) if (rnd() < 0.45) g.fillStyle(0xe8b45a, 0.35).fillRect(x + k * T + 10, top + 11 * T + Math.floor(rnd() * 3) * 20, 5, 7);
-        g.fillStyle(0x000000, 0.35).fillRect(x, fy * T, 8, HT + T).fillRect(x + wd - 8, fy * T, 8, HT + T); // el borde de los edificios da sombra
+  roofBatStep(time) { // Tejados de noche: murciélagos que cruzan la sala de lado a lado (no te persiguen); si te rozan de casualidad, te hacen daño
+    const bats = this.roofBats = this.roofBats || [], dt = Math.min(0.05, (time - (this.rbT || time)) / 1000); this.rbT = time;
+    const a = this.W.areas[this.myArea], night = a && a.z === 18 ? this.nightLevel(a) : 0, p = this.player, v = this.cameras.main.worldView;
+    if (night > 0.95 && !this.dead && !this.dlg && v) {
+      this.rbCd = (this.rbCd === undefined ? 2 : this.rbCd) - dt;
+      if (this.rbCd <= 0 && bats.length < 4) {
+        this.rbCd = 3.5 + Math.random() * 4; const dir = Math.random() < 0.5 ? 1 : -1, y = Phaser.Math.Clamp(p.y + Phaser.Math.Between(-150, 40), a.y0 * T + 70, (a.y0 + a.rh - 2) * T - 30);
+        bats.push({ s: this.add.sprite(dir > 0 ? v.x - 50 : v.right + 50, y, 'bat1').setScale(3).setDepth(9), dir, y0: y, ph: Math.random() * 6, sp: 200 + Math.random() * 70, hit: false, t: 0 });
+        if (!this.rbHint) { this.rbHint = true; this.toast('De noche cruzan murciélagos por los tejados: si te rozan, te hacen daño.', 6000); }
       }
-      for (const [s0, s1] of spans) {
-        let x = s0; while (x < s1) {
-          const rest = s1 - x, n = rest <= 16 ? rest : 8 + Math.floor(rnd() * 7), wt = rest - n < 5 ? rest : n, px = x * T, wd = wt * T, col = WALL[Math.floor(rnd() * WALL.length)];
-          g.fillStyle(col, 1).fillRect(px, top, wd, HT).fillStyle(0x000000, 0.22).fillRect(px, top, 6, HT).fillRect(px + wd - 6, top, 6, HT);
-          g.fillStyle(0x5a4a52, 1).fillRect(px - 5, top, wd + 10, 9).fillStyle(0x7a666a, 1).fillRect(px - 5, top, wd + 10, 3).fillStyle(0x000000, 0.3).fillRect(px - 5, top + 9, wd + 10, 3); // alero
-          for (let wy = 2; wy < 13; wy += 3) for (let wx = 1; wx + 1 < wt; wx += 3) { // ventanas con postigos
-            const lx = px + wx * T + 3, ly = top + wy * T + 6, lit = rnd() < 0.3;
-            g.fillStyle(0x3a2622, 1).fillRect(lx - 4, ly - 2, 30, 38).fillStyle(lit ? 0xf0c068 : 0x1c1624, 1).fillRect(lx, ly, 22, 30);
-            if (lit) g.fillStyle(0xfff0c0, 0.4).fillRect(lx + 2, ly + 2, 8, 12); else g.fillStyle(0x3a2a30, 1).fillRect(lx, ly + 14, 22, 2);
-          }
-          x += wt;
-          if (x < s1) g.fillStyle(0x000000, 0.45).fillRect(x * T - 2, top, 4, HT); // medianera entre dos casas
-        }
-      }
-      this.roofObjs.push({ id: a.id, g });
-    });
-    this.roofShown = null;
+    }
+    for (let i = bats.length - 1; i >= 0; i--) {
+      const b = bats[i]; b.t += dt; b.s.x += b.dir * b.sp * dt; b.s.y = b.y0 + Math.sin(time * 0.006 + b.ph) * 26; b.s.setTexture(((time / 110) | 0) % 2 ? 'bat1' : 'bat2');
+      if (!b.hit && !this.dead && Math.abs(b.s.x - p.x) < 26 && Math.abs(b.s.y - p.y) < 24) { b.hit = true; this.hurt(1, b.s.x); }
+      if (night < 0.5 || !a || a.z !== 18 || b.t > 14 || (b.t > 1 && (b.s.x < v.x - 200 || b.s.x > v.right + 200))) { b.s.destroy(); bats.splice(i, 1); }
+    }
   },
-  roofStep() { if (!this.roofObjs || this.roofShown === this.myArea) return; this.roofShown = this.myArea; for (const o of this.roofObjs) o.g.setVisible(o.id === this.myArea); },
+  buildRoofs() { // las estacas bajo un hueco de los tejados no se ven (siguen valiendo como peligro: es lo que devuelve al jugador al último apoyo)
+    for (const q of (this.W.gaps || [])) this.fg.forEachTile(t => { t.alpha = 0; }, this, q.x0, q.fy, q.x1 - q.x0 + 1, 1);
+  },
   skyBuild() {
+    this.decoAnim = []; this.decoGs = {}; this.decoT = 0;
     const w = this.W; if (!w.sky && !(w.props || []).length && !(w.doors || []).some(d => d.label)) return;
     const open = w.sky ? w.areaList.filter(a => a.open) : []; if (w.sky && !open.length) return;
     const ground = this.skyGround = w.sky ? Math.max(...open.map(a => a.y0 + a.rh - 1)) : 0; // el suelo de la calle (la sala abierta más baja)
@@ -1740,6 +1746,7 @@ Object.assign(CastleScene.prototype, {
     // casas y cajas: sus casillas sólidas se ocultan y se dibuja el edificio encima
     const pg = this.add.graphics().setDepth(-4.9); this.propG = pg;
     // decorado de la Morada: cunas vacías, los cuatro retratos y la mesa para seis (sin colisión)
+    (w.props || []).filter(p => DECO_KINDS.has(p.kind)).forEach(p => this.drawDeco(pg, p)); // decorados puros (sin casillas): también en salas no abiertas (Cloacas)
     (w.props || []).filter(p => p.kind === 'cradle' || p.kind === 'portrait' || p.kind === 'table' || p.kind === 'faro').forEach(p => {
       const x = (p.gx) * T, fy = p.gy * T;
       if (p.kind === 'faro') { const by = fy - 2 * T; // el faro apagado: fuste de piedra que se estrecha, galería, linterna sin luz y cúpula (al fondo del embarcadero, sin colisión)
@@ -1751,6 +1758,7 @@ Object.assign(CastleScene.prototype, {
       pg.fillStyle(0x4a3220, 1).fillRect(x - 60, fy - 40, 120, 8).fillRect(x - 54, fy - 40, 8, 40).fillRect(x + 46, fy - 40, 8, 40); for (let i = 0; i < 6; i++) pg.fillStyle(i === 5 ? 0x2a1c10 : 0xcdbf9e, 1).fillRect(x - 54 + i * 19, fy - 50, 12, 10); // mesa para seis; la sexta silla, vacía
     });
     (w.props || []).filter(p => !w.sky || open.some(a => a.id === p.area)).forEach(p => {
+      if (DECO_KINDS.has(p.kind)) return;
       if (p.kind === 'stairs' || p.kind === 'tower' || p.kind === 'cradle' || p.kind === 'portrait' || p.kind === 'table' || p.kind === 'faro') return; // de ladrillo (se ven sus casillas) o decorado sin casillas propias (si no, forEachTile sin ancho ni alto ocultaba todo el suelo desde su posición)
       if (p.kind === 'facade') { this.drawFacade(pg, p); return; }
       this.fg.forEachTile(t => { t.alpha = 0; }, this, p.gx, p.gy, p.w, p.h);
@@ -1829,7 +1837,255 @@ Object.assign(CastleScene.prototype, {
     pg.fillStyle(ST.beam, 1).fillRect(x - 12, E, W + 24, 6).fillRect(rx0, ry - 4, rx1 - rx0, 5); // alero y cumbrera de madera
     if (p.style !== 'stone') pg.fillStyle(0x5a5048, 1).fillRect(rx1 - 30, ry - 22, 14, 24).fillStyle(0x3a3430, 1).fillRect(rx1 - 33, ry - 26, 20, 6); // chimenea
   },
+  // ---- Decorados de la bifurcación (Tejados / Calle / Cloacas). Sin colisión y sin tocar casillas. Lo estático va a capas compartidas; lo animado, a un Graphics propio que solo se repinta cuando se ve en pantalla
+  decoLayer(d) { this.decoGs = this.decoGs || {}; return this.decoGs[d] || (this.decoGs[d] = this.add.graphics().setDepth(d)); },
+  decoAnimAdd(x0, y0, x1, y1, depth, fn) { const d = { g: this.add.graphics().setDepth(depth), x0, y0, x1, y1, fn, vis: true, s: null }; this.decoAnim.push(d); fn(d.g, this.time.now, d); return d; },
+  decoStep(time) { // repinta los decorados animados que se ven (en modo ligero, cada 120 ms)
+    if (!this.decoAnim || !this.decoAnim.length) return;
+    if (LITE && time - (this.decoT || 0) < 120) return; this.decoT = time;
+    const v = this.cameras.main.worldView; if (!v) return;
+    this.decoAnim.forEach(d => {
+      const vis = d.x1 > v.x - 60 && d.x0 < v.right + 60 && d.y1 > v.y - 60 && d.y0 < v.bottom + 60;
+      if (d.vis !== vis) { d.vis = vis; d.g.setVisible(vis); }
+      if (vis) { d.g.clear(); d.fn(d.g, time, d); }
+    });
+  },
+  decoPhase() { try { return this.cyc ? World.phaseAt(this.cyc.t).i : 2; } catch (e) { return 2; } }, // 0 noche, 1 alba, 2 día, 3 ocaso
+  drawDeco(pg0, p) {
+    const w = this.W, a = w.areas[p.area], kind = p.kind, x0 = p.gx * T, fy = p.gy * T, cx = x0 + T / 2, st = typeof p.style === 'number' ? p.style : 0;
+    const Wd = (typeof p.w === 'number' && p.w > 0 ? p.w : (DECO_W[kind] || 2)) * T, ceilY = a ? (a.y0 + 1) * T : fy - 6 * T, self = this;
+    const sg = (d) => self.decoLayer(d), lite = LITE, mx = decoMix, poly = decoPoly;
+    switch (kind) {
+      case 'tenement': { // bloque de pisos que cuelga de la cubierta hasta el suelo de la calle (detrás de las fachadas bajas)
+        const g = sg(-4.92), top = fy + T, bot = this.skyGround > p.gy ? this.skyGround * T : fy + 17 * T, H = bot - top; if (H < 90) break;
+        const S = [{ wl: 0x8f7c58, bm: 0x4a3624, sh: 0x4f6a46 }, { wl: 0x7d6e50, bm: 0x32261a, sh: 0x7a3a2a }, { wl: 0x757166, bm: 0x3a362e, sh: 0x3a4a5a }, { wl: 0x95705a, bm: 0x4a2c20, sh: 0x3a5a56 }][st & 3];
+        const rnd = rndSeeded(p.gx * 31 + st * 7 + 3), c1 = mx(S.wl, 0x0a0820, 0.3), c2 = mx(S.wl, 0x0a0820, 0.62);
+        g.fillGradientStyle(c1, c1, c2, c2, 1).fillRect(x0, top, Wd, H);
+        g.fillStyle(0x0a0820, 0.22).fillRect(x0 + Wd - 8, top, 8, H).fillStyle(0xffffff, 0.06).fillRect(x0, top, 4, H); // luz a la izquierda, sombra a la derecha
+        g.fillStyle(0x3a362e, 1).fillRect(x0 - 6, top, Wd + 12, 10).fillStyle(0x6a6258, 1).fillRect(x0 - 6, top, Wd + 12, 3); for (let dx = 0; dx < Wd; dx += 12) g.fillStyle(0x24211c, 1).fillRect(x0 + dx, top + 10, 6, 5); // cornisa con dentellones
+        const n = Math.max(1, Math.floor((Wd - 20) / 56)), sp = (Wd - 20) / n;
+        for (let r = 0, yr = top + 18; yr < bot - 80; r++, yr += 96) {
+          const wy = yr + 14; g.fillStyle(0x0a0820, 0.35).fillRect(x0 - 3, yr + 88, Wd + 6, 5).fillStyle(S.bm, 1).fillRect(x0 - 3, yr + 82, Wd + 6, 6); // viga de forjado con sombra
+          for (let i = 0; i < n; i++) {
+            const wx = x0 + 10 + i * sp + (sp - 22) / 2, lit = rnd() < 0.32;
+            g.fillStyle(0x1a1208, 1).fillRect(wx - 3, wy - 3, 28, 38);
+            if (lit) { g.fillStyle(0xffb347, 0.1).fillRect(wx - 9, wy - 8, 40, 50).fillStyle(0xffc060, 0.88).fillRect(wx, wy, 22, 32).fillStyle(0x6a3a1a, 0.5).fillRect(wx + 10, wy, 2, 32).fillRect(wx, wy + 14, 22, 2); }
+            else g.fillStyle(0x141018, 1).fillRect(wx, wy, 22, 32).fillStyle(0x3a4a6a, 0.3).fillRect(wx + 3, wy + 2, 5, 28);
+            g.fillStyle(S.sh, 1).fillRect(wx - 9, wy - 2, 6, 34).fillRect(wx + 25, wy - 2, 6, 34); for (let k = 0; k < 4; k++) g.fillStyle(0x0a0820, 0.35).fillRect(wx - 9, wy + 3 + k * 8, 6, 2).fillRect(wx + 25, wy + 3 + k * 8, 6, 2); // postigos con lamas
+            g.fillStyle(0x5a5248, 1).fillRect(wx - 5, wy + 33, 32, 4); // alféizar
+            const q = rnd(); if (q < 0.2) { g.fillStyle(0x4a3220, 1).fillRect(wx - 3, wy + 37, 28, 7); for (let k = 0; k < 5; k++) g.fillStyle(k % 2 ? 0x4a8a3a : 0xc86a8a, 1).fillCircle(wx + 1 + k * 5, wy + 36, 3); } // jardinera
+            else if (q < 0.32 && r > 0) { g.fillStyle(0x3a2a1c, 1).fillRect(wx - 12, wy + 42, 46, 4); for (let k = 0; k < 8; k++) g.fillRect(wx - 11 + k * 6, wy + 30, 2, 12); g.fillRect(wx - 12, wy + 30, 46, 2); } // balconcillo con barandilla
+            else if (q < 0.42 && i + 1 < n) { const ax = wx + 24, bx2 = wx + sp - 2, ly = wy + 8; g.lineStyle(2, 0x3a2a1c, 1).lineBetween(ax, ly, bx2, ly + 4); [0xe8e0d0, 0xb86a5a, 0x7a8fb0][(r + i) % 3] && g.fillStyle([0xe8e0d0, 0xb86a5a, 0x7a8fb0][(r + i) % 3], 0.95).fillRect(ax + 8, ly + 1, 12, 16).fillRect(ax + sp * 0.5, ly + 3, 10, 12); } // tendal
+          }
+        }
+        g.fillStyle(0x2a2622, 1).fillRect(x0 + Wd - 18, top + 14, 4, H - 14); for (let yy = top + 40; yy < bot; yy += 70) g.fillRect(x0 + Wd - 21, yy, 10, 3); // bajante de hierro
+        g.fillStyle(0x4a463e, 1).fillRect(x0 - 4, bot - 34, Wd + 8, 34).fillStyle(0x0a0820, 0.3).fillRect(x0 - 4, bot - 34, Wd + 8, 34); // zócalo de piedra
+        break;
+      }
+      case 'chimney': {
+        const g = sg(-4.9), bx = cx - 18; g.fillStyle(0x4a3a32, 1).fillRect(bx, fy - 64, 36, 64).fillStyle(0x6a5648, 1).fillRect(bx, fy - 64, 6, 64).fillStyle(0x2a1e1a, 0.55).fillRect(bx + 30, fy - 64, 6, 64);
+        for (let y = 0; y < 64; y += 8) { g.fillStyle(0x2a1e1a, 0.6).fillRect(bx, fy - 64 + y, 36, 1); for (let xx = (y / 8) % 2 ? 8 : 16; xx < 36; xx += 16) g.fillRect(bx + xx, fy - 64 + y, 1, 8); }
+        g.fillStyle(0x3a302a, 1).fillRect(bx - 5, fy - 74, 46, 11).fillStyle(0x6a5a4c, 1).fillRect(bx - 5, fy - 74, 46, 3).fillStyle(0x4a3a32, 1).fillRect(bx + 5, fy - 90, 10, 16).fillRect(bx + 21, fy - 86, 10, 12).fillStyle(0x0a0808, 1).fillRect(bx + 6, fy - 90, 8, 3).fillRect(bx + 22, fy - 86, 8, 3);
+        if (!lite) this.decoAnimAdd(bx - 20, fy - 280, bx + 70, fy - 90, -4.85, (gg, t) => { for (let i = 0; i < 5; i++) { const u = ((t * 0.00032 + i * 0.2 + p.gx * 0.13) % 1); gg.fillStyle(0x9a9aa4, 0.26 * (1 - u)).fillCircle(bx + 18 + Math.sin(u * 6 + i) * 9 + u * 26, fy - 94 - u * 160, 5 + u * 15); } });
+        break;
+      }
+      case 'vane': {
+        const g = sg(-4.9); g.fillStyle(0x2a2a30, 1).fillRect(cx - 2, fy - 96, 4, 96).fillCircle(cx, fy - 98, 4); g.lineStyle(2, 0x2a2a30, 1).lineBetween(cx - 15, fy - 72, cx + 15, fy - 72).lineBetween(cx, fy - 87, cx, fy - 57);
+        g.fillStyle(0xc8a050, 1).fillCircle(cx - 15, fy - 72, 3).fillCircle(cx + 15, fy - 72, 3);
+        this.decoAnimAdd(cx - 40, fy - 140, cx + 40, fy - 90, -4.88, (gg, t) => {
+          let d = Math.cos(t * 0.0009 + p.gx); if (Math.abs(d) < 0.2) d = d < 0 ? -0.2 : 0.2; const y = fy - 106, c = 0x1e1e24;
+          if (st === 1) { gg.fillStyle(c, 1).fillEllipse(cx, y, 26 * Math.abs(d) + 6, 14).fillCircle(cx + 12 * d, y - 9, 5).fillTriangle(cx + 16 * d, y - 10, cx + 23 * d, y - 8, cx + 16 * d, y - 6).fillTriangle(cx - 12 * d, y - 2, cx - 24 * d, y - 18, cx - 20 * d, y + 2).fillTriangle(cx - 12 * d, y, cx - 26 * d, y - 8, cx - 22 * d, y + 6).fillStyle(0xb02a2a, 1).fillRect(cx + 10 * d - 2, y - 17, 4, 4); }
+          else { gg.fillStyle(c, 1).fillRect(Math.min(cx - 20 * d, cx + 8 * d), y - 2, 28 * Math.abs(d), 4).fillTriangle(cx + 24 * d, y, cx + 8 * d, y - 8, cx + 8 * d, y + 8).fillTriangle(cx - 20 * d, y, cx - 28 * d, y - 12, cx - 12 * d, y - 2).fillTriangle(cx - 20 * d, y, cx - 28 * d, y + 12, cx - 12 * d, y + 2); }
+        });
+        break;
+      }
+      case 'laundry': {
+        const g = sg(-4.9), n = Math.max(2, Math.round(Wd / 44)); g.fillStyle(0x4a3624, 1).fillRect(x0 - 3, fy - 74, 6, 74).fillRect(x0 + Wd - 3, fy - 74, 6, 74).fillStyle(0x2a1c10, 1).fillRect(x0 - 6, fy - 76, 12, 4).fillRect(x0 + Wd - 6, fy - 76, 12, 4);
+        const cols = [0xe8e0d0, 0xb86a5a, 0x7a8fb0, 0xd8c070, 0xcdbf9e], sag = u => fy - 70 + 9 * Math.sin(Math.PI * u);
+        g.lineStyle(2, 0x2a1c10, 1); for (let i = 0; i < 12; i++) g.lineBetween(x0 + Wd * i / 12, sag(i / 12), x0 + Wd * (i + 1) / 12, sag((i + 1) / 12));
+        this.decoAnimAdd(x0 - 12, fy - 80, x0 + Wd + 12, fy, -4.88, (gg, t) => { for (let i = 0; i < n; i++) { const u = (i + 0.5) / n, bx = x0 + Wd * u - 14, ty = sag(u), sw = Math.sin(t * 0.002 + i * 1.3 + p.gx) * 6, ln = 34 + (i % 3) * 6, c = cols[(i + st) % 5];
+          decoPoly(gg, [[bx, ty], [bx + 28, ty], [bx + 28 + sw * 1.2, ty + ln], [bx + sw, ty + ln + 1]], c, 0.95); decoPoly(gg, [[bx + 18, ty], [bx + 28, ty], [bx + 28 + sw * 1.2, ty + ln], [bx + 19 + sw, ty + ln]], 0x000000, 0.12); gg.fillStyle(0x2a1c10, 1).fillRect(bx + 4, ty - 2, 3, 4).fillRect(bx + 21, ty - 2, 3, 4); } });
+        break;
+      }
+      case 'gargoyle': {
+        const g = sg(-4.9), d = st === 1 ? -1 : 1, X = u => cx + d * u, Y = v => fy + v, P = pts => pts.map(q => [X(q[0]), Y(q[1])]);
+        g.fillStyle(0x5a5650, 1).fillRect(cx - 26, fy - 14, 52, 14).fillStyle(0x7a766e, 1).fillRect(cx - 26, fy - 14, 52, 3).fillStyle(0x2a2826, 0.5).fillRect(cx - 26, fy - 4, 52, 4);
+        if (st === 2) { poly(g, P([[-4, -40], [-34, -78], [-24, -50], [-30, -44], [-14, -34]]), 0x24222a); poly(g, P([[6, -40], [30, -80], [24, -52], [34, -46], [14, -34]]), 0x2e2c34); } // alas abiertas
+        else poly(g, P([[-14, -38], [-30, -62], [-22, -40], [-10, -30]]), 0x24222a); // alas plegadas
+        poly(g, P([[-18, -14], [-20, -34], [-8, -46], [6, -42], [14, -50], [26, -46], [27, -36], [15, -31], [11, -22], [12, -14]]), 0x2e2c30);
+        poly(g, P([[-8, -46], [6, -42], [14, -50], [10, -52], [-2, -48]]), 0x56545c); // luz en el lomo y la frente
+        poly(g, P([[10, -50], [8, -64], [17, -50]]), 0x3a383e); poly(g, P([[-2, -44], [-6, -56], [3, -44]]), 0x3a383e); // cuernos
+        poly(g, P([[26, -38], [30, -30], [22, -33]]), 0x8a8a8a); // colmillo
+        g.fillStyle(0xff4a2a, 0.18).fillCircle(X(18), Y(-41), 8).fillStyle(0xff4a2a, 1).fillCircle(X(18), Y(-41), 2);
+        break;
+      }
+      case 'skylight': {
+        const g = sg(-4.9); g.fillStyle(0xffd080, 0.07); poly(g, [[x0 + 18, fy - 40], [x0 + Wd - 18, fy - 40], [x0 + Wd + 24, fy - 160], [x0 - 24, fy - 160]], 0xffd080, 0.07);
+        g.fillStyle(0x4a3624, 1).fillRect(x0, fy - 12, Wd, 12).fillStyle(0x6a4a2c, 1).fillRect(x0, fy - 12, Wd, 3);
+        poly(g, [[x0 + 6, fy - 12], [x0 + Wd - 6, fy - 12], [x0 + Wd - 18, fy - 38], [x0 + 18, fy - 38]], 0xe89a40, 0.95); poly(g, [[x0 + 14, fy - 14], [x0 + Wd - 14, fy - 14], [x0 + Wd - 24, fy - 34], [x0 + 24, fy - 34]], 0xffd27a, 0.85);
+        g.lineStyle(3, 0x2a1c10, 1).lineBetween(x0 + Wd / 2, fy - 12, x0 + Wd / 2, fy - 38).lineBetween(x0 + 10, fy - 25, x0 + Wd - 10, fy - 25); g.fillStyle(0x2a1c10, 1).fillRect(x0 + 16, fy - 42, Wd - 32, 5);
+        break;
+      }
+      case 'rigging': {
+        const g = sg(-4.9), H0 = 112; g.fillStyle(0x4a3624, 1).fillRect(x0 - 3, fy - H0, 6, H0).fillRect(x0 + Wd - 3, fy - H0, 6, H0).fillStyle(0x2a1c10, 1).fillRect(x0 - 8, fy - H0 + 6, 16, 4).fillRect(x0 + Wd - 8, fy - H0 + 6, 16, 4);
+        g.lineStyle(2, 0xb8a070, 1).lineBetween(x0, fy - H0 + 2, x0 + Wd, fy - 70).lineBetween(x0, fy - 70, x0 + Wd, fy - H0 + 2).lineBetween(x0, fy - H0 + 2, x0 - 44, fy).lineBetween(x0 + Wd, fy - H0 + 2, x0 + Wd + 44, fy);
+        g.lineStyle(3, 0x8a7448, 1); for (let i = 0; i < 10; i++) { const u0 = i / 10, u1 = (i + 1) / 10; g.lineBetween(x0 + Wd * u0, fy - H0 + 2 + 14 * Math.sin(Math.PI * u0), x0 + Wd * u1, fy - H0 + 2 + 14 * Math.sin(Math.PI * u1)); }
+        [x0, x0 + Wd].forEach(px => g.fillStyle(0x2a2622, 1).fillCircle(px, fy - H0 + 2, 7).fillStyle(0x8a7448, 1).fillCircle(px, fy - H0 + 2, 2.5));
+        const mxp = x0 + Wd / 2, my = fy - H0 + 16; g.lineStyle(2, 0xb8a070, 1).lineBetween(mxp, my, mxp, my + 30); g.fillStyle(0x6a4a2c, 1).fillRect(mxp - 8, my + 30, 16, 12).fillStyle(0x2a1c10, 1).fillRect(mxp - 9, my + 30, 18, 2); // cubo colgando
+        break;
+      }
+      case 'belfry': {
+        const g = sg(-4.9); g.fillStyle(0x726c60, 1).fillRect(cx - 30, fy - 130, 60, 130).fillStyle(0x938c7c, 1).fillRect(cx - 30, fy - 130, 5, 130).fillStyle(0x2a2622, 0.35).fillRect(cx + 22, fy - 130, 8, 130);
+        for (let y = 0; y < 130; y += 12) g.fillStyle(0x3a362e, 0.45).fillRect(cx - 30, fy - 130 + y, 60, 1);
+        g.fillStyle(0x0a0808, 1).fillCircle(cx, fy - 112, 12).fillRect(cx - 12, fy - 112, 24, 40).fillStyle(0x3a362e, 1).fillRect(cx - 3, fy - 52, 6, 22); // arco y aspillera
+        poly(g, [[cx - 5, fy - 114], [cx + 5, fy - 114], [cx + 10, fy - 88], [cx - 10, fy - 88]], 0xb88a3a); g.fillStyle(0x8a6428, 1).fillRect(cx - 11, fy - 90, 22, 4).fillStyle(0x3a2a14, 1).fillCircle(cx, fy - 84, 3).fillStyle(0x2a1c10, 1).fillRect(cx - 14, fy - 116, 28, 3);
+        g.fillStyle(0x5a3a30, 1).fillTriangle(cx - 36, fy - 130, cx + 36, fy - 130, cx, fy - 170).fillStyle(0x2a1c10, 1).fillRect(cx - 1, fy - 186, 3, 18).fillRect(cx - 6, fy - 180, 13, 3);
+        g.fillStyle(0x4a7a3a, 0.5).fillRect(cx - 30, fy - 20, 14, 20).fillRect(cx - 26, fy - 70, 6, 14);
+        break;
+      }
+      case 'flag': {
+        const g = sg(-4.9); g.fillStyle(0x2a1c10, 1).fillRect(cx - 2, fy - 134, 4, 134).fillStyle(0xc8a050, 1).fillCircle(cx, fy - 136, 4);
+        this.decoAnimAdd(cx, fy - 140, cx + 90, fy - 70, -4.88, (gg, t) => {
+          const n = 7, top = fy - 126, h = 40, pt = i => ({ x: cx + 2 + i * 10, o: Math.sin(t * 0.004 + i * 0.8 + p.gx) * (1.5 + i * 1.3) });
+          for (let i = 0; i < n; i++) { const A = pt(i), B = pt(i + 1), tail = i >= n - 2 ? (i % 2 ? 8 : 0) : 0; decoPoly(gg, [[A.x, top + A.o], [B.x, top + B.o], [B.x, top + B.o + h - tail - i * 1.5], [A.x, top + A.o + h - (i > 4 ? 6 : 0)]], i % 2 ? 0x7a2020 : 0x8a2a2a, 0.97); }
+          const E = pt(2); decoPoly(gg, [[E.x + 4, top + E.o + 20], [E.x + 12, top + E.o + 12], [E.x + 20, top + E.o + 20], [E.x + 12, top + E.o + 28]], 0xd8b050, 0.9);
+        });
+        break;
+      }
+      case 'pigeons': {
+        const g = sg(-4.9), xs = [-21, -7, 8, 22], bird = (gg, x, y, fl, ph) => { gg.fillStyle(0x7a7a86, 1).fillEllipse(x, y - 5, 11, 7).fillStyle(0x5a5a66, 1).fillCircle(x + 5, y - 9, 3).fillTriangle(x - 5, y - 6, x - 11, y - 3, x - 5, y - 3).fillStyle(0xffb040, 1).fillRect(x + 7, y - 9, 2, 1); if (fl) { const up = Math.sin(ph) * 7; gg.fillStyle(0x9a9aa6, 1).fillTriangle(x - 2, y - 7, x + 4, y - 7, x - 4, y - 7 - 8 - up); } };
+        if (lite) { xs.forEach(u => bird(g, cx + u, fy, false, 0)); break; }
+        this.decoAnimAdd(cx - 60, fy - 520, cx + 360, fy, -4.87, (gg, t, d) => {
+          if (!d.s) d.s = xs.map((u, i) => ({ x: cx + u, y: fy, vx: (i % 2 ? 1 : -1) * (50 + i * 22), vy: -(80 + i * 25), fly: false })); const P = this.player, dt = Math.min(0.1, (t - (d.t || t)) / 1000); d.t = t;
+          if (P && !d.s.fly && Math.abs(P.x - cx) < 130 && Math.abs(P.y - fy) < 120) d.s.forEach(b => { b.fly = true; }); d.s.fly = d.s[0].fly;
+          d.s.forEach((b, i) => { if (b.fly) { b.x += b.vx * dt * 1.6; b.y += b.vy * dt * 1.4; b.vy -= 18 * dt; } if (b.y > fy - 800) bird(gg, b.x, b.y, b.fly, t * 0.03 + i); });
+        });
+        break;
+      }
+      case 'crossroads': { // gran poste de la encrucijada: tres carteles tallados y un farol
+        const g = sg(-4.9), py = fy, H0 = 190;
+        g.fillStyle(0x6a5a46, 1).fillTriangle(cx - 30, py, cx + 30, py, cx, py - 18).fillStyle(0x8a7a62, 1).fillCircle(cx - 22, py - 4, 6).fillCircle(cx + 22, py - 4, 6).fillCircle(cx + 4, py - 7, 7); // montón de piedras
+        g.fillStyle(0x4a3220, 1).fillRect(cx - 8, py - H0, 16, H0 - 4).fillStyle(0x6a4a30, 1).fillRect(cx - 8, py - H0, 5, H0 - 4).fillStyle(0x2a1c10, 0.5).fillRect(cx + 4, py - H0, 4, H0 - 4); for (let y = 12; y < H0 - 8; y += 22) g.fillStyle(0x2a1c10, 0.5).fillRect(cx - 6, py - y, 4, 2); // poste con vetas
+        const board = (cy, ang, len, col, sym) => {
+          const ca = Math.cos(ang), sa = Math.sin(ang), L = (u, v) => [cx + u * ca - v * sa, cy + u * sa + v * ca], h = 17;
+          decoPoly(g, [L(-6, -h), L(len - 12, -h), L(len + 12, 0), L(len - 12, h), L(-6, h)], 0x2a1c10); decoPoly(g, [L(-3, -h + 3), L(len - 14, -h + 3), L(len + 6, 0), L(len - 14, h - 3), L(-3, h - 3)], col);
+          decoPoly(g, [L(-3, -h + 3), L(len - 14, -h + 3), L(len - 14, -h + 7), L(-3, -h + 7)], 0xffffff, 0.14);
+          sym(L); g.fillStyle(0xb0b0b8, 1).fillCircle(L(4, 0)[0], L(4, 0)[1], 2); };
+        const dark = 0x2a1a10, hi = 0xe8c070;
+        board(py - 150, -0.32, 112, 0x6a5a8a, L => { // hacia arriba: tejado a dos aguas sobre una flecha ascendente
+          poly(g, [L(40, 0), L(52, -12), L(64, 0)], hi); g.fillStyle(hi, 1); poly(g, [L(44, 0), L(60, 0), L(60, 9), L(44, 9)], hi); poly(g, [L(86, 6), L(96, -8), L(106, 6)], dark); poly(g, [L(94, 6), L(98, 6), L(98, 12), L(94, 12)], dark); });
+        board(py - 110, 0.0, 124, 0x7a5a30, L => { // al frente: calle con casas y farol
+          poly(g, [L(28, 8), L(28, -4), L(36, -10), L(44, -4), L(44, 8)], hi); poly(g, [L(48, 8), L(48, -8), L(58, -14), L(68, -8), L(68, 8)], hi); poly(g, [L(76, 8), L(76, -2), L(84, -8), L(92, -2), L(92, 8)], hi); poly(g, [L(40, 8), L(60, 8), L(70, 12), L(30, 12)], dark); poly(g, [L(98, 10), L(100, 10), L(100, -10), L(98, -10)], dark); });
+        board(py - 70, 0.32, 112, 0x3a6a56, L => { // hacia abajo: reja y ola
+          for (let i = 0; i < 4; i++) poly(g, [L(36 + i * 9, -9), L(39 + i * 9, -9), L(39 + i * 9, 3), L(36 + i * 9, 3)], hi); poly(g, [L(34, -9), L(70, -9), L(70, -6), L(34, -6)], hi);
+          g.lineStyle(2, hi, 1); for (let i = 0; i < 10; i++) { const u0 = 34 + i * 4, u1 = u0 + 4, a0 = L(u0, 9 + 2 * Math.sin(i * 1.4)), a1 = L(u1, 9 + 2 * Math.sin((i + 1) * 1.4)); g.lineBetween(a0[0], a0[1], a1[0], a1[1]); } poly(g, [L(86, -4), L(96, 8), L(76, 8)], dark); });
+        g.lineStyle(4, 0x1a1a1e, 1).lineBetween(cx, py - H0 + 6, cx - 28, py - H0 + 6).lineBetween(cx - 28, py - H0 + 6, cx - 28, py - H0 + 14); g.fillStyle(0x1a1a1e, 1).fillRect(cx - 38, py - H0 + 14, 20, 4).fillRect(cx - 36, py - H0 + 18, 16, 22).fillRect(cx - 38, py - H0 + 40, 20, 4); // brazo de hierro y farol
+        g.fillStyle(0xffb347, 0.1).fillCircle(cx - 28, py - H0 + 30, 64).fillStyle(0xffb347, 0.16).fillCircle(cx - 28, py - H0 + 30, 34).fillStyle(0xffd27a, 0.95).fillRect(cx - 33, py - H0 + 20, 10, 18).fillStyle(0xffffff, 0.8).fillRect(cx - 30, py - H0 + 24, 4, 8);
+        this.caveLamps = this.caveLamps || []; this.caveLamps.push({ x: cx - 28, y: py - H0 + 30, r: 120 });
+        break;
+      }
+      case 'manhole': { // brocal de piedra, tapa de reja entreabierta, escalerilla de hierro y vaho verdoso
+        const g = sg(-4.9); g.fillStyle(0x5a554c, 1).fillRect(x0 - 10, fy - 9, 12, 12).fillRect(x0 + Wd - 2, fy - 9, 12, 12).fillStyle(0x8a8478, 1).fillRect(x0 - 10, fy - 9, 12, 3).fillRect(x0 + Wd - 2, fy - 9, 12, 3).fillStyle(0x2a2622, 0.5).fillRect(x0 - 10, fy, 12, 3).fillRect(x0 + Wd - 2, fy, 12, 3);
+        const ladX = x0 + Wd / 2; g.fillStyle(0x6a3a22, 1).fillRect(ladX - 9, fy - 2, 3, 130).fillRect(ladX + 6, fy - 2, 3, 130); for (let y = 8; y < 126; y += 14) g.fillStyle(0x8a4a2a, 1).fillRect(ladX - 9, fy + y, 18, 3); g.fillStyle(0x3a2a1c, 0.5).fillRect(ladX - 9, fy + 30, 3, 100);
+        const lx = x0 + Wd + 2; poly(g, [[lx, fy - 6], [lx + 8, fy - 6], [lx + 30, fy - 40], [lx + 22, fy - 42]], 0x3a3a40); g.lineStyle(2, 0x6a6a72, 1); for (let i = 1; i < 5; i++) { const u = i / 5; g.lineBetween(lx + 2 + u * 22, fy - 6 - u * 36, lx + 8 + u * 22, fy - 6 - u * 36); } g.fillStyle(0x6a6a72, 1).fillRect(lx - 2, fy - 8, 12, 3); // tapa de reja abierta, apoyada
+        this.decoAnimAdd(x0 - 30, fy - 150, x0 + Wd + 30, fy, -4.86, (gg, t) => { const n = lite ? 2 : 5; for (let i = 0; i < n; i++) { const u = ((t * 0.00028 + i / n) % 1); gg.fillStyle(0x9affb0, 0.2 * (1 - u)).fillCircle(x0 + Wd / 2 + Math.sin(u * 5 + i * 2) * (Wd * 0.28), fy - 6 - u * 120, 6 + u * 16); } });
+        break;
+      }
+      case 'hoist': { // bastidor de madera del montacargas de la Plaza: postes con tornapuntas, torno con manivela y contrapeso de sacos
+        const g = sg(-4.9), H0 = 230, xl = x0 - 14, xr = x0 + Wd + 6;
+        [xl, xr].forEach(px => { g.fillStyle(0x4a3220, 1).fillRect(px, fy - H0, 10, H0).fillStyle(0x6a4a30, 1).fillRect(px, fy - H0, 3, H0).fillStyle(0x3a3a40, 1).fillRect(px - 2, fy - 20, 14, 6).fillRect(px - 2, fy - H0 + 30, 14, 6); });
+        g.lineStyle(6, 0x3a2616, 1).lineBetween(xl + 5, fy - 60, xl - 24, fy).lineBetween(xr + 5, fy - 60, xr + 34, fy).lineBetween(xl + 5, fy - H0 + 40, xl + 5 + (Wd * 0.4), fy - H0 + 4).lineBetween(xr + 5, fy - H0 + 40, xr + 5 - (Wd * 0.4), fy - H0 + 4);
+        g.fillStyle(0x3a2616, 1).fillRect(xl, fy - H0 - 4, xr - xl + 10, 8).fillStyle(0x6a4a30, 1).fillRect(xl, fy - H0 - 4, xr - xl + 10, 2);
+        g.fillStyle(0x4a3220, 1).fillCircle(xl + 5, fy - 90, 14).fillStyle(0x2a1c10, 1).fillCircle(xl + 5, fy - 90, 5); g.lineStyle(3, 0x2a1c10, 1).lineBetween(xl + 5, fy - 104, xl + 5, fy - 76).lineBetween(xl - 9, fy - 90, xl + 19, fy - 90).lineBetween(xl + 5, fy - 90, xl - 14, fy - 106); g.fillStyle(0x6a6a72, 1).fillCircle(xl - 14, fy - 106, 3); // torno con manivela
+        g.lineStyle(3, 0xb8a070, 1).lineBetween(xr + 5, fy - H0 + 6, xr + 5, fy - 70); g.fillStyle(0x8a7448, 1).fillEllipse(xr + 5, fy - 60, 26, 24).fillStyle(0x6a5430, 1).fillRect(xr - 4, fy - 74, 18, 5); // saco de contrapeso
+        g.fillStyle(0x2a1c10, 1).fillRect(x0 + Wd / 2 - 32, fy - H0 + 14, 64, 14).fillStyle(0xc8a050, 1).fillRect(x0 + Wd / 2 - 28, fy - H0 + 17, 56, 2).fillRect(x0 + Wd / 2 - 20, fy - H0 + 22, 40, 2); // rótulo
+        break;
+      }
+      case 'swater': { // agua oscura y espesa a ras del suelo (estilo 1: ácida y verde sobre estacas, tapando un foso de pinchos)
+        const acid = st === 1, lvl = acid ? 8 : 18, deep = acid ? T : 0, y0 = fy - lvl;
+        if (acid) { const g = sg(8.4); for (let sx = x0 + 10; sx < x0 + Wd - 6; sx += 36) { g.fillStyle(0x3a2616, 1).fillRect(sx, fy - 26, 6, 40 + deep).fillStyle(0x6a4a30, 1).fillRect(sx, fy - 26, 2, 40 + deep); g.fillTriangle(sx - 1, fy - 26, sx + 7, fy - 26, sx + 3, fy - 36); } } // estacas que asoman
+        this.decoAnimAdd(x0 - 4, fy - 60, x0 + Wd + 4, fy + deep, 8.5, (gg, t) => {
+          const c0 = acid ? 0x2a6a1a : 0x16200f, c1 = acid ? 0x9aff4a : 0x4a5a22, c2 = acid ? 0xd8ff7a : 0xb4d04a;
+          gg.fillStyle(c0, acid ? 0.6 : 0.64).fillRect(x0, y0, Wd, lvl + deep); if (acid) gg.fillStyle(0x6aff3a, 0.08).fillRect(x0 - 6, y0 - 30, Wd + 12, 30);
+          gg.fillStyle(c1, 0.5).fillRect(x0, y0, Wd, 3); for (let xx = x0; xx < x0 + Wd; xx += 12) { const y = y0 + Math.sin(t * 0.002 + xx * 0.08 + p.gx) * 1.6; gg.fillStyle(c2, acid ? 0.55 : 0.4).fillRect(xx, y - 1, 8, 2); }
+          const nr = Math.max(2, Math.floor(Wd / 60)); for (let i = 0; i < nr; i++) { const xs = x0 + ((t * 0.012 * (1 + (i % 3) * 0.4) + i * 57) % Wd); gg.fillStyle(c2, 0.16).fillRect(xs, y0 + 5 + (i % 3) * 4, 16, 2); } // reflejos que se deslizan
+          if (!lite) { const nb = Math.max(2, Math.floor(Wd / 48)); for (let i = 0; i < nb; i++) { const u = ((t * 0.0006 + i * 0.31 + p.gx * 0.07) % 1), bx = x0 + 14 + ((i * 53 + p.gx * 17) % Math.max(1, Wd - 28)); if (u < 0.85) gg.lineStyle(1, c2, 0.6).strokeCircle(bx, fy - 4 - u * (lvl - 2), 1.5 + (i % 3)); else gg.lineStyle(1, c2, 0.5 * (1 - u) * 6).strokeCircle(bx, y0, 2 + (u - 0.85) * 30); }
+          }
+        });
+        break;
+      }
+      case 'sgrate': { // reja en el techo con un haz de luz, tintado según la hora, y polvo flotando
+        const bw = Wd, ph = this.decoPhase(), tint = [0x6a86c8, 0xffb27a, 0xfff2c0, 0xff8a50][ph], al = [0.09, 0.14, 0.17, 0.13][ph];
+        this.decoAnimAdd(x0 - 10, ceilY - 30, x0 + bw + 90, fy, -4.89, (gg, t) => {
+          const pf = this.decoPhase(), tn = [0x6a86c8, 0xffb27a, 0xfff2c0, 0xff8a50][pf], a0 = [0.09, 0.14, 0.17, 0.13][pf] * (0.85 + 0.15 * Math.sin(t * 0.0015)), sh = 46;
+          decoPoly(gg, [[x0 + 6, ceilY], [x0 + bw - 6, ceilY], [x0 + bw - 6 + sh + 22, fy], [x0 + 6 + sh, fy]], tn, a0); decoPoly(gg, [[x0 + 14, ceilY], [x0 + bw - 14, ceilY], [x0 + bw - 14 + sh * 0.9 + 12, fy], [x0 + 14 + sh * 0.9, fy]], tn, a0 * 0.8);
+          gg.fillStyle(tn, a0 * 1.8).fillEllipse(x0 + bw / 2 + sh + 10, fy - 1, bw + 30, 8);
+          gg.fillStyle(0x0a0a08, 1).fillRect(x0 - 6, ceilY - 14, bw + 12, 16); gg.fillStyle(tn, 0.85).fillRect(x0, ceilY - 10, bw, 11); // hueco del brocal con luz de fuera
+          for (let xx = x0 + 4; xx < x0 + bw; xx += 9) gg.fillStyle(0x2a2622, 1).fillRect(xx, ceilY - 10, 3, 13); gg.fillStyle(0x3a362e, 1).fillRect(x0 - 6, ceilY - 2, bw + 12, 4).fillRect(x0, ceilY - 6, bw, 2);
+          for (let i = 0; i < (lite ? 4 : 10); i++) { const u = ((t * 0.00004 * (1 + i % 3) + i * 0.37) % 1), yy = ceilY + u * (fy - ceilY), xx = x0 + bw / 2 + u * (sh + 8) + Math.sin(t * 0.001 + i * 2.1) * (bw * 0.35); gg.fillStyle(0xffffff, 0.5 * Math.sin(Math.PI * u)).fillRect(xx, yy, 2, 2); }
+        });
+        break;
+      }
+      case 'spipe': { // tubería de hierro oxidado con juntas, abrazaderas y una fuga que gotea
+        const g = sg(-6), y = ceilY + 36;
+        for (let sx = x0 + 24; sx < x0 + Wd; sx += 96) g.fillStyle(0x2a2824, 1).fillRect(sx, ceilY, 4, y - ceilY);
+        g.fillStyle(0x4a3a2a, 1).fillRect(x0, y, Wd, 14).fillStyle(0x7a5a3a, 1).fillRect(x0, y, Wd, 3).fillStyle(0x2a1e14, 1).fillRect(x0, y + 11, Wd, 3);
+        const rnd = rndSeeded(p.gx * 5 + 9); for (let i = 0; i < Wd / 22; i++) g.fillStyle(0x8a4a22, 0.6).fillRect(x0 + rnd() * (Wd - 10), y + 2 + rnd() * 8, 4 + rnd() * 8, 2 + rnd() * 3);
+        for (let sx = x0 + 6; sx < x0 + Wd - 4; sx += 64) g.fillStyle(0x5a4634, 1).fillRect(sx - 4, y - 3, 8, 20).fillStyle(0x8a7a5a, 1).fillRect(sx - 4, y - 3, 8, 2).fillStyle(0x1a1a1a, 1).fillRect(sx - 2, y + 1, 2, 2).fillRect(sx - 2, y + 10, 2, 2);
+        const lx = x0 + Math.min(70, Wd - 10); g.fillStyle(0x6f8a2a, 0.55).fillRect(lx - 1, y + 14, 3, 14);
+        this.decoAnimAdd(lx - 12, y + 10, lx + 12, fy, -5.95, (gg, t) => { const u = ((t + p.gx * 211) % 1500) / 1500, yy = y + 16 + (fy - y - 16) * u * u; if (u < 0.9) gg.fillStyle(0x9ab04a, 0.9).fillRect(lx - 1, yy, 3, 5); else { const r = (u - 0.9) * 90; gg.lineStyle(1, 0x9ab04a, 0.7 * (1 - (u - 0.9) * 10)).strokeEllipse(lx, fy - 1, r, r * 0.3); } });
+        break;
+      }
+      case 'sdrip': { // gotera: una grieta en el techo, gota que engorda, cae y salpica
+        const lh = fy - ceilY; this.decoLayer(-5.95).fillStyle(0x0a0c08, 0.5).fillTriangle(cx - 6, ceilY - 2, cx + 6, ceilY - 2, cx, ceilY + 8);
+        this.decoAnimAdd(cx - 24, ceilY, cx + 24, fy, -5.9, (gg, t) => {
+          const u = ((t + p.gx * 337) % 1700) / 1700; gg.fillStyle(0x6f8a2a, 0.35).fillRect(cx - 1, ceilY + 6, 2, 10 + 10 * Math.sin(t * 0.001));
+          if (u < 0.14) gg.fillStyle(0x9ab0a0, 0.9).fillCircle(cx, ceilY + 10, 1 + u * 16);
+          else if (u < 0.92) { const f = (u - 0.14) / 0.78; gg.fillStyle(0x9ab0a0, 0.95).fillRect(cx - 1, ceilY + 10 + (lh - 14) * f * f, 3, 6); }
+          else { const f = (u - 0.92) / 0.08; gg.lineStyle(1, 0x9ab0a0, 0.7 * (1 - f)).strokeEllipse(cx, fy - 1, 4 + f * 26, 2 + f * 6); if (!lite) { gg.fillStyle(0x9ab0a0, 0.6 * (1 - f)).fillRect(cx - 8 * f, fy - 2 - 9 * Math.sin(Math.PI * f), 2, 2).fillRect(cx + 8 * f, fy - 2 - 9 * Math.sin(Math.PI * f), 2, 2); } }
+        });
+        break;
+      }
+      case 'sarch': { // arco de ladrillo de fondo: bóveda de cañón que se pierde en la oscuridad
+        const g = sg(-6), hw = Math.max(24, Wd / 2 - 14), ah = Math.max(70, Math.min(fy - ceilY - 4, 6 * T)), sh = Math.max(10, ah - hw), ax = x0 + Wd / 2;
+        poly(g, decoArch(ax, fy, hw + 16, sh), 0x4e4a30); poly(g, decoArch(ax, fy, hw + 16, sh), 0x0a0a06, 0.18);
+        g.lineStyle(1, 0x2a2818, 0.9); for (let i = 1; i < 12; i++) { const an = Math.PI + Math.PI * i / 12, ca = Math.cos(an), sa = Math.sin(an); g.lineBetween(ax + (hw) * ca, fy - sh + (hw) * sa, ax + (hw + 16) * ca, fy - sh + (hw + 16) * sa); }
+        for (let y = fy - 6; y > fy - sh; y -= 12) g.lineBetween(ax - hw - 16, y, ax - hw, y).lineBetween(ax + hw, y, ax + hw + 16, y);
+        poly(g, decoArch(ax, fy, hw, sh), 0x0a0b06); poly(g, decoArch(ax, fy, hw * 0.74, sh * 0.9), 0x070804); poly(g, decoArch(ax, fy, hw * 0.46, sh * 0.8), 0x040402);
+        g.fillStyle(0x9aa83a, 0.07).fillCircle(ax, fy - sh * 0.7, hw * 0.3); g.fillStyle(0x16200f, 0.7).fillRect(ax - hw, fy - 5, hw * 2, 5); // resplandor lejano y agua en el fondo
+        const rnd = rndSeeded(p.gx * 3 + 1); for (let i = 0; i < 8; i++) g.fillStyle(0x5f7a2a, 0.7).fillRect(ax - hw - 16 + rnd() * (hw * 2 + 32), fy - sh - hw * 0.8 + rnd() * (sh + hw * 0.6), 2, 3 + rnd() * 6);
+        break;
+      }
+      case 'sgate': { // compuerta de hierro y madera con cadenas y rueda de manivela
+        const g = sg(-6), gh = Math.max(70, Math.min(fy - ceilY - 8, 4 * T)), top = fy - gh;
+        g.fillStyle(0x3a2a1c, 1).fillRect(x0, top, 9, gh).fillRect(x0 + Wd - 9, top, 9, gh).fillRect(x0, top - 6, Wd, 10).fillStyle(0x5a4228, 1).fillRect(x0, top - 6, Wd, 3);
+        g.fillStyle(0x0a0c08, 1).fillRect(x0 + 9, top + 4, Wd - 18, gh - 4); const gtop = top + gh * 0.34;
+        for (let y = gtop, i = 0; y < fy - 6; y += 14, i++) { g.fillStyle(i % 2 ? 0x3a3428 : 0x4a4434, 1).fillRect(x0 + 9, y, Wd - 18, 12).fillStyle(0xffffff, 0.06).fillRect(x0 + 9, y, Wd - 18, 2); for (let sx = x0 + 16; sx < x0 + Wd - 12; sx += 20) g.fillStyle(0x1a1a14, 1).fillCircle(sx, y + 6, 1.5); }
+        const rnd = rndSeeded(p.gx * 7 + 2); for (let i = 0; i < 5; i++) g.fillStyle(0x8a4a22, 0.45).fillRect(x0 + 12 + rnd() * (Wd - 30), gtop + rnd() * 20, 2 + rnd() * 3, 20 + rnd() * (fy - gtop - 24));
+        [x0 + Wd * 0.28, x0 + Wd * 0.72].forEach(ch => { for (let y = top - 4; y < gtop; y += 7) g.fillStyle(0x6a6a60, 1).fillEllipse(ch, y + 3, (y / 7) % 2 ? 6 : 3, 7); });
+        const rx = x0 + Wd / 2, ry = top + gh * 0.16; g.lineStyle(3, 0x6a5a40, 1).strokeCircle(rx, ry, 11).lineBetween(rx - 11, ry, rx + 11, ry).lineBetween(rx, ry - 11, rx, ry + 11); g.fillStyle(0x2a2622, 1).fillCircle(rx, ry, 3);
+        g.fillStyle(0x16200f, 0.7).fillRect(x0 + 9, fy - 5, Wd - 18, 5);
+        break;
+      }
+      case 'snest': { // nido de ratas: montón de trapos y paja, huesos, una calavera y ojos rojos asomando
+        const g = sg(-4.9); poly(g, [[cx - 34, fy], [cx - 26, fy - 12], [cx - 12, fy - 22], [cx + 4, fy - 18], [cx + 18, fy - 24], [cx + 32, fy - 10], [cx + 38, fy]], 0x3a2e1c); poly(g, [[cx - 24, fy], [cx - 12, fy - 15], [cx + 4, fy - 13], [cx + 20, fy - 17], [cx + 30, fy]], 0x4a3c24);
+        const rnd = rndSeeded(p.gx * 11 + 4); for (let i = 0; i < 10; i++) { const sx = cx - 30 + rnd() * 62; g.lineStyle(1, i % 2 ? 0x8a7448 : 0x5a4a2a, 1).lineBetween(sx, fy - 4 - rnd() * 12, sx + (rnd() - 0.5) * 14, fy - 14 - rnd() * 10); }
+        g.fillStyle(0xdcd4c0, 1).fillRect(cx - 34, fy - 5, 14, 3).fillRect(cx + 26, fy - 8, 12, 3).fillRect(cx + 14, fy - 3, 16, 3).fillCircle(cx - 36, fy - 5, 2).fillCircle(cx + 38, fy - 8, 2); // huesos
+        g.fillStyle(0xcfc8b4, 1).fillCircle(cx - 4, fy - 9, 7).fillRect(cx - 7, fy - 5, 7, 5).fillStyle(0x1a1610, 1).fillRect(cx - 7, fy - 11, 3, 3).fillRect(cx - 2, fy - 11, 3, 3); // calavera
+        g.fillStyle(0x080604, 1).fillEllipse(cx + 12, fy - 8, 12, 9).fillStyle(0xff3a2a, 1).fillRect(cx + 8, fy - 9, 2, 2).fillRect(cx + 13, fy - 9, 2, 2).fillStyle(0xff3a2a, 0.15).fillCircle(cx + 12, fy - 8, 10);
+        break;
+      }
+      case 'slamp': { // farol de gas apagado, colgado de una cadena
+        const g = sg(-6), ly = ceilY + 66; for (let y = ceilY; y < ly; y += 6) g.fillStyle(0x4a4a44, 1).fillRect(cx - ((y / 6) % 2 ? 1 : 2), y, 3, 5);
+        poly(g, [[cx - 10, ly], [cx + 10, ly], [cx + 7, ly - 8], [cx - 7, ly - 8]], 0x2a2a28); g.fillStyle(0x3a3a38, 1).fillRect(cx - 9, ly, 18, 2).fillStyle(0x181a14, 1).fillRect(cx - 8, ly + 2, 16, 24).fillStyle(0x4a5a42, 0.35).fillRect(cx - 7, ly + 3, 14, 22).fillStyle(0xffffff, 0.12).fillRect(cx - 6, ly + 4, 3, 18).fillStyle(0x0a0a08, 0.7).fillRect(cx - 4, ly + 12, 8, 12); // cristal sucio y mecha apagada
+        g.fillStyle(0x2a2a28, 1).fillRect(cx - 9, ly + 26, 18, 3).fillRect(cx - 3, ly + 29, 6, 4).fillStyle(0x8a9a3a, 0.1).fillCircle(cx, ly + 14, 14);
+        g.lineStyle(1, 0x8a8a80, 0.35).lineBetween(cx - 14, ceilY + 2, cx - 4, ceilY + 26).lineBetween(cx + 14, ceilY + 2, cx + 4, ceilY + 24); // telarañas
+        break;
+      }
+    }
+  },
   skyStep(time) {
+    this.decoStep(time); // decorados animados de Tejados y Cloacas (también en salas sin cielo)
     if (!this.skyG) return;
     const ca = this.cycArea(); this.skyG.setVisible(!!ca); this.cityG.setVisible(!!ca); if (!ca) return;
     const ph = World.phaseAt(this.cyc.t), nx = (ph.i + 1) % 4, k = ph.left < 4 ? 1 - ph.left / 4 : 0;
@@ -2405,6 +2661,16 @@ Object.assign(CastleScene.prototype, {
     const c = t % 14, e = k => k * k * (3 - 2 * k), d = l.yBot - l.yTop;
     if (c < 3) return l.yTop; if (c < 7) return l.yTop + d * e((c - 3) / 4); if (c < 10) return l.yBot; return l.yBot - d * e((c - 10) / 4);
   },
+  liftDraw(L, y, now) { // montacargas de la Zona 3: tablones con herrajes, cuerdas gordas hasta una polea de madera y un farol
+    const g = L.g, x = L.x, w = L.w, top = L.yTop - 200, cxm = x + w / 2; g.clear();
+    g.fillStyle(0x3a2616, 1).fillRect(x - 6, top - 10, w + 12, 12).fillStyle(0x6a4a30, 1).fillRect(x - 6, top - 10, w + 12, 3); // viga y polea de madera arriba
+    g.fillStyle(0x4a3220, 1).fillCircle(cxm, top + 8, 15).fillStyle(0x2a1c10, 1).fillCircle(cxm, top + 8, 5).lineStyle(3, 0x2a1c10, 1).lineBetween(cxm - 14, top + 8, cxm + 14, top + 8).lineBetween(cxm, top - 6, cxm, top + 22);
+    [x + 12, x + w - 12].forEach((rx, i) => { const rl = y - 14 - (top + 8); g.fillStyle(0xb8a070, 1).fillRect(rx - 3, top + 8, 6, rl).fillStyle(0x6a5430, 1); for (let yy = top + 12; yy < y - 14; yy += 8) g.fillRect(rx - 3, yy, 6, 2); g.lineStyle(3, 0xb8a070, 1).lineBetween(rx, top + 8, cxm + (i ? 12 : -12), top + 8); });
+    g.fillStyle(0x3a2616, 1).fillRect(x, y - 2, w, 14).fillStyle(0x6a4a30, 1).fillRect(x, y - 2, w, 4); for (let tx = x + 14; tx < x + w - 6; tx += 16) g.fillStyle(0x2a1c10, 0.8).fillRect(tx, y - 2, 1, 14); // tablones
+    g.fillStyle(0x3a3a40, 1).fillRect(x - 3, y - 4, w + 6, 4).fillRect(x - 3, y + 10, w + 6, 3).fillRect(x - 3, y - 4, 6, 17).fillRect(x + w - 3, y - 4, 6, 17); g.fillStyle(0x8a8a92, 1).fillRect(x - 3, y - 4, w + 6, 1); // herrajes de hierro
+    [x + 4, x + w - 4].forEach(rx => g.fillStyle(0x9a9aa2, 1).fillCircle(rx, y + 3, 1.5));
+    const fx = x + w - 8, fl = 0.85 + 0.15 * Math.sin(now * 0.012); g.lineStyle(2, 0x1a1a1e, 1).lineBetween(fx, y - 4, fx, y - 22); g.fillStyle(0x1a1a1e, 1).fillRect(fx - 5, y - 36, 10, 3).fillRect(fx - 5, y - 22, 10, 3).fillStyle(0xffd27a, fl).fillRect(fx - 3, y - 33, 6, 11).fillStyle(0xffb347, 0.14 * fl).fillCircle(fx, y - 28, 34); // farol
+  },
   liftStep(dt) {
     if (!this.W.lifts || !this.W.lifts.length || !this.player) return;
     if (!this.liftObjs) {
@@ -2412,8 +2678,9 @@ Object.assign(CastleScene.prototype, {
         const r = this.add.rectangle(l.x + l.w / 2, l.yTop + 8, l.w, 16, 0x5a4128).setDepth(3).setStrokeStyle(2, 0x2a5428);
         this.physics.add.existing(r, true); const b = r.body; b.checkCollision.down = false; b.checkCollision.left = false; b.checkCollision.right = false; // cuerpo estático: se recoloca cada frame
         this.physics.add.collider(this.player, r);
-        const g = this.add.graphics().setDepth(2); // cadenas hacia el techo
-        return { ...l, r, g };
+        const z3 = this.W.region === 'z3'; if (z3) r.setAlpha(0); // en la Zona 3 el cuerpo físico es invisible y se pinta una plataforma de tablones
+        const g = this.add.graphics().setDepth(z3 ? 3 : 2); // cadenas hacia el techo
+        return { ...l, r, g, z3 };
       });
     }
     const t = Date.now() / 1000;
@@ -2421,6 +2688,7 @@ Object.assign(CastleScene.prototype, {
       const oldTop = L.r.y - 8, pb = this.player.body, riding = pb.bottom >= oldTop - 6 && pb.bottom <= oldTop + 10 && pb.velocity.y >= -20 && pb.right > L.x && pb.left < L.x + L.w;
       L.r.y = this.liftY(L, t) + 8; L.r.body.updateFromGameObject();
       if (riding) { const sh = (L.r.y - 8) - oldTop; if (sh) this.player.y += sh; } // el jugador sube y baja con la plataforma
+      if (L.z3) { this.liftDraw(L, L.r.y - 8, Date.now()); return; }
       L.g.clear().fillStyle(0x6b6b5a, 1); [L.x + 10, L.x + L.w - 10].forEach(cx => L.g.fillRect(cx - 2, L.yTop - 200, 4, L.r.y - 8 - (L.yTop - 200)));
     });
   },

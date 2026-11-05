@@ -179,6 +179,13 @@ const ELITE_AB = {
   'Carcelero': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 4.2 },
   'Espectro Penitente': { kind: 'blink', range: 420, tele: 0.5, act: 0.1, cd: 4.5 },
   'Verdugo Cubierto de Musgo': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 3.8 },
+  'Vigía de las Cornisas': { kind: 'blink', range: 420, tele: 0.5, act: 0.1, cd: 4.2 }, // Tejados: aparece a tu espalda desde otra cornisa
+  'Gárgola Viva': { kind: 'quake', range: 300, tele: 0.65, act: 0.1, cd: 4 }, // Tejados: se deja caer sobre la teja y sacude el suelo
+  'Sereno de las Alturas': { kind: 'orbs', range: 380, tele: 0.45, act: 0.1, cd: 3.2 }, // Tejados: farol en alto que suelta orbes de luz
+  'Rata Mayor del Colector': { kind: 'charge', range: 280, tele: 0.55, act: 0.55, cd: 3.4, spd: 360 }, // Cloacas: embestida a ras de suelo
+  'Farolero Ahogado': { kind: 'haste', range: 260, tele: 0.5, act: 2.4, cd: 5, trail: true },
+ // Cloacas: corre y deja un rastro de légamo
+  'Alguacil del Aljibe': { kind: 'quake', range: 300, tele: 0.7, act: 0.1, cd: 3.9 }, // Cloacas: golpea con el cayado y hace temblar el aljibe
   'Relojero Oxidado': { kind: 'haste', range: 260, tele: 0.5, act: 2.6, cd: 5, trail: true } // deja un rastro de veneno de 3 s y, un ciclo sí y otro no, lanza una nube que dura 5 s
 };
 const SILENCE_TYPES = ['orb', 'thorn']; // proyectiles que destruye la Palabra de Silencio (los orbes; no ondas, pilares ni nubes)
@@ -213,7 +220,7 @@ const PR = {
 const OTHER_ROOM_DARK = 0.86; // cuánto se oscurecen las salas en las que no estás (0 = nada, 1 = negro)
 const NEAR_ROOM_DARK = 0.3; // salas vecinas con el paso abierto: se ven al 70 %
 const ROOM_FADE = 0.7; // segundos que tarda una sala en aclararse u oscurecerse al cambiar de sala
-const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7, 1.9, 2.2, 2.0, 2.1, 2.1, 1, 2.4, 2.6]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
+const ZONE_SCALE = [1, 1.1, 1.1, 1.25, 1.25, 1.4, 1, 1.5, 1.6, 1.7, 1.9, 2.2, 2.0, 2.1, 2.1, 1, 2.4, 2.6, 2.4, 2.5]; // vida de los enemigos corrientes según la zona (suave: en la Zona 1 el daño del jugador apenas sube)
 const rectsOverlap = (ax, ay, aw, ah, bx, by, bw, bh) => Math.abs(ax - bx) * 2 < aw + bw && Math.abs(ay - by) * 2 < ah + bh;
 const cellKey = (x, y) => Math.floor(x / (CW * T)) + ',' + Math.floor(y / (CH * T));
 
@@ -242,8 +249,11 @@ class CastleScene extends Phaser.Scene {
     this.torchOn = Object.assign({}, this.progress.torches || {});
     this.torchObjs = w.torches.map(t => {
       const lit = this.torchOn[this.torchKey(t.id)] !== undefined ? !!this.torchOn[this.torchKey(t.id)] : t.lit;
+      const A = w.areas[t.area], post = !t.none && w.sky && A && A.open && A.z === 16; // en la calle las antorchas son farolas: un poste hasta el suelo
+      if (t.none) return { ...t, lit: false, sconce: this.add.image(0, 0, 'sconce').setVisible(false), flame: this.add.image(0, 0, 'flame1').setVisible(false), glow: this.add.image(0, 0, 'glow').setVisible(false) };
+      if (post) { const g = this.add.graphics().setDepth(-3.1), fy = (A.y0 + A.rh - 1) * T, px = t.x; g.fillStyle(0x1c1620, 1).fillRect(px - 9, fy - 6, 18, 6).fillRect(px - 6, fy - 16, 12, 10).fillRect(px - 3, t.y + 14, 6, fy - t.y - 14).fillStyle(0x3a3040, 1).fillRect(px - 3, t.y + 14, 2, fy - t.y - 14).fillRect(px - 5, t.y + 40, 10, 4).fillStyle(0x1c1620, 1).fillRect(px - 14, t.y + 6, 28, 5).fillRect(px - 12, t.y - 18, 3, 24).fillRect(px + 9, t.y - 18, 3, 24).fillRect(px - 13, t.y - 22, 26, 5); } // base, poste, brazo y jaula del farol
       return { ...t, lit,
-        sconce: this.add.image(t.x, t.y + 8, 'sconce').setScale(3).setDepth(-3),
+        sconce: this.add.image(t.x, t.y + 8, 'sconce').setScale(3).setDepth(-3).setVisible(!post),
         flame: this.add.image(t.x, t.y, 'flame1').setScale(3).setDepth(-3).setVisible(lit),
         glow: this.add.image(t.x, t.y, 'glow').setScale(1.3).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0.4).setDepth(-4).setVisible(lit && !LITE) };
     });
@@ -575,7 +585,7 @@ class CastleScene extends Phaser.Scene {
     if (nl < 0.95 || !cur || cur.safe || cur.calm) return;
     const live = [...this.ents.values()].filter(e => e.nightTorch !== undefined);
     if (live.length >= 3) return;
-    const p = this.player, cand = this.torchObjs.filter(o => o.area === cur.id && !o.lit && !live.some(e => e.nightTorch === o.id) && Math.abs(o.x - p.x) < 800).sort((a, b) => Math.abs(a.x - p.x) - Math.abs(b.x - p.x))[0];
+    const p = this.player, cand = this.torchObjs.filter(o => !o.none && o.area === cur.id && !o.lit && !live.some(e => e.nightTorch === o.id) && Math.abs(o.x - p.x) < 800).sort((a, b) => Math.abs(a.x - p.x) - Math.abs(b.x - p.x))[0];
     if (!cand) return;
     for (let i = 0; i < 6; i++) this.poof(cand.x + Phaser.Math.Between(-10, 10), cand.y + 8 - i * 6, 1, 0xaaaaff); // sale del humo de la lámpara
     this.createEnt('n' + (this.nid++), 'eco', cand.x, cand.y + 14, true, { room: cur.id, summoned: true, awake: true, nightTorch: cand.id });
@@ -618,7 +628,7 @@ class CastleScene extends Phaser.Scene {
   }
   interactTorch(pressedE) {
     const p = this.player; let best = null, bd = 1e9;
-    if (!this.dead) for (const o of this.torchObjs) { const dx = Math.abs(o.x - p.x), dy = Math.abs(o.y - p.y); if (dx < 48 && dy < 100) { /* hay que estar cerca: las antorchas altas se encienden en mitad de un salto */ const d = dx + dy; if (d < bd) { bd = d; best = o; } } }
+    if (!this.dead) for (const o of this.torchObjs) { if (o.none) continue; const dx = Math.abs(o.x - p.x), dy = Math.abs(o.y - p.y); if (dx < 48 && dy < 100) { /* hay que estar cerca: las antorchas altas se encienden en mitad de un salto */ const d = dx + dy; if (d < bd) { bd = d; best = o; } } }
     if (best) { this.promptTxt.setVisible(true).setPosition(best.x, best.y - 26).setText(best.lit ? '{act}: apagar' : '{act}: encender'); } else this.promptTxt.setVisible(false);
     if (best && pressedE) { const on = !best.lit; this.setTorch(best.id, on); socket.emit('torch', { id: this.torchKey(best.id), on }); SFX.altar(); }
   }
@@ -639,8 +649,8 @@ class CastleScene extends Phaser.Scene {
     if (this.gdoorDraw) this.gdoorDraw();
     if (this.skyStep) this.skyStep(time);
     if (this.litPlatStep) this.litPlatStep(time);
+    if (this.roofBatStep) this.roofBatStep(time);
     if (this.luaCellStep) this.luaCellStep();
-    if (this.roofStep) this.roofStep();
     if (this.phasedStep) { this.phasedStep(time); this.bellStep(Math.min(0.1, Math.max(0, (time - (this.bellPrevT || time)) / 1000)), time); this.bellPrevT = time; }
     (this.caveLamps || []).forEach(L => { if (!(L.gate && L.gate.open)) lamp(L.x, L.y, L.r, 0.85); }); this.caveEmbers(time); this.mossSpores(time); this.liftStep(0.016);
     (this.gemObjs || []).forEach(o => { if (!this.gemGot.has(o.id) && !this.hiddenAt(o.x, o.y)) lamp(o.x, o.y, 45, 0.8); });
